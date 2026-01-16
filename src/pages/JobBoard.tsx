@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KanbanBoard } from '@/components/jobs/KanbanBoard';
 import { AddJobDialog } from '@/components/jobs/AddJobDialog';
+import { ImportJobsDialog } from '@/components/jobs/ImportJobsDialog';
 import { Job, JobStatus } from '@/types/job';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { useJobs } from '@/hooks/useJobs';
 
 export default function JobBoard() {
   const navigate = useNavigate();
-  const { jobs, addJob, updateJob } = useJobs();
+  const { jobs, addJob, updateJob, refetch } = useJobs();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredJobs = jobs.filter(job => 
@@ -41,7 +42,10 @@ export default function JobBoard() {
               Track your applications across {jobs.length} positions
             </p>
           </div>
-          <AddJobDialog onAdd={handleAddJob} />
+          <div className="flex gap-2">
+            <ImportJobsDialog onImportComplete={refetch} />
+            <AddJobDialog onAdd={handleAddJob} />
+          </div>
         </div>
 
         {/* Search */}
