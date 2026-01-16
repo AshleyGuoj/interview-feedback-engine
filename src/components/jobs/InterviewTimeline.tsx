@@ -21,9 +21,12 @@ import {
   Save,
   X,
   Plus,
-  Trash2
+  Trash2,
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatDualTimezone } from '@/lib/timezone';
 
 interface InterviewTimelineProps {
   stages: InterviewStage[];
@@ -50,6 +53,10 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
       name: stage.name,
       status: stage.status,
       date: stage.date,
+      scheduledTime: stage.scheduledTime,
+      scheduledTimezone: stage.scheduledTimezone || 'Asia/Shanghai',
+      deadline: stage.deadline,
+      deadlineTimezone: stage.deadlineTimezone || 'Asia/Shanghai',
       preparation: stage.preparation || { notes: '', stories: [], questions: [] },
       interviewLog: stage.interviewLog || { 
         interviewers: [], 
@@ -142,19 +149,31 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                 )}>
                   <CollapsibleTrigger className="w-full">
                     <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-medium">{stage.name}</span>
                         <Badge variant="secondary" className={statusBadge.className}>
                           {statusBadge.label}
                         </Badge>
-                        {stage.date && (
+                        {stage.scheduledTime && stage.scheduledTimezone && (
+                          <div className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
+                            <Calendar className="w-3 h-3" />
+                            {formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone)}
+                          </div>
+                        )}
+                        {stage.deadline && stage.deadlineTimezone && (
+                          <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded-full">
+                            <AlertCircle className="w-3 h-3" />
+                            截止: {formatDualTimezone(stage.deadline, stage.deadlineTimezone)}
+                          </div>
+                        )}
+                        {stage.date && !stage.scheduledTime && !stage.deadline && (
                           <span className="text-sm text-muted-foreground">
                             {new Date(stage.date).toLocaleDateString()}
                           </span>
                         )}
                       </div>
                       <ChevronDown className={cn(
-                        'w-5 h-5 text-muted-foreground transition-transform',
+                        'w-5 h-5 text-muted-foreground transition-transform shrink-0',
                         isOpen && 'rotate-180'
                       )} />
                     </div>
@@ -186,7 +205,7 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                       {isEditing ? (
                         <div className="space-y-6">
                           {/* Basic Info */}
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="space-y-2">
                               <Label>Stage Name</Label>
                               <Input
@@ -220,6 +239,74 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                                 value={editData.date || ''}
                                 onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
                               />
+                            </div>
+                          </div>
+
+                          {/* Scheduled Time with Timezone */}
+                          <div className="space-y-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Calendar className="w-4 h-4 text-primary" />
+                              Scheduled Interview Time
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Date & Time</Label>
+                                <Input
+                                  type="datetime-local"
+                                  value={editData.scheduledTime || ''}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                <Select
+                                  value={editData.scheduledTimezone || 'Asia/Shanghai'}
+                                  onValueChange={(value) => setEditData(prev => ({ ...prev, scheduledTimezone: value }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Asia/Shanghai">北京时间 (UTC+8)</SelectItem>
+                                    <SelectItem value="America/Los_Angeles">北美西部 (UTC-8)</SelectItem>
+                                    <SelectItem value="America/New_York">北美东部 (UTC-5)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Deadline with Timezone */}
+                          <div className="space-y-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800/30">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <AlertCircle className="w-4 h-4 text-amber-600" />
+                              Deadline (if applicable)
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Deadline Date & Time</Label>
+                                <Input
+                                  type="datetime-local"
+                                  value={editData.deadline || ''}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, deadline: e.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Timezone</Label>
+                                <Select
+                                  value={editData.deadlineTimezone || 'Asia/Shanghai'}
+                                  onValueChange={(value) => setEditData(prev => ({ ...prev, deadlineTimezone: value }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Asia/Shanghai">北京时间 (UTC+8)</SelectItem>
+                                    <SelectItem value="America/Los_Angeles">北美西部 (UTC-8)</SelectItem>
+                                    <SelectItem value="America/New_York">北美东部 (UTC-5)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </div>
 
