@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { InterviewTimeline } from '@/components/jobs/InterviewTimeline';
+import { StageEditor } from '@/components/jobs/StageEditor';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,6 +135,10 @@ export default function JobDetail() {
       s.id === stageId ? { ...s, ...updates } : s
     );
     await updateJob(job.id, { stages: updatedStages });
+  };
+
+  const handleStagesChange = async (newStages: InterviewStage[]) => {
+    await updateJob(job.id, { stages: newStages });
   };
 
   const handleAIAction = (action: 'summarize' | 'suggest-prep' | 'extract-insights', stageId?: string) => {
@@ -492,7 +497,10 @@ export default function JobDetail() {
 
         {/* Interview Timeline */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Interview Timeline</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Interview Timeline</h2>
+            <StageEditor stages={job.stages} onSave={handleStagesChange} />
+          </div>
           <InterviewTimeline 
             stages={job.stages}
             onStageUpdate={handleStageUpdate}
