@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 const STORAGE_KEY = 'career-pilot-jobs';
 const STORAGE_VERSION_KEY = 'career-pilot-jobs-version';
-const CURRENT_VERSION = 2; // Increment this when initial data changes
+const CURRENT_VERSION = 3; // Increment this when initial data changes
 // Initial sample data
 const initialJobs: Job[] = [
   {
@@ -46,7 +46,13 @@ const initialJobs: Job[] = [
       { id: '2-3', name: 'Round 2', status: 'completed' },
       { id: '2-4', name: 'Round 3', status: 'completed' },
       { id: '2-5', name: 'Language Test', status: 'completed' },
-      { id: '2-6', name: 'Offer Discussion', status: 'completed' },
+      { 
+        id: '2-6', 
+        name: 'Offer Discussion', 
+        status: 'upcoming',
+        scheduledTime: '2026-01-20T21:30:00',
+        scheduledTimezone: 'America/New_York',
+      },
     ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
