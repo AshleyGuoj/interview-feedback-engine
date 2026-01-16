@@ -98,11 +98,18 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
 
   const getStatusBadge = (status: InterviewStage['status']) => {
     const variants: Record<InterviewStage['status'], { label: string; className: string }> = {
-      completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-      upcoming: { label: 'Upcoming', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-      skipped: { label: 'Skipped', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+      completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50' },
+      upcoming: { label: 'Upcoming', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50' },
+      skipped: { label: 'Skipped', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' },
     };
     return variants[status];
+  };
+
+  const cycleStatus = (stageId: string, currentStatus: InterviewStage['status']) => {
+    const statusOrder: InterviewStage['status'][] = ['upcoming', 'completed', 'skipped'];
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    onStageUpdate(stageId, { status: nextStatus });
   };
 
   const updateArrayField = (
@@ -147,11 +154,19 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                   'transition-all',
                   isOpen && 'ring-1 ring-primary/20'
                 )}>
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-medium">{stage.name}</span>
-                        <Badge variant="secondary" className={statusBadge.className}>
+                        <Badge 
+                          variant="secondary" 
+                          className={cn(statusBadge.className, 'cursor-pointer transition-colors')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cycleStatus(stage.id, stage.status);
+                          }}
+                          title="Click to change status"
+                        >
                           {statusBadge.label}
                         </Badge>
                         {stage.scheduledTime && stage.scheduledTimezone && (
