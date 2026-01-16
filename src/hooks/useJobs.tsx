@@ -1,220 +1,191 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Job, InterviewStage, DEFAULT_STAGES } from '@/types/job';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-const STORAGE_KEY = 'career-pilot-jobs';
-const STORAGE_VERSION_KEY = 'career-pilot-jobs-version';
-const CURRENT_VERSION = 4; // Increment this when initial data changes
-// Initial sample data
-const initialJobs: Job[] = [
-  {
-    id: '1',
-    companyName: '字节跳动',
-    roleTitle: 'AI Project Management',
-    location: 'CN',
-    status: 'closed',
-    source: 'other',
-    interestLevel: 4,
-    currentStage: 'Round 2',
-    nextAction: '三面挂',
-    careerFitNotes: '一面HR+两面业务',
-    stages: [
-      { id: '1-0', name: 'Applied', status: 'completed' },
-      { id: '1-1', name: 'HR Screen', status: 'completed' },
-      { id: '1-2', name: 'Round 1', status: 'completed' },
-      { id: '1-3', name: 'Round 2', status: 'completed' },
-      { id: '1-4', name: 'Final Round', status: 'skipped' },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    companyName: 'Boss直聘',
-    roleTitle: '海外产品经理',
-    location: 'CN',
-    status: 'offer',
-    source: 'boss',
-    interestLevel: 5,
-    currentStage: 'Offer Discussion',
-    nextAction: '✅ 已OC',
-    careerFitNotes: '共四面（三面业务+一面语言）',
-    stages: [
-      { id: '2-0', name: 'Applied', status: 'completed' },
-      { id: '2-1', name: 'HR Screen', status: 'completed' },
-      { id: '2-2', name: 'Round 1', status: 'completed' },
-      { id: '2-3', name: 'Round 2', status: 'completed' },
-      { id: '2-4', name: 'Round 3', status: 'completed' },
-      { id: '2-5', name: 'Language Test', status: 'completed' },
-      { 
-        id: '2-6', 
-        name: 'Offer Discussion', 
-        status: 'completed',
-        scheduledTime: '2026-01-13T21:30:00',
-        scheduledTimezone: 'America/New_York',
-      },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    companyName: 'DeepWisdom',
-    roleTitle: 'Agent产品经理',
-    location: 'CN',
-    status: 'offer',
-    source: 'other',
-    interestLevel: 4,
-    currentStage: 'Offer Discussion',
-    nextAction: '已OC但无HC',
-    careerFitNotes: '两面业务+一面HR',
-    stages: [
-      { id: '3-0', name: 'Applied', status: 'completed' },
-      { id: '3-1', name: 'Round 1', status: 'completed' },
-      { id: '3-2', name: 'Round 2', status: 'completed' },
-      { id: '3-3', name: 'HR Screen', status: 'completed' },
-      { id: '3-4', name: 'Offer Discussion', status: 'completed' },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    companyName: '群核科技',
-    roleTitle: 'Agent策略产品',
-    location: 'CN',
-    status: 'closed',
-    source: 'other',
-    interestLevel: 3,
-    currentStage: 'Round 1',
-    nextAction: '一面横向一周挂',
-    careerFitNotes: '一面业务',
-    stages: [
-      { id: '4-0', name: 'Applied', status: 'completed' },
-      { id: '4-1', name: 'Round 1', status: 'completed' },
-      { id: '4-2', name: 'Round 2', status: 'skipped' },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    companyName: 'Shopee',
-    roleTitle: '产品经理',
-    location: 'CN',
-    status: 'interviewing',
-    source: 'other',
-    interestLevel: 4,
-    currentStage: 'Round 1',
-    nextAction: '一面 1/20 14:00 (北京)',
-    stages: [
-      { id: '5-0', name: 'Applied', status: 'completed' },
-      { 
-        id: '5-1', 
-        name: 'Round 1', 
-        status: 'upcoming',
-        scheduledTime: '2026-01-20T14:00:00',
-        scheduledTimezone: 'Asia/Shanghai',
-      },
-      { id: '5-2', name: 'Round 2', status: 'upcoming' },
-      { id: '5-3', name: 'Final Round', status: 'upcoming' },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '6',
-    companyName: '美的',
-    roleTitle: 'AI产品经理',
-    location: 'CN',
-    status: 'interviewing',
-    source: 'other',
-    interestLevel: 3,
-    currentStage: 'AI Interview',
-    nextAction: 'AI面试截止 1/16 23:59 (北京)',
-    stages: [
-      { id: '6-0', name: 'Applied', status: 'completed' },
-      { 
-        id: '6-1', 
-        name: 'AI Interview', 
-        status: 'upcoming',
-        deadline: '2026-01-16T23:59:00',
-        deadlineTimezone: 'Asia/Shanghai',
-      },
-      { id: '6-2', name: 'Round 1', status: 'upcoming' },
-      { id: '6-3', name: 'Round 2', status: 'upcoming' },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-function loadJobs(): Job[] {
-  try {
-    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
-    // If version mismatch or no version, use initial data
-    if (!storedVersion || parseInt(storedVersion) < CURRENT_VERSION) {
-      localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION.toString());
-      return initialJobs;
-    }
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error('Failed to load jobs from localStorage:', e);
-  }
-  return initialJobs;
+// Transform database row to Job type
+function dbToJob(row: any): Job {
+  return {
+    id: row.id,
+    companyName: row.company_name,
+    roleTitle: row.role_title,
+    location: row.location as Job['location'],
+    status: row.status as Job['status'],
+    jobLink: row.job_link || undefined,
+    source: row.source as Job['source'],
+    interestLevel: row.interest_level as Job['interestLevel'],
+    careerFitNotes: row.career_fit_notes || undefined,
+    currentStage: row.current_stage || undefined,
+    nextAction: row.next_action || undefined,
+    stages: (row.stages || []) as InterviewStage[],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
-function saveJobs(jobs: Job[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
-  } catch (e) {
-    console.error('Failed to save jobs to localStorage:', e);
-  }
+// Transform Job to database row
+function jobToDb(job: Partial<Job>, userId: string) {
+  const result: any = { user_id: userId };
+  
+  if (job.companyName !== undefined) result.company_name = job.companyName;
+  if (job.roleTitle !== undefined) result.role_title = job.roleTitle;
+  if (job.location !== undefined) result.location = job.location;
+  if (job.status !== undefined) result.status = job.status;
+  if (job.jobLink !== undefined) result.job_link = job.jobLink || null;
+  if (job.source !== undefined) result.source = job.source;
+  if (job.interestLevel !== undefined) result.interest_level = job.interestLevel;
+  if (job.careerFitNotes !== undefined) result.career_fit_notes = job.careerFitNotes || null;
+  if (job.currentStage !== undefined) result.current_stage = job.currentStage || null;
+  if (job.nextAction !== undefined) result.next_action = job.nextAction || null;
+  if (job.stages !== undefined) result.stages = job.stages;
+  
+  return result;
 }
 
 export function useJobs() {
-  const [jobs, setJobs] = useState<Job[]>(() => loadJobs());
-  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Save to localStorage whenever jobs change
+  // Fetch jobs from database
+  const fetchJobs = useCallback(async () => {
+    if (!user) {
+      setJobs([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching jobs:', error);
+        toast.error('Failed to load jobs');
+        return;
+      }
+
+      setJobs(data?.map(dbToJob) || []);
+    } catch (e) {
+      console.error('Error fetching jobs:', e);
+      toast.error('Failed to load jobs');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
-    saveJobs(jobs);
-  }, [jobs]);
+    fetchJobs();
+  }, [fetchJobs]);
 
   const addJob = async (newJob: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) {
+      toast.error('Please sign in to add jobs');
+      return null;
+    }
+
     const stages = newJob.stages.length > 0 
       ? newJob.stages 
       : DEFAULT_STAGES.map((s, i) => ({ ...s, id: `stage-${Date.now()}-${i}` }));
 
-    const job: Job = {
-      ...newJob,
-      id: `job-${Date.now()}`,
-      stages,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    const dbData = {
+      ...jobToDb({ ...newJob, stages }, user.id),
     };
 
-    setJobs(prev => [job, ...prev]);
-    toast.success('Job added');
-    return job;
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .insert(dbData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding job:', error);
+        toast.error('Failed to add job');
+        return null;
+      }
+
+      const job = dbToJob(data);
+      setJobs(prev => [job, ...prev]);
+      toast.success('Job added');
+      return job;
+    } catch (e) {
+      console.error('Error adding job:', e);
+      toast.error('Failed to add job');
+      return null;
+    }
   };
 
   const updateJob = async (id: string, updates: Partial<Job>) => {
+    if (!user) {
+      toast.error('Please sign in to update jobs');
+      return;
+    }
+
+    // Optimistic update
     setJobs(prev => prev.map(job => 
       job.id === id ? { ...job, ...updates, updatedAt: new Date().toISOString() } : job
     ));
-    toast.success('Job updated');
+
+    const dbData = jobToDb(updates, user.id);
+    delete dbData.user_id; // Don't update user_id
+
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .update(dbData)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating job:', error);
+        toast.error('Failed to update job');
+        // Revert on error
+        await fetchJobs();
+        return;
+      }
+
+      toast.success('Job updated');
+    } catch (e) {
+      console.error('Error updating job:', e);
+      toast.error('Failed to update job');
+      await fetchJobs();
+    }
   };
 
   const deleteJob = async (id: string) => {
+    if (!user) {
+      toast.error('Please sign in to delete jobs');
+      return;
+    }
+
+    // Optimistic delete
     setJobs(prev => prev.filter(job => job.id !== id));
-    toast.success('Job deleted');
+
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting job:', error);
+        toast.error('Failed to delete job');
+        await fetchJobs();
+        return;
+      }
+
+      toast.success('Job deleted');
+    } catch (e) {
+      console.error('Error deleting job:', e);
+      toast.error('Failed to delete job');
+      await fetchJobs();
+    }
   };
 
   const getJob = (id: string) => jobs.find(job => job.id === id);
 
-  return { jobs, loading, addJob, updateJob, deleteJob, getJob };
+  return { jobs, loading, addJob, updateJob, deleteJob, getJob, refetch: fetchJobs };
 }
