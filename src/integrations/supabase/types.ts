@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      jobs: {
+        Row: {
+          career_fit_notes: string | null
+          company_name: string
+          created_at: string
+          current_stage: string | null
+          id: string
+          interest_level: number
+          job_link: string | null
+          location: string
+          next_action: string | null
+          role_title: string
+          source: string
+          stages: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          career_fit_notes?: string | null
+          company_name: string
+          created_at?: string
+          current_stage?: string | null
+          id?: string
+          interest_level?: number
+          job_link?: string | null
+          location?: string
+          next_action?: string | null
+          role_title: string
+          source?: string
+          stages?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          career_fit_notes?: string | null
+          company_name?: string
+          created_at?: string
+          current_stage?: string | null
+          id?: string
+          interest_level?: number
+          job_link?: string | null
+          location?: string
+          next_action?: string | null
+          role_title?: string
+          source?: string
+          stages?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

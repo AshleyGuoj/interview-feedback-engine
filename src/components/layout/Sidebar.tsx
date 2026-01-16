@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -8,10 +8,12 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -24,6 +26,13 @@ const navItems = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <aside
@@ -70,8 +79,22 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="p-2 border-t border-border">
+      {/* User & Collapse */}
+      <div className="p-2 border-t border-border space-y-1">
+        {user && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className={cn(
+              'w-full text-muted-foreground hover:text-foreground',
+              collapsed ? 'justify-center' : 'justify-start'
+            )}
+          >
+            <LogOut className="w-4 h-4" />
+            {!collapsed && <span className="ml-2">Sign Out</span>}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
