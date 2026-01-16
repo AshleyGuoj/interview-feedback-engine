@@ -40,7 +40,7 @@ export function formatInTimezone(utcDate: Date, timezone: string, formatStr: str
 export function getTimezoneDisplays(
   dateTimeStr: string, 
   originalTimezone: string,
-  targetTimezone: string = 'America/Los_Angeles'
+  targetTimezone: string = 'America/New_York'
 ): { original: string; converted: string; originalLabel: string; convertedLabel: string } {
   const utcDate = parseInTimezone(dateTimeStr, originalTimezone);
   
@@ -58,7 +58,7 @@ export function getTimezoneDisplays(
 export function formatDualTimezone(
   dateTimeStr: string, 
   originalTimezone: string,
-  targetTimezone: string = 'America/Los_Angeles'
+  targetTimezone: string = 'America/New_York'
 ): string {
   const displays = getTimezoneDisplays(dateTimeStr, originalTimezone, targetTimezone);
   return `${displays.original} (${displays.originalLabel}) / ${displays.converted} (${displays.convertedLabel})`;
