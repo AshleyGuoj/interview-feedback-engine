@@ -51,9 +51,10 @@ export default function Dashboard() {
       .slice(0, 4);
   }, [jobs]);
 
-  // Get recent activity based on updatedAt
+  // Get recent activity based on updatedAt (exclude closed jobs)
   const recentActivity = useMemo(() => {
     return [...jobs]
+      .filter(job => job.status !== 'closed')
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5)
       .map(job => {
