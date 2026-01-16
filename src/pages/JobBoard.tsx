@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KanbanBoard } from '@/components/jobs/KanbanBoard';
 import { AddJobDialog } from '@/components/jobs/AddJobDialog';
-import { Job } from '@/types/job';
+import { Job, JobStatus } from '@/types/job';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useJobs } from '@/hooks/useJobs';
 
 export default function JobBoard() {
   const navigate = useNavigate();
-  const { jobs, addJob } = useJobs();
+  const { jobs, addJob, updateJob } = useJobs();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredJobs = jobs.filter(job => 
@@ -24,6 +24,10 @@ export default function JobBoard() {
 
   const handleJobClick = (job: Job) => {
     navigate(`/jobs/${job.id}`);
+  };
+
+  const handleJobStatusChange = async (jobId: string, newStatus: JobStatus) => {
+    await updateJob(jobId, { status: newStatus });
   };
 
   return (
@@ -53,7 +57,11 @@ export default function JobBoard() {
         </div>
 
         {/* Kanban Board */}
-        <KanbanBoard jobs={filteredJobs} onJobClick={handleJobClick} />
+        <KanbanBoard 
+          jobs={filteredJobs} 
+          onJobClick={handleJobClick} 
+          onJobStatusChange={handleJobStatusChange}
+        />
       </div>
     </DashboardLayout>
   );

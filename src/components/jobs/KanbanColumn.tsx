@@ -1,6 +1,8 @@
 import { Job, JobStatus } from '@/types/job';
-import { JobCard } from './JobCard';
+import { DraggableJobCard } from './DraggableJobCard';
 import { cn } from '@/lib/utils';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 interface KanbanColumnProps {
   status: JobStatus;
@@ -29,6 +31,10 @@ const columnConfig: Record<JobStatus, { label: string; color: string }> = {
 
 export function KanbanColumn({ status, jobs, onJobClick }: KanbanColumnProps) {
   const config = columnConfig[status];
+  
+  const { setNodeRef, isOver } = useDroppable({
+    id: status,
+  });
 
   return (
     <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1">
@@ -42,18 +48,29 @@ export function KanbanColumn({ status, jobs, onJobClick }: KanbanColumnProps) {
       </div>
 
       {/* Cards Container */}
-      <div className="flex-1 space-y-3 overflow-y-auto pb-4">
-        {jobs.map((job) => (
-          <JobCard 
-            key={job.id} 
-            job={job} 
-            onClick={() => onJobClick(job)} 
-          />
-        ))}
+      <div 
+        ref={setNodeRef}
+        className={cn(
+          "flex-1 space-y-3 overflow-y-auto pb-4 p-2 -m-2 rounded-lg transition-colors",
+          isOver && "bg-primary/5 ring-2 ring-primary/20"
+        )}
+      >
+        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
+          {jobs.map((job) => (
+            <DraggableJobCard 
+              key={job.id} 
+              job={job} 
+              onClick={() => onJobClick(job)} 
+            />
+          ))}
+        </SortableContext>
         
         {jobs.length === 0 && (
-          <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg">
-            No jobs yet
+          <div className={cn(
+            "text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg transition-colors",
+            isOver && "border-primary/50 bg-primary/10"
+          )}>
+            {isOver ? "Drop here" : "No jobs yet"}
           </div>
         )}
       </div>
