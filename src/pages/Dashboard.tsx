@@ -51,10 +51,11 @@ export default function Dashboard() {
       .slice(0, 4);
   }, [jobs]);
 
-  // Get recent activity based on updatedAt (exclude closed jobs)
+  // Get recent activity based on updatedAt (exclude closed jobs and specific companies)
   const recentActivity = useMemo(() => {
+    const excludedCompanies = ['DeepWisdom'];
     return [...jobs]
-      .filter(job => job.status !== 'closed')
+      .filter(job => job.status !== 'closed' && !excludedCompanies.includes(job.companyName))
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 5)
       .map(job => {
