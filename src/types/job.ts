@@ -9,6 +9,10 @@ export interface InterviewStage {
   name: string;
   status: 'upcoming' | 'completed' | 'skipped';
   date?: string;
+  scheduledTime?: string; // ISO string for scheduled interview time (in original timezone)
+  scheduledTimezone?: string; // e.g., 'Asia/Shanghai', 'America/Los_Angeles'
+  deadline?: string; // ISO string for deadline (if applicable)
+  deadlineTimezone?: string;
   preparation?: {
     notes: string;
     stories: string[];

@@ -3,7 +3,8 @@ import { Job, InterviewStage, DEFAULT_STAGES } from '@/types/job';
 import { toast } from 'sonner';
 
 const STORAGE_KEY = 'career-pilot-jobs';
-
+const STORAGE_VERSION_KEY = 'career-pilot-jobs-version';
+const CURRENT_VERSION = 2; // Increment this when initial data changes
 // Initial sample data
 const initialJobs: Job[] = [
   {
@@ -99,10 +100,16 @@ const initialJobs: Job[] = [
     source: 'other',
     interestLevel: 4,
     currentStage: 'Round 1',
-    nextAction: '约一面',
+    nextAction: '一面 1/20 14:00 (北京)',
     stages: [
       { id: '5-0', name: 'Applied', status: 'completed' },
-      { id: '5-1', name: 'Round 1', status: 'upcoming' },
+      { 
+        id: '5-1', 
+        name: 'Round 1', 
+        status: 'upcoming',
+        scheduledTime: '2026-01-20T14:00:00',
+        scheduledTimezone: 'Asia/Shanghai',
+      },
       { id: '5-2', name: 'Round 2', status: 'upcoming' },
       { id: '5-3', name: 'Final Round', status: 'upcoming' },
     ],
@@ -118,10 +125,16 @@ const initialJobs: Job[] = [
     source: 'other',
     interestLevel: 3,
     currentStage: 'AI Interview',
-    nextAction: '一面AI面试',
+    nextAction: 'AI面试截止 1/16 23:59 (北京)',
     stages: [
       { id: '6-0', name: 'Applied', status: 'completed' },
-      { id: '6-1', name: 'AI Interview', status: 'upcoming' },
+      { 
+        id: '6-1', 
+        name: 'AI Interview', 
+        status: 'upcoming',
+        deadline: '2026-01-16T23:59:00',
+        deadlineTimezone: 'Asia/Shanghai',
+      },
       { id: '6-2', name: 'Round 1', status: 'upcoming' },
       { id: '6-3', name: 'Round 2', status: 'upcoming' },
     ],
@@ -132,6 +145,12 @@ const initialJobs: Job[] = [
 
 function loadJobs(): Job[] {
   try {
+    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+    // If version mismatch or no version, use initial data
+    if (!storedVersion || parseInt(storedVersion) < CURRENT_VERSION) {
+      localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION.toString());
+      return initialJobs;
+    }
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return JSON.parse(stored);

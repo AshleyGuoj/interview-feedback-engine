@@ -1,10 +1,11 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Clock, Trophy, TrendingUp } from 'lucide-react';
+import { Briefcase, Clock, Trophy, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useJobs } from '@/hooks/useJobs';
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { formatDualTimezone } from '@/lib/timezone';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -28,20 +29,25 @@ export default function Dashboard() {
     ];
   }, [jobs]);
 
-  // Get upcoming interviews from jobs that are in interviewing stage
+  // Get upcoming interviews from jobs that are in interviewing stage with scheduled times
   const upcomingInterviews = useMemo(() => {
     return jobs
       .filter(job => job.status === 'interviewing')
-      .map(job => {
-        const currentStageData = job.stages.find(s => s.name === job.currentStage);
-        return {
+      .flatMap(job => {
+        const upcomingStages = job.stages.filter(s => s.status === 'upcoming');
+        return upcomingStages.map(stage => ({
           id: job.id,
           company: job.companyName,
           role: job.roleTitle,
-          stage: job.currentStage || 'Interview',
-          nextAction: job.nextAction || 'Prepare for interview',
-        };
+          stage: stage.name,
+          scheduledTime: stage.scheduledTime,
+          scheduledTimezone: stage.scheduledTimezone,
+          deadline: stage.deadline,
+          deadlineTimezone: stage.deadlineTimezone,
+          nextAction: job.nextAction,
+        }));
       })
+      .filter(item => item.scheduledTime || item.deadline)
       .slice(0, 4);
   }, [jobs]);
 
@@ -108,24 +114,35 @@ export default function Dashboard() {
             <CardContent className="space-y-4">
               {upcomingInterviews.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  No upcoming interviews
+                  No scheduled interviews
                 </p>
               ) : (
-                upcomingInterviews.map((interview) => (
+                upcomingInterviews.map((interview, index) => (
                   <div 
-                    key={interview.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
+                    key={`${interview.id}-${index}`}
+                    className="flex flex-col p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors gap-2"
                     onClick={() => navigate(`/jobs/${interview.id}`)}
                   >
-                    <div>
-                      <p className="font-medium">{interview.company}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {interview.role} • {interview.stage}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{interview.company}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {interview.role} • {interview.stage}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">{interview.nextAction}</p>
-                    </div>
+                    {interview.scheduledTime && interview.scheduledTimezone && (
+                      <div className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full w-fit">
+                        <Calendar className="w-3 h-3" />
+                        {formatDualTimezone(interview.scheduledTime, interview.scheduledTimezone)}
+                      </div>
+                    )}
+                    {interview.deadline && interview.deadlineTimezone && (
+                      <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded-full w-fit">
+                        <AlertCircle className="w-3 h-3" />
+                        截止: {formatDualTimezone(interview.deadline, interview.deadlineTimezone)}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
