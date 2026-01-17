@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { InterviewTimeline } from '@/components/jobs/InterviewTimeline';
@@ -69,6 +69,24 @@ export default function JobDetail() {
   const [editData, setEditData] = useState<Partial<Job>>({});
   const [attachments, setAttachments] = useState<{ name: string; type: string; url: string }[]>([]);
 
+  // Derive next upcoming event from stages (single source of truth)
+  const nextUpcomingEvent = useMemo(() => {
+    if (!job) return null;
+    
+    const upcomingStages = job.stages.filter(s => 
+      s.status === 'upcoming' && s.scheduledTime
+    );
+    
+    if (upcomingStages.length === 0) return null;
+    
+    // Sort by scheduled time and get the earliest
+    upcomingStages.sort((a, b) => 
+      (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
+    );
+    
+    return upcomingStages[0];
+  }, [job?.stages]);
+
   if (!job) {
     return (
       <DashboardLayout>
@@ -94,7 +112,6 @@ export default function JobDetail() {
       interestLevel: job.interestLevel,
       careerFitNotes: job.careerFitNotes,
       currentStage: job.currentStage,
-      nextAction: job.nextAction,
     });
     setIsEditing(true);
   };
@@ -395,23 +412,13 @@ export default function JobDetail() {
                     placeholder="https://..."
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Current Stage</Label>
-                    <Input
-                      value={editData.currentStage || ''}
-                      onChange={(e) => setEditData(prev => ({ ...prev, currentStage: e.target.value }))}
-                      placeholder="e.g. Round 2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Next Action</Label>
-                    <Input
-                      value={editData.nextAction || ''}
-                      onChange={(e) => setEditData(prev => ({ ...prev, nextAction: e.target.value }))}
-                      placeholder="e.g. Prepare case study"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Current Stage</Label>
+                  <Input
+                    value={editData.currentStage || ''}
+                    onChange={(e) => setEditData(prev => ({ ...prev, currentStage: e.target.value }))}
+                    placeholder="e.g. Round 2"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Career Fit Notes</Label>
@@ -481,11 +488,13 @@ export default function JobDetail() {
                   </div>
                 </div>
 
-                {/* Next Action */}
-                {job.nextAction && (
+                {/* Next Action - Derived from Interview Timeline */}
+                {nextUpcomingEvent && nextUpcomingEvent.scheduledTime && (
                   <div className="pt-2 border-t border-border">
                     <p className="text-sm text-muted-foreground mb-1">Next Action</p>
-                    <p className="text-sm font-medium">{job.nextAction}</p>
+                    <p className="text-sm font-medium">
+                      {formatDualTimezone(nextUpcomingEvent.scheduledTime, nextUpcomingEvent.scheduledTimezone || 'Asia/Shanghai')}
+                    </p>
                   </div>
                 )}
 
