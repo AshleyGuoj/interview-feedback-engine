@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { formatInTimezone } from '@/lib/timezone';
+import { parseInTimezone, formatInTimezone } from '@/lib/timezone';
 
 interface JobCardProps {
   job: Job;
@@ -16,7 +16,6 @@ interface JobCardProps {
 function formatScheduledTimeET(scheduledTime: string, originalTimezone: string): string {
   try {
     // Parse the time in original timezone and convert to US Eastern
-    const { parseInTimezone } = require('@/lib/timezone');
     const utcDate = parseInTimezone(scheduledTime, originalTimezone);
     const etTime = formatInTimezone(utcDate, 'America/New_York', 'M/d HH:mm');
     return `${etTime} (美东)`;
