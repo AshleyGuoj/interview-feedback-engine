@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
+import { parseInTimezone, formatInTimezone } from '@/lib/timezone';
 
 interface DraggableJobCardProps {
   job: Job;
@@ -30,6 +32,31 @@ export function DraggableJobCard({ job, onClick }: DraggableJobCardProps) {
   const completedStages = job.stages.filter(s => s.status === 'completed').length;
   const totalStages = job.stages.length;
   const progress = (completedStages / totalStages) * 100;
+
+  const nextUpcomingStage = useMemo(() => {
+    const upcomingStages = job.stages.filter(s => s.status === 'upcoming');
+    if (upcomingStages.length === 0) return null;
+
+    const withScheduledTime = upcomingStages.filter(s => s.scheduledTime);
+    if (withScheduledTime.length > 0) {
+      withScheduledTime.sort((a, b) => (a.scheduledTime || '').localeCompare(b.scheduledTime || ''));
+      return withScheduledTime[0];
+    }
+
+    return upcomingStages[0];
+  }, [job.stages]);
+
+  const nextUpcomingLabel = useMemo(() => {
+    if (!nextUpcomingStage) return null;
+
+    if (!nextUpcomingStage.scheduledTime) return nextUpcomingStage.name;
+
+    const originalTz = nextUpcomingStage.scheduledTimezone || 'Asia/Shanghai';
+    const utcDate = parseInTimezone(nextUpcomingStage.scheduledTime, originalTz);
+    const etTime = formatInTimezone(utcDate, 'America/New_York', 'M/d HH:mm');
+
+    return `${nextUpcomingStage.name} ${etTime} (美东)`;
+  }, [nextUpcomingStage]);
 
   const locationColors: Record<string, string> = {
     CN: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
@@ -90,11 +117,11 @@ export function DraggableJobCard({ job, onClick }: DraggableJobCardProps) {
             <Progress value={progress} className="h-1.5" />
           </div>
 
-          {/* Next Action - clickable */}
-          {job.nextAction && (
-            <div className="flex items-center gap-1.5 text-xs text-primary" onClick={onClick}>
+          {/* Next Action - Stage + time (US Eastern) */}
+          {nextUpcomingLabel && (
+            <div className="flex items-center gap-1.5 text-xs text-primary font-medium" onClick={onClick}>
               <ArrowRight className="w-3 h-3" />
-              <span className="truncate">{job.nextAction}</span>
+              <span className="truncate">{nextUpcomingLabel}</span>
             </div>
           )}
         </div>
