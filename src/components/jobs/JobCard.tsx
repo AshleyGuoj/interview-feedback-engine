@@ -36,20 +36,28 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const totalStages = job.stages.length;
   const progress = (completedStages / totalStages) * 100;
 
-  // Find next upcoming interview with scheduled time
-  const nextUpcomingInterview = useMemo(() => {
-    const upcomingStages = job.stages.filter(s => 
-      s.status === 'upcoming' && s.scheduledTime
+  // Find next scheduled interview (any stage with scheduled time, sorted by earliest)
+  const nextScheduledInterview = useMemo(() => {
+    const scheduledStages = job.stages.filter(s => s.scheduledTime);
+    
+    if (scheduledStages.length === 0) return null;
+    
+    // Sort by scheduled time and get the earliest future one
+    const now = new Date().toISOString();
+    const futureStages = scheduledStages.filter(s => (s.scheduledTime || '') >= now);
+    
+    if (futureStages.length > 0) {
+      futureStages.sort((a, b) => 
+        (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
+      );
+      return futureStages[0];
+    }
+    
+    // If no future stages, return the most recent one
+    scheduledStages.sort((a, b) => 
+      (b.scheduledTime || '').localeCompare(a.scheduledTime || '')
     );
-    
-    if (upcomingStages.length === 0) return null;
-    
-    // Sort by scheduled time and get the earliest
-    upcomingStages.sort((a, b) => 
-      (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
-    );
-    
-    return upcomingStages[0];
+    return scheduledStages[0];
   }, [job.stages]);
 
   const locationColors: Record<string, string> = {
@@ -96,12 +104,12 @@ export function JobCard({ job, onClick }: JobCardProps) {
           <Progress value={progress} className="h-1.5" />
         </div>
 
-        {/* Next Upcoming Interview with Time */}
-        {nextUpcomingInterview && nextUpcomingInterview.scheduledTime ? (
+        {/* Next Scheduled Interview with Time */}
+        {nextScheduledInterview && nextScheduledInterview.scheduledTime ? (
           <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
             <ArrowRight className="w-3 h-3" />
             <span className="truncate">
-              {nextUpcomingInterview.name} {formatScheduledTime(nextUpcomingInterview.scheduledTime, nextUpcomingInterview.scheduledTimezone)}
+              {formatScheduledTime(nextScheduledInterview.scheduledTime, nextScheduledInterview.scheduledTimezone)}
             </span>
           </div>
         ) : job.nextAction ? (
