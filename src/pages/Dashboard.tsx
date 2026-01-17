@@ -3,15 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Clock, Trophy, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useJobs } from '@/hooks/useJobs';
+import { useActivities } from '@/hooks/useActivities';
 import { useMemo } from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isAfter, parseISO } from 'date-fns';
 import { formatDualTimezone } from '@/lib/timezone';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { jobs } = useJobs();
+  const { activities, loading: activitiesLoading } = useActivities();
 
-  // Calculate real stats
+  // Calculate real stats - derived from jobs data
   const stats = useMemo(() => {
     const activeApplications = jobs.filter(j => j.status !== 'closed').length;
     const offers = jobs.filter(j => j.status === 'offer').length;
@@ -29,12 +31,26 @@ export default function Dashboard() {
     ];
   }, [jobs]);
 
-  // Get upcoming interviews from jobs that are in interviewing stage with scheduled times
+  // Upcoming interviews - derived view from stages where status === 'upcoming' AND scheduledTime >= now
   const upcomingInterviews = useMemo(() => {
+    const now = new Date();
+    
     return jobs
-      .filter(job => job.status === 'interviewing')
       .flatMap(job => {
-        const upcomingStages = job.stages.filter(s => s.status === 'upcoming');
+        const upcomingStages = job.stages.filter(s => {
+          if (s.status !== 'upcoming') return false;
+          
+          // Include if has scheduled time in the future, or has a deadline
+          if (s.scheduledTime) {
+            try {
+              return isAfter(parseISO(s.scheduledTime), now);
+            } catch {
+              return true; // Include if can't parse
+            }
+          }
+          return !!s.deadline;
+        });
+        
         return upcomingStages.map(stage => ({
           id: job.id,
           company: job.companyName,
@@ -45,39 +61,38 @@ export default function Dashboard() {
           deadline: stage.deadline,
           deadlineTimezone: stage.deadlineTimezone,
           nextAction: job.nextAction,
+          // For sorting
+          sortDate: stage.scheduledTime || stage.deadline || '',
         }));
       })
       .filter(item => item.scheduledTime || item.deadline)
+      .sort((a, b) => {
+        if (!a.sortDate) return 1;
+        if (!b.sortDate) return -1;
+        return a.sortDate.localeCompare(b.sortDate);
+      })
       .slice(0, 4);
   }, [jobs]);
 
-  // Get recent activity based on updatedAt (exclude closed jobs and specific companies)
+  // Recent activity - read from activities table (append-only feed)
   const recentActivity = useMemo(() => {
-    const excludedCompanies = ['DeepWisdom'];
-    return [...jobs]
-      .filter(job => job.status !== 'closed' && !excludedCompanies.includes(job.companyName))
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 5)
-      .map(job => {
-        let action = '';
-        if (job.status === 'offer') {
-          action = 'Received offer!';
-        } else if (job.status === 'interviewing') {
-          action = job.currentStage ? `${job.currentStage} in progress` : 'Interview scheduled';
-        } else if (job.status === 'applied') {
-          action = 'Application submitted';
-        } else {
-          action = 'Position closed';
-        }
-
+    // Create a map of job IDs to job info for enrichment
+    const jobMap = new Map(jobs.map(j => [j.id, j]));
+    
+    return activities
+      .slice(0, 8)
+      .map(activity => {
+        const job = jobMap.get(activity.jobId);
         return {
-          id: job.id,
-          company: job.companyName,
-          action,
-          time: formatDistanceToNow(new Date(job.updatedAt), { addSuffix: true }),
+          id: activity.id,
+          jobId: activity.jobId,
+          company: job?.companyName || 'Unknown',
+          message: activity.message,
+          type: activity.type,
+          time: formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true }),
         };
       });
-  }, [jobs]);
+  }, [activities, jobs]);
 
   return (
     <DashboardLayout>
@@ -108,7 +123,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Upcoming Interviews */}
+          {/* Upcoming Interviews - Derived view */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Upcoming Interviews</CardTitle>
@@ -151,13 +166,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Recent Activity */}
+          {/* Recent Activity - Read from activities table */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Recent Activity</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {recentActivity.length === 0 ? (
+              {activitiesLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Loading activities...
+                </p>
+              ) : recentActivity.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   No recent activity
                 </p>
@@ -166,15 +185,16 @@ export default function Dashboard() {
                   <div 
                     key={activity.id} 
                     className="flex items-start gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg -mx-2 transition-colors"
-                    onClick={() => navigate(`/jobs/${activity.id}`)}
+                    onClick={() => navigate(`/jobs/${activity.jobId}`)}
                   >
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
+                    <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                      activity.type === 'interview_scheduled' ? 'bg-blue-500' :
+                      activity.type === 'stage_completed' ? 'bg-emerald-500' :
+                      activity.type === 'offer_received' ? 'bg-yellow-500' :
+                      'bg-primary'
+                    }`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-medium">{activity.company}</span>
-                        {' — '}
-                        {activity.action}
-                      </p>
+                      <p className="text-sm">{activity.message}</p>
                       <p className="text-xs text-muted-foreground">{activity.time}</p>
                     </div>
                   </div>
