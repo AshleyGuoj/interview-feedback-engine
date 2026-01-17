@@ -53,9 +53,13 @@ export function DraggableJobCard({ job, onClick }: DraggableJobCardProps) {
 
     const originalTz = nextUpcomingStage.scheduledTimezone || 'Asia/Shanghai';
     const utcDate = parseInTimezone(nextUpcomingStage.scheduledTime, originalTz);
-    const etTime = formatInTimezone(utcDate, 'America/New_York', 'M/d HH:mm');
+    const etDate = new Date(utcDate.getTime() + (-5) * 60 * 60 * 1000); // US Eastern offset
+    const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const dayOfWeek = dayNames[etDate.getUTCDay()];
+    const etDateStr = formatInTimezone(utcDate, 'America/New_York', 'M/d');
+    const etHour = formatInTimezone(utcDate, 'America/New_York', 'HH:mm');
 
-    return `${nextUpcomingStage.name} ${etTime} (美东)`;
+    return `${nextUpcomingStage.name} ${etDateStr} ${dayOfWeek} ${etHour} (美东)`;
   }, [nextUpcomingStage]);
 
   const locationColors: Record<string, string> = {

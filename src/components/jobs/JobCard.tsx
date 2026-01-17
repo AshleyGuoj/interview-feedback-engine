@@ -12,13 +12,16 @@ interface JobCardProps {
   onClick: () => void;
 }
 
-// Format scheduled time for display on card in US Eastern time
+// Format scheduled time for display on card in US Eastern time with day of week
 function formatScheduledTimeET(scheduledTime: string, originalTimezone: string): string {
   try {
-    // Parse the time in original timezone and convert to US Eastern
     const utcDate = parseInTimezone(scheduledTime, originalTimezone);
-    const etTime = formatInTimezone(utcDate, 'America/New_York', 'M/d HH:mm');
-    return `${etTime} (美东)`;
+    const etDate = new Date(utcDate.getTime() + (-5) * 60 * 60 * 1000); // US Eastern offset
+    const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const dayOfWeek = dayNames[etDate.getUTCDay()];
+    const etTime = formatInTimezone(utcDate, 'America/New_York', 'M/d');
+    const etHour = formatInTimezone(utcDate, 'America/New_York', 'HH:mm');
+    return `${etTime} ${dayOfWeek} ${etHour} (美东)`;
   } catch {
     return scheduledTime;
   }
