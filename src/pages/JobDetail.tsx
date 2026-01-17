@@ -28,7 +28,9 @@ import {
 import { Job, InterviewStage, JobStatus, JobSource } from '@/types/job';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useJobs } from '@/hooks/useJobs';
+import { useJobs, deriveJobStatusFromStages } from '@/hooks/useJobs';
+import { useActivities } from '@/hooks/useActivities';
+import { formatDualTimezone } from '@/lib/timezone';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +62,7 @@ export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJob } = useJobs();
+  const { addActivity } = useActivities();
   
   const job = getJob(id || '');
   const [isEditing, setIsEditing] = useState(false);
@@ -131,10 +134,59 @@ export default function JobDetail() {
   };
 
   const handleStageUpdate = async (stageId: string, updates: Partial<InterviewStage>) => {
+    const oldStage = job.stages.find(s => s.id === stageId);
     const updatedStages = job.stages.map(s => 
       s.id === stageId ? { ...s, ...updates } : s
     );
-    await updateJob(job.id, { stages: updatedStages });
+    
+    // Derive new job status from stages
+    const newStatus = deriveJobStatusFromStages(updatedStages, job.status);
+    const statusChanged = newStatus !== job.status;
+    
+    // Update job with stages and potentially new status
+    await updateJob(job.id, { 
+      stages: updatedStages,
+      ...(statusChanged ? { status: newStatus } : {})
+    });
+    
+    // Log activity for stage updates
+    const stageName = oldStage?.name || 'Stage';
+    
+    if (updates.status && oldStage?.status !== updates.status) {
+      // Status change activity
+      const activityType = updates.status === 'completed' ? 'stage_completed' : 'stage_updated';
+      const message = updates.status === 'completed'
+        ? `${job.companyName} — ${stageName} completed`
+        : `${job.companyName} — ${stageName} marked as ${updates.status}`;
+      
+      await addActivity({
+        jobId: job.id,
+        type: activityType,
+        message,
+        metadata: { 
+          stageName, 
+          oldStatus: oldStage?.status, 
+          newStatus: updates.status 
+        }
+      });
+    }
+    
+    if (updates.scheduledTime && updates.scheduledTime !== oldStage?.scheduledTime) {
+      // Interview scheduled activity
+      const timezone = updates.scheduledTimezone || oldStage?.scheduledTimezone || 'Asia/Shanghai';
+      const timeDisplay = formatDualTimezone(updates.scheduledTime, timezone);
+      
+      await addActivity({
+        jobId: job.id,
+        type: 'interview_scheduled',
+        message: `${job.companyName} — ${stageName} scheduled for ${timeDisplay}`,
+        metadata: { 
+          stageName, 
+          scheduledTime: updates.scheduledTime,
+          scheduledTimezone: timezone
+        }
+      });
+    }
   };
 
   const handleStagesChange = async (newStages: InterviewStage[]) => {

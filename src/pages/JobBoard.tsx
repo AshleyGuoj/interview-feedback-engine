@@ -8,10 +8,12 @@ import { Job, JobStatus } from '@/types/job';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useJobs } from '@/hooks/useJobs';
+import { useActivities } from '@/hooks/useActivities';
 
 export default function JobBoard() {
   const navigate = useNavigate();
-  const { jobs, addJob, updateJob, refetch } = useJobs();
+  const { jobs, addJob, updateJob, refetch, getJob } = useJobs();
+  const { addActivity } = useActivities();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredJobs = jobs.filter(job => 
@@ -20,7 +22,16 @@ export default function JobBoard() {
   );
 
   const handleAddJob = async (newJob: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => {
-    await addJob(newJob);
+    const job = await addJob(newJob);
+    if (job) {
+      // Log activity for new application
+      await addActivity({
+        jobId: job.id,
+        type: 'status_changed',
+        message: `${job.companyName} — Application submitted for ${job.roleTitle}`,
+        metadata: { status: 'applied', roleTitle: job.roleTitle }
+      });
+    }
   };
 
   const handleJobClick = (job: Job) => {
@@ -28,7 +39,27 @@ export default function JobBoard() {
   };
 
   const handleJobStatusChange = async (jobId: string, newStatus: JobStatus) => {
+    const job = getJob(jobId);
+    const oldStatus = job?.status;
+    
     await updateJob(jobId, { status: newStatus });
+    
+    if (job && oldStatus !== newStatus) {
+      // Log activity for status change
+      const statusMessages: Record<JobStatus, string> = {
+        applied: 'Application submitted',
+        interviewing: 'Moved to interviewing',
+        offer: 'Received offer! 🎉',
+        closed: 'Position closed',
+      };
+      
+      await addActivity({
+        jobId,
+        type: newStatus === 'offer' ? 'offer_received' : 'status_changed',
+        message: `${job.companyName} — ${statusMessages[newStatus]}`,
+        metadata: { oldStatus, newStatus }
+      });
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Job, InterviewStage, DEFAULT_STAGES } from '@/types/job';
+import { Job, InterviewStage, DEFAULT_STAGES, JobStatus } from '@/types/job';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +41,34 @@ function jobToDb(job: Partial<Job>, userId: string) {
   if (job.stages !== undefined) result.stages = job.stages;
   
   return result;
+}
+
+/**
+ * Derive job status from interview stages
+ * If any stage is 'upcoming' or 'completed', status should be 'interviewing'
+ * Unless explicitly set to 'offer' or 'closed'
+ */
+export function deriveJobStatusFromStages(stages: InterviewStage[], currentStatus: JobStatus): JobStatus {
+  // Don't auto-change if already offer or closed
+  if (currentStatus === 'offer' || currentStatus === 'closed') {
+    return currentStatus;
+  }
+  
+  const hasActiveInterviews = stages.some(
+    s => s.status === 'upcoming' || s.status === 'completed'
+  );
+  
+  // Check if there's an upcoming or completed stage beyond "Applied"
+  const hasInterviewActivity = stages.some(
+    s => (s.status === 'upcoming' || s.status === 'completed') && 
+         s.name.toLowerCase() !== 'applied'
+  );
+  
+  if (hasInterviewActivity) {
+    return 'interviewing';
+  }
+  
+  return currentStatus;
 }
 
 export function useJobs() {
