@@ -13,6 +13,7 @@ import Timeline from "./pages/Timeline";
 import Analytics from "./pages/Analytics";
 import Archive from "./pages/Archive";
 import AnalyzeInterview from "./pages/AnalyzeInterview";
+import InterviewPrep from "./pages/InterviewPrep";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
               <Route path="/analyze" element={<ProtectedRoute><AnalyzeInterview /></ProtectedRoute>} />
+              <Route path="/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
