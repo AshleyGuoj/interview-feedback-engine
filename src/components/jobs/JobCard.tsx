@@ -4,16 +4,53 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
+import { format, parseISO } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 
 interface JobCardProps {
   job: Job;
   onClick: () => void;
 }
 
+// Format scheduled time for display on card
+function formatScheduledTime(scheduledTime: string, timezone?: string): string {
+  try {
+    const date = parseISO(scheduledTime);
+    const dayOfWeek = format(date, 'EEE', { locale: zhCN });
+    const dateStr = format(date, 'M/d');
+    const timeStr = format(date, 'HH:mm');
+    
+    const tzLabel = timezone === 'Asia/Shanghai' ? '北京' : 
+                    timezone === 'America/Los_Angeles' ? '美西' :
+                    timezone === 'America/New_York' ? '美东' : '';
+    
+    return `${dateStr} ${timeStr}${tzLabel ? ` (${tzLabel})` : ''}`;
+  } catch {
+    return scheduledTime;
+  }
+}
+
 export function JobCard({ job, onClick }: JobCardProps) {
   const completedStages = job.stages.filter(s => s.status === 'completed').length;
   const totalStages = job.stages.length;
   const progress = (completedStages / totalStages) * 100;
+
+  // Find next upcoming interview with scheduled time
+  const nextUpcomingInterview = useMemo(() => {
+    const upcomingStages = job.stages.filter(s => 
+      s.status === 'upcoming' && s.scheduledTime
+    );
+    
+    if (upcomingStages.length === 0) return null;
+    
+    // Sort by scheduled time and get the earliest
+    upcomingStages.sort((a, b) => 
+      (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
+    );
+    
+    return upcomingStages[0];
+  }, [job.stages]);
 
   const locationColors: Record<string, string> = {
     CN: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
@@ -59,13 +96,20 @@ export function JobCard({ job, onClick }: JobCardProps) {
           <Progress value={progress} className="h-1.5" />
         </div>
 
-        {/* Next Action */}
-        {job.nextAction && (
+        {/* Next Upcoming Interview with Time */}
+        {nextUpcomingInterview && nextUpcomingInterview.scheduledTime ? (
+          <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+            <ArrowRight className="w-3 h-3" />
+            <span className="truncate">
+              {nextUpcomingInterview.name} {formatScheduledTime(nextUpcomingInterview.scheduledTime, nextUpcomingInterview.scheduledTimezone)}
+            </span>
+          </div>
+        ) : job.nextAction ? (
           <div className="flex items-center gap-1.5 text-xs text-primary">
             <ArrowRight className="w-3 h-3" />
             <span className="truncate">{job.nextAction}</span>
           </div>
-        )}
+        ) : null}
       </div>
     </Card>
   );
