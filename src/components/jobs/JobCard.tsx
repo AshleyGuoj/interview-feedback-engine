@@ -2,26 +2,24 @@ import { Job } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { MapPin, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { formatInTimezone } from '@/lib/timezone';
 
 interface JobCardProps {
   job: Job;
   onClick: () => void;
 }
 
-// Format scheduled time for display on card (e.g., "2026-01-22 周三22:00")
-function formatScheduledTime(scheduledTime: string): string {
+// Format scheduled time for display on card in US Eastern time
+function formatScheduledTimeET(scheduledTime: string, originalTimezone: string): string {
   try {
-    const date = parseISO(scheduledTime);
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const dayOfWeek = format(date, 'EEEE', { locale: zhCN }).replace('星期', '周');
-    const timeStr = format(date, 'HH:mm');
-    
-    return `${dateStr} ${dayOfWeek}${timeStr}`;
+    // Parse the time in original timezone and convert to US Eastern
+    const { parseInTimezone } = require('@/lib/timezone');
+    const utcDate = parseInTimezone(scheduledTime, originalTimezone);
+    const etTime = formatInTimezone(utcDate, 'America/New_York', 'M/d HH:mm');
+    return `${etTime} (美东)`;
   } catch {
     return scheduledTime;
   }
@@ -32,19 +30,22 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const totalStages = job.stages.length;
   const progress = (completedStages / totalStages) * 100;
 
-  // Find next upcoming interview from Interview Timeline (single source of truth)
-  const nextUpcomingEvent = useMemo(() => {
-    const upcomingStages = job.stages.filter(s => 
-      s.status === 'upcoming' && s.scheduledTime
-    );
+  // Find next upcoming stage (with or without scheduled time)
+  const nextUpcomingStage = useMemo(() => {
+    const upcomingStages = job.stages.filter(s => s.status === 'upcoming');
     
     if (upcomingStages.length === 0) return null;
     
-    // Sort by scheduled time and get the earliest
-    upcomingStages.sort((a, b) => 
-      (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
-    );
+    // First try to find one with scheduled time (earliest)
+    const withScheduledTime = upcomingStages.filter(s => s.scheduledTime);
+    if (withScheduledTime.length > 0) {
+      withScheduledTime.sort((a, b) => 
+        (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
+      );
+      return withScheduledTime[0];
+    }
     
+    // Otherwise return the first upcoming stage
     return upcomingStages[0];
   }, [job.stages]);
 
@@ -92,12 +93,15 @@ export function JobCard({ job, onClick }: JobCardProps) {
           <Progress value={progress} className="h-1.5" />
         </div>
 
-        {/* Next Action - Derived from Interview Timeline */}
-        {nextUpcomingEvent && nextUpcomingEvent.scheduledTime && (
+        {/* Next Action - Stage name + time (US Eastern) or just stage name */}
+        {nextUpcomingStage && (
           <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
             <ArrowRight className="w-3 h-3" />
             <span className="truncate">
-              {formatScheduledTime(nextUpcomingEvent.scheduledTime)}
+              {nextUpcomingStage.scheduledTime 
+                ? `${nextUpcomingStage.name} ${formatScheduledTimeET(nextUpcomingStage.scheduledTime, nextUpcomingStage.scheduledTimezone || 'Asia/Shanghai')}`
+                : nextUpcomingStage.name
+              }
             </span>
           </div>
         )}
