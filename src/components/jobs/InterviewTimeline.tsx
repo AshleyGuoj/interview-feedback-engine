@@ -220,7 +220,7 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                       {isEditing ? (
                         <div className="space-y-6">
                           {/* Basic Info */}
-                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label>Stage Name</Label>
                               <Input
@@ -246,14 +246,6 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                                   <SelectItem value="skipped">Skipped</SelectItem>
                                 </SelectContent>
                               </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Date</Label>
-                              <Input
-                                type="date"
-                                value={editData.date || ''}
-                                onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
-                              />
                             </div>
                           </div>
 
