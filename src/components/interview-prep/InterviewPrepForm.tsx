@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Briefcase, MessageSquare, Sparkles } from "lucide-react";
+import { FileUploadInput } from "./FileUploadInput";
 
 interface InterviewPrepFormProps {
   onSubmit: (data: { resume: string; jobDescription: string; interviewNotes: string }) => void;
@@ -24,68 +22,34 @@ export function InterviewPrepForm({ onSubmit, isLoading }: InterviewPrepFormProp
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Briefcase className="h-5 w-5 text-primary" />
-            Job Description
-          </CardTitle>
-          <CardDescription>
-            Paste the full job description to analyze role requirements
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Paste the job description here..."
-            className="min-h-[180px] resize-y"
-            required
-          />
-        </CardContent>
-      </Card>
+      <FileUploadInput
+        title="Job Description"
+        description="上传 JD 截图/PDF 或直接粘贴文本"
+        icon={<Briefcase className="h-5 w-5 text-primary" />}
+        value={jobDescription}
+        onChange={setJobDescription}
+        placeholder="粘贴 Job Description 内容..."
+        required
+      />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <FileText className="h-5 w-5 text-primary" />
-            Your Resume
-          </CardTitle>
-          <CardDescription>
-            Paste your resume to identify strengths and potential weak points
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={resume}
-            onChange={(e) => setResume(e.target.value)}
-            placeholder="Paste your resume content here..."
-            className="min-h-[180px] resize-y"
-            required
-          />
-        </CardContent>
-      </Card>
+      <FileUploadInput
+        title="Your Resume"
+        description="上传简历图片/PDF 或直接粘贴文本"
+        icon={<FileText className="h-5 w-5 text-primary" />}
+        value={resume}
+        onChange={setResume}
+        placeholder="粘贴简历内容..."
+        required
+      />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            Interview Experience Notes
-            <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
-          </CardTitle>
-          <CardDescription>
-            Paste interview experiences from Xiaohongshu, Niuke, or other platforms to identify patterns
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={interviewNotes}
-            onChange={(e) => setInterviewNotes(e.target.value)}
-            placeholder="Paste interview experience notes here (optional)..."
-            className="min-h-[140px] resize-y"
-          />
-        </CardContent>
-      </Card>
+      <FileUploadInput
+        title="Interview Experience Notes"
+        description="上传面经截图或粘贴小红书/牛客面经"
+        icon={<MessageSquare className="h-5 w-5 text-primary" />}
+        value={interviewNotes}
+        onChange={setInterviewNotes}
+        placeholder="粘贴面经内容 (可选)..."
+      />
 
       <Button 
         type="submit" 
@@ -95,12 +59,12 @@ export function InterviewPrepForm({ onSubmit, isLoading }: InterviewPrepFormProp
         {isLoading ? (
           <>
             <Sparkles className="mr-2 h-5 w-5 animate-spin" />
-            Analyzing...
+            分析中...
           </>
         ) : (
           <>
             <Sparkles className="mr-2 h-5 w-5" />
-            Generate Interview Preparation
+            生成面试准备
           </>
         )}
       </Button>
