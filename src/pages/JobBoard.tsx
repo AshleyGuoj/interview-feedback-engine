@@ -7,7 +7,7 @@ import { ImportJobsDialog } from '@/components/jobs/ImportJobsDialog';
 import { Job, JobStatus } from '@/types/job';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useJobs } from '@/hooks/useJobs';
+import { useJobs } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
 
 export default function JobBoard() {
