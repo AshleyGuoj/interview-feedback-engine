@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  LogOut
+  LogOut,
+  Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/timeline', icon: Calendar, label: 'Timeline' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/archive', icon: Archive, label: 'Archive' },
+  { to: '/interview-prep', icon: Brain, label: 'Interview Prep' },
 ];
 
 export function Sidebar() {
