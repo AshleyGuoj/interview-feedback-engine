@@ -13,19 +13,15 @@ interface JobCardProps {
   onClick: () => void;
 }
 
-// Format scheduled time for display on card
-function formatScheduledTime(scheduledTime: string, timezone?: string): string {
+// Format scheduled time for display on card (e.g., "2026-01-22 周三22:00")
+function formatScheduledTime(scheduledTime: string): string {
   try {
     const date = parseISO(scheduledTime);
-    const dayOfWeek = format(date, 'EEE', { locale: zhCN });
-    const dateStr = format(date, 'M/d');
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = format(date, 'EEEE', { locale: zhCN }).replace('星期', '周');
     const timeStr = format(date, 'HH:mm');
     
-    const tzLabel = timezone === 'Asia/Shanghai' ? '北京' : 
-                    timezone === 'America/Los_Angeles' ? '美西' :
-                    timezone === 'America/New_York' ? '美东' : '';
-    
-    return `${dateStr} ${timeStr}${tzLabel ? ` (${tzLabel})` : ''}`;
+    return `${dateStr} ${dayOfWeek}${timeStr}`;
   } catch {
     return scheduledTime;
   }
@@ -36,28 +32,20 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const totalStages = job.stages.length;
   const progress = (completedStages / totalStages) * 100;
 
-  // Find next scheduled interview (any stage with scheduled time, sorted by earliest)
-  const nextScheduledInterview = useMemo(() => {
-    const scheduledStages = job.stages.filter(s => s.scheduledTime);
-    
-    if (scheduledStages.length === 0) return null;
-    
-    // Sort by scheduled time and get the earliest future one
-    const now = new Date().toISOString();
-    const futureStages = scheduledStages.filter(s => (s.scheduledTime || '') >= now);
-    
-    if (futureStages.length > 0) {
-      futureStages.sort((a, b) => 
-        (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
-      );
-      return futureStages[0];
-    }
-    
-    // If no future stages, return the most recent one
-    scheduledStages.sort((a, b) => 
-      (b.scheduledTime || '').localeCompare(a.scheduledTime || '')
+  // Find next upcoming interview from Interview Timeline (single source of truth)
+  const nextUpcomingEvent = useMemo(() => {
+    const upcomingStages = job.stages.filter(s => 
+      s.status === 'upcoming' && s.scheduledTime
     );
-    return scheduledStages[0];
+    
+    if (upcomingStages.length === 0) return null;
+    
+    // Sort by scheduled time and get the earliest
+    upcomingStages.sort((a, b) => 
+      (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
+    );
+    
+    return upcomingStages[0];
   }, [job.stages]);
 
   const locationColors: Record<string, string> = {
@@ -104,20 +92,15 @@ export function JobCard({ job, onClick }: JobCardProps) {
           <Progress value={progress} className="h-1.5" />
         </div>
 
-        {/* Next Scheduled Interview with Time */}
-        {nextScheduledInterview && nextScheduledInterview.scheduledTime ? (
+        {/* Next Action - Derived from Interview Timeline */}
+        {nextUpcomingEvent && nextUpcomingEvent.scheduledTime && (
           <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
             <ArrowRight className="w-3 h-3" />
             <span className="truncate">
-              {formatScheduledTime(nextScheduledInterview.scheduledTime, nextScheduledInterview.scheduledTimezone)}
+              {formatScheduledTime(nextUpcomingEvent.scheduledTime)}
             </span>
           </div>
-        ) : job.nextAction ? (
-          <div className="flex items-center gap-1.5 text-xs text-primary">
-            <ArrowRight className="w-3 h-3" />
-            <span className="truncate">{job.nextAction}</span>
-          </div>
-        ) : null}
+        )}
       </div>
     </Card>
   );
