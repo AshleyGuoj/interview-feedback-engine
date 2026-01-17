@@ -2,7 +2,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Clock, Trophy, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useJobs } from '@/hooks/useJobs';
+import { useJobs } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
 import { useMemo } from 'react';
 import { formatDistanceToNow, isAfter, parseISO } from 'date-fns';

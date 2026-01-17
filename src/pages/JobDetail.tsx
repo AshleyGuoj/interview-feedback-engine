@@ -28,7 +28,7 @@ import {
 import { Job, InterviewStage, JobStatus, JobSource } from '@/types/job';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useJobs, deriveJobStatusFromStages } from '@/hooks/useJobs';
+import { useJobs, deriveJobStatusFromStages } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
 import { formatDualTimezone } from '@/lib/timezone';
 import {
