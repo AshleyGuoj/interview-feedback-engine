@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { parseInTimezone, formatInTimezone } from '@/lib/timezone';
 import { SubStatusBadge, RiskTagBadge, ClosedReasonBadge } from './StatusBadge';
-import { StageProgress } from './StageProgress';
+
 
 interface DraggableJobCardProps {
   job: Job;
@@ -157,13 +157,6 @@ export function DraggableJobCard({ job, onClick }: DraggableJobCardProps) {
             </div>
           )}
 
-          {/* Stage-based progress */}
-          <div onClick={onClick}>
-            <StageProgress 
-              stages={job.stages} 
-              currentStageName={job.currentStage || job.stages.find(s => s.status === 'upcoming')?.name}
-            />
-          </div>
 
           {/* Next scheduled interview with dual timezone */}
           {timeDisplay && nextScheduledStage && (
