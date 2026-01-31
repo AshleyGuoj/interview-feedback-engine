@@ -13,6 +13,7 @@ import Timeline from "./pages/Timeline";
 import Analytics from "./pages/Analytics";
 import Archive from "./pages/Archive";
 import AnalyzeInterview from "./pages/AnalyzeInterview";
+import InterviewAnalysis from "./pages/InterviewAnalysis";
 import InterviewPrep from "./pages/InterviewPrep";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><JobBoard /></ProtectedRoute>} />
               <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
+              <Route path="/jobs/:jobId/stages/:stageId/analyze" element={<ProtectedRoute><InterviewAnalysis /></ProtectedRoute>} />
               <Route path="/timeline" element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
