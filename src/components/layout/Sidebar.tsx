@@ -50,16 +50,49 @@ export function Sidebar() {
         collapsed ? 'w-16' : 'w-56'
       )}
     >
-      {/* Logo */}
+      {/* Logo & Collapse Toggle */}
       <div className={cn(
-        'h-16 flex items-center border-b border-border px-4',
-        collapsed ? 'justify-center' : 'gap-2'
+        'h-16 flex items-center border-b border-border px-3',
+        collapsed ? 'justify-center' : 'justify-between'
       )}>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-primary-foreground" />
+        <div className={cn('flex items-center', collapsed ? '' : 'gap-2')}>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-primary-foreground" />
+          </div>
+          {!collapsed && (
+            <span className="font-semibold text-foreground">CareerPilot</span>
+          )}
         </div>
-        {!collapsed && (
-          <span className="font-semibold text-foreground">CareerPilot</span>
+        
+        {/* Collapse Toggle Button */}
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCollapsed(false)}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <PanelLeft className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">展开侧边栏</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCollapsed(true)}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">折叠侧边栏</TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -103,7 +136,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User & Collapse */}
+      {/* User & Sign Out */}
       <div className="p-2 border-t border-border space-y-1">
         {user && !collapsed && (
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">
@@ -134,32 +167,6 @@ export function Sidebar() {
           >
             <LogOut className="w-4 h-4" />
             <span className="ml-2">Sign Out</span>
-          </Button>
-        )}
-        
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCollapsed(false)}
-                className="w-full justify-center text-muted-foreground hover:text-foreground"
-              >
-                <PanelLeft className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">展开侧边栏</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(true)}
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
-          >
-            <PanelLeftClose className="w-4 h-4" />
-            <span className="ml-2">Collapse</span>
           </Button>
         )}
       </div>
