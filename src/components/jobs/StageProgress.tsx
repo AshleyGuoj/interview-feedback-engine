@@ -17,6 +17,9 @@ const MAX_VISIBLE_NODES = 6;
 export function StageProgress({ stages }: StageProgressProps) {
   if (!stages || stages.length === 0) return null;
 
+  const getStageKey = (stage: Partial<InterviewStage>, index: number) =>
+    String((stage as InterviewStage).id ?? `${stage.name ?? 'stage'}-${index}`);
+
   // Find current stage index (first pending/upcoming stage)
   const currentIndex = stages.findIndex(s => s.status === 'upcoming');
   const effectiveCurrentIndex = currentIndex === -1 ? stages.length - 1 : currentIndex;
@@ -42,7 +45,7 @@ export function StageProgress({ stages }: StageProgressProps) {
             const isUpcoming = stage.status === 'upcoming' && !isCurrent;
 
             return (
-              <div key={stage.id} className="flex items-center shrink-0">
+              <div key={getStageKey(stage, index)} className="flex items-center shrink-0">
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <div
@@ -104,7 +107,7 @@ export function StageProgress({ stages }: StageProgressProps) {
                 <TooltipContent side="top" className="text-xs">
                   <div className="space-y-0.5">
                     {overflowStages.map((stage, i) => (
-                      <div key={stage.id} className="flex items-center gap-1.5">
+                      <div key={getStageKey(stage, MAX_VISIBLE_NODES + i)} className="flex items-center gap-1.5">
                         <div
                           className={cn(
                             'w-1.5 h-1.5 rounded-full',
