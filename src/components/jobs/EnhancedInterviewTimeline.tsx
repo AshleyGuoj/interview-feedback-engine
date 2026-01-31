@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { 
   ChevronDown, 
   Check, 
@@ -28,9 +28,9 @@ import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { QuestionRecorder } from '@/components/interview/QuestionRecorder';
 import { ReflectionEditor } from '@/components/interview/ReflectionEditor';
-import { TranscriptAnalyzer } from '@/components/interview/TranscriptAnalyzer';
 
 interface JobContext {
+  jobId?: string;
   company?: string;
   role?: string;
 }
@@ -43,11 +43,11 @@ interface EnhancedInterviewTimelineProps {
 }
 
 export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, jobContext }: EnhancedInterviewTimelineProps) {
+  const navigate = useNavigate();
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [editingStage, setEditingStage] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<InterviewStage>>({});
   const [activeTab, setActiveTab] = useState<Record<string, string>>({});
-  const [analyzerOpenFor, setAnalyzerOpenFor] = useState<string | null>(null);
 
   const toggleStage = (stageId: string) => {
     setOpenStages(prev => 
@@ -202,37 +202,20 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                           记录面试内容，构建你的面试数据库
                         </div>
                         <div className="flex gap-2">
-                          {/* AI Transcript Analyzer Button */}
-                          <Dialog 
-                            open={analyzerOpenFor === stage.id} 
-                            onOpenChange={(open) => setAnalyzerOpenFor(open ? stage.id : null)}
+                          {/* AI Transcript Analyzer Button - Navigate to full page */}
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-1.5"
+                            onClick={() => {
+                              if (jobContext?.jobId) {
+                                navigate(`/jobs/${jobContext.jobId}/stages/${stage.id}/analyze`);
+                              }
+                            }}
                           >
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="gap-1.5">
-                                <Sparkles className="w-3 h-3" />
-                                AI 分析记录
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-                              <TranscriptAnalyzer
-                                context={{
-                                  company: jobContext?.company,
-                                  role: jobContext?.role,
-                                  stage: stage.name,
-                                }}
-                                onQuestionsExtracted={(questions) => {
-                                  // Merge with existing questions
-                                  const existingQuestions = stage.questions || [];
-                                  handleQuestionsChange(stage.id, [...existingQuestions, ...questions]);
-                                  setAnalyzerOpenFor(null);
-                                }}
-                                onReflectionGenerated={(reflection) => {
-                                  handleReflectionChange(stage.id, reflection);
-                                }}
-                                onClose={() => setAnalyzerOpenFor(null)}
-                              />
-                            </DialogContent>
-                          </Dialog>
+                            <Sparkles className="w-3 h-3" />
+                            AI 分析记录
+                          </Button>
                           
                           {isEditing ? (
                             <>
