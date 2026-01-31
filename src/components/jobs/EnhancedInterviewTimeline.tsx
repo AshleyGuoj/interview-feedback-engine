@@ -3,12 +3,12 @@ import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { 
   ChevronDown, 
   Check, 
@@ -28,18 +28,26 @@ import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { QuestionRecorder } from '@/components/interview/QuestionRecorder';
 import { ReflectionEditor } from '@/components/interview/ReflectionEditor';
+import { TranscriptAnalyzer } from '@/components/interview/TranscriptAnalyzer';
+
+interface JobContext {
+  company?: string;
+  role?: string;
+}
 
 interface EnhancedInterviewTimelineProps {
   stages: InterviewStage[];
   onStageUpdate: (stageId: string, updates: Partial<InterviewStage>) => void;
-  onAIAction: (action: 'summarize' | 'suggest-prep' | 'extract-insights', stageId?: string) => void;
+  onAIAction?: (action: 'summarize' | 'suggest-prep' | 'extract-insights', stageId?: string) => void;
+  jobContext?: JobContext;
 }
 
-export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction }: EnhancedInterviewTimelineProps) {
+export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, jobContext }: EnhancedInterviewTimelineProps) {
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [editingStage, setEditingStage] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<InterviewStage>>({});
   const [activeTab, setActiveTab] = useState<Record<string, string>>({});
+  const [analyzerOpenFor, setAnalyzerOpenFor] = useState<string | null>(null);
 
   const toggleStage = (stageId: string) => {
     setOpenStages(prev => 
@@ -193,23 +201,57 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction }:
                         <div className="text-sm text-muted-foreground">
                           记录面试内容，构建你的面试数据库
                         </div>
-                        {isEditing ? (
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={cancelEditing}>
-                              <X className="w-3 h-3 mr-1" />
-                              取消
+                        <div className="flex gap-2">
+                          {/* AI Transcript Analyzer Button */}
+                          <Dialog 
+                            open={analyzerOpenFor === stage.id} 
+                            onOpenChange={(open) => setAnalyzerOpenFor(open ? stage.id : null)}
+                          >
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="gap-1.5">
+                                <Sparkles className="w-3 h-3" />
+                                AI 分析记录
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+                              <TranscriptAnalyzer
+                                context={{
+                                  company: jobContext?.company,
+                                  role: jobContext?.role,
+                                  stage: stage.name,
+                                }}
+                                onQuestionsExtracted={(questions) => {
+                                  // Merge with existing questions
+                                  const existingQuestions = stage.questions || [];
+                                  handleQuestionsChange(stage.id, [...existingQuestions, ...questions]);
+                                  setAnalyzerOpenFor(null);
+                                }}
+                                onReflectionGenerated={(reflection) => {
+                                  handleReflectionChange(stage.id, reflection);
+                                }}
+                                onClose={() => setAnalyzerOpenFor(null)}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                          
+                          {isEditing ? (
+                            <>
+                              <Button variant="ghost" size="sm" onClick={cancelEditing}>
+                                <X className="w-3 h-3 mr-1" />
+                                取消
+                              </Button>
+                              <Button size="sm" onClick={() => saveEditing(stage.id)}>
+                                <Save className="w-3 h-3 mr-1" />
+                                保存
+                              </Button>
+                            </>
+                          ) : (
+                            <Button variant="outline" size="sm" onClick={() => startEditing(stage)}>
+                              <Pencil className="w-3 h-3 mr-1" />
+                              编辑信息
                             </Button>
-                            <Button size="sm" onClick={() => saveEditing(stage.id)}>
-                              <Save className="w-3 h-3 mr-1" />
-                              保存
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button variant="outline" size="sm" onClick={() => startEditing(stage)}>
-                            <Pencil className="w-3 h-3 mr-1" />
-                            编辑信息
-                          </Button>
-                        )}
+                          )}
+                        </div>
                       </div>
 
                       {isEditing ? (

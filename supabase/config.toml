@@ -1,1 +1,4 @@
 project_id = "dgmudhywxfggitdbshlv"
+
+[functions.analyze-transcript]
+verify_jwt = false
