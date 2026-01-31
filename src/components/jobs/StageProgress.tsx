@@ -6,6 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { forwardRef } from 'react';
 
 interface StageProgressProps {
   stages: InterviewStage[];
@@ -13,6 +14,20 @@ interface StageProgressProps {
 }
 
 const MAX_VISIBLE_NODES = 6;
+
+// ForwardRef wrapper for dot node
+const DotNode = forwardRef<HTMLDivElement, { className: string }>(
+  ({ className }, ref) => <div ref={ref} className={className} />
+);
+DotNode.displayName = 'DotNode';
+
+// ForwardRef wrapper for overflow badge
+const OverflowBadge = forwardRef<HTMLDivElement, { className: string; count: number }>(
+  ({ className, count }, ref) => (
+    <div ref={ref} className={className}>+{count}</div>
+  )
+);
+OverflowBadge.displayName = 'OverflowBadge';
 
 export function StageProgress({ stages }: StageProgressProps) {
   if (!stages || stages.length === 0) return null;
@@ -48,7 +63,7 @@ export function StageProgress({ stages }: StageProgressProps) {
               <div key={getStageKey(stage, index)} className="flex items-center shrink-0">
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
-                    <div
+                    <DotNode
                       className={cn(
                         'rounded-full transition-all duration-300 ease-out cursor-default shrink-0',
                         // Size
@@ -85,7 +100,7 @@ export function StageProgress({ stages }: StageProgressProps) {
             <>
               <div
                 className={cn(
-                  'w-3 h-0.5 mx-0.5 transition-colors duration-300',
+                  'w-3 h-0.5 mx-0.5 transition-colors duration-300 shrink-0',
                   visibleStages[visibleStages.length - 1]?.status === 'completed'
                     ? 'bg-chart-2'
                     : 'bg-muted-foreground/20'
@@ -93,16 +108,15 @@ export function StageProgress({ stages }: StageProgressProps) {
               />
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <div
+                  <OverflowBadge
+                    count={overflowCount}
                     className={cn(
-                      'flex items-center justify-center rounded-full text-[9px] font-medium cursor-default transition-all duration-300',
+                      'flex items-center justify-center rounded-full text-[9px] font-medium cursor-default transition-all duration-300 shrink-0',
                       overflowHasCurrent
                         ? 'w-5 h-5 bg-primary text-primary-foreground ring-2 ring-primary/30'
                         : 'w-5 h-5 bg-muted text-muted-foreground'
                     )}
-                  >
-                    +{overflowCount}
-                  </div>
+                  />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
                   <div className="space-y-0.5">
@@ -110,7 +124,7 @@ export function StageProgress({ stages }: StageProgressProps) {
                       <div key={getStageKey(stage, MAX_VISIBLE_NODES + i)} className="flex items-center gap-1.5">
                         <div
                           className={cn(
-                            'w-1.5 h-1.5 rounded-full',
+                            'w-1.5 h-1.5 rounded-full shrink-0',
                             stage.status === 'completed' && 'bg-chart-2',
                             stage.status === 'upcoming' && i === 0 && overflowHasCurrent && 'bg-primary',
                             stage.status === 'upcoming' && !(i === 0 && overflowHasCurrent) && 'bg-muted-foreground/40',
