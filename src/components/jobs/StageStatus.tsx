@@ -132,7 +132,7 @@ const STATUS_CONFIG: Record<StatusType, {
     textClass: 'text-muted-foreground font-medium',
   },
   waiting: {
-    icon: ArrowRight,
+    icon: Clock,
     label: (name) => `Awaiting feedback · ${name}`,
     iconClass: 'text-amber-500',
     textClass: 'text-foreground font-medium',
