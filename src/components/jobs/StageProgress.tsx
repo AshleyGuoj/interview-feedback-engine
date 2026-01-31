@@ -34,7 +34,7 @@ export function StageProgress({ stages }: StageProgressProps) {
     <TooltipProvider>
       <div className="space-y-1.5">
         {/* Stage dots */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
           {visibleStages.map((stage, index) => {
             const isCompleted = stage.status === 'completed';
             const isSkipped = stage.status === 'skipped';
@@ -42,19 +42,19 @@ export function StageProgress({ stages }: StageProgressProps) {
             const isUpcoming = stage.status === 'upcoming' && !isCurrent;
 
             return (
-              <div key={stage.id} className="flex items-center">
+              <div key={stage.id} className="flex items-center shrink-0">
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <div
                       className={cn(
-                        'rounded-full transition-all duration-300 ease-out cursor-default',
+                        'rounded-full transition-all duration-300 ease-out cursor-default shrink-0',
                         // Size
-                        isCurrent ? 'w-3 h-3' : 'w-2 h-2',
+                        isCurrent ? 'w-2.5 h-2.5' : 'w-2 h-2',
                         // Colors
                         isCompleted && 'bg-chart-2',
-                        isCurrent && 'bg-primary ring-2 ring-primary/30 animate-pulse',
+                        isCurrent && 'bg-primary ring-2 ring-primary/30',
                         isUpcoming && 'bg-muted-foreground/30',
-                        isSkipped && 'bg-transparent border-2 border-dashed border-muted-foreground/40'
+                        isSkipped && 'bg-transparent border border-dashed border-muted-foreground/40'
                       )}
                     />
                   </TooltipTrigger>
@@ -68,7 +68,7 @@ export function StageProgress({ stages }: StageProgressProps) {
                 {index < visibleStages.length - 1 && (
                   <div
                     className={cn(
-                      'w-3 h-0.5 mx-0.5 transition-colors duration-300',
+                      'w-2 h-0.5 mx-0.5 transition-colors duration-300 shrink-0',
                       isCompleted ? 'bg-chart-2' : 'bg-muted-foreground/20'
                     )}
                   />
