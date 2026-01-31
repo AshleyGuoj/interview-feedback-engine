@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { InterviewTimeline } from '@/components/jobs/InterviewTimeline';
+import { EnhancedInterviewTimeline } from '@/components/jobs/EnhancedInterviewTimeline';
 import { StageEditor } from '@/components/jobs/StageEditor';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -559,10 +559,13 @@ export default function JobDetail() {
         {/* Interview Timeline */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Interview Timeline</h2>
+            <div>
+              <h2 className="text-lg font-semibold">面试记录</h2>
+              <p className="text-sm text-muted-foreground">记录每轮面试的问题与反思，沉淀为你的面试数据库</p>
+            </div>
             <StageEditor stages={job.stages} onSave={handleStagesChange} />
           </div>
-          <InterviewTimeline 
+          <EnhancedInterviewTimeline 
             stages={job.stages}
             onStageUpdate={handleStageUpdate}
             onAIAction={handleAIAction}
