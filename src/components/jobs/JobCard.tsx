@@ -1,40 +1,14 @@
 import { Job } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { parseInTimezone, formatInTimezone } from '@/lib/timezone';
 import { SubStatusBadge, RiskTagBadge, ClosedReasonBadge } from './StatusBadge';
+import { StageStatus } from './StageStatus';
 
 interface JobCardProps {
   job: Job;
   onClick: () => void;
-}
-
-// Format scheduled time with dual timezone display
-function formatDualTimezone(scheduledTime: string, originalTimezone: string): { local: string; remote: string; dayOfWeek: string } {
-  try {
-    const utcDate = parseInTimezone(scheduledTime, originalTimezone);
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    
-    // Local time (US Eastern)
-    const localTime = formatInTimezone(utcDate, 'America/New_York', 'M/d HH:mm');
-    const localDate = new Date(utcDate.getTime() + (-5) * 60 * 60 * 1000);
-    const dayOfWeek = dayNames[localDate.getUTCDay()];
-    
-    // Remote time (original timezone, usually Beijing)
-    const remoteTime = formatInTimezone(utcDate, originalTimezone, 'HH:mm');
-    const tzLabel = originalTimezone === 'Asia/Shanghai' ? 'BJ' : originalTimezone.split('/')[1]?.slice(0, 3) || 'Remote';
-    
-    return {
-      local: localTime,
-      remote: `${remoteTime} ${tzLabel}`,
-      dayOfWeek,
-    };
-  } catch {
-    return { local: scheduledTime, remote: '', dayOfWeek: '' };
-  }
 }
 
 // Calculate days since last contact
@@ -47,16 +21,6 @@ function getDaysSinceContact(lastContactDate?: string): number | null {
 }
 
 export function JobCard({ job, onClick }: JobCardProps) {
-  // Find next upcoming stage with scheduled time
-  const nextScheduledStage = useMemo(() => {
-    const upcomingStages = job.stages.filter(s => s.status === 'upcoming' && s.scheduledTime);
-    if (upcomingStages.length === 0) return null;
-    upcomingStages.sort((a, b) => 
-      (a.scheduledTime || '').localeCompare(b.scheduledTime || '')
-    );
-    return upcomingStages[0];
-  }, [job.stages]);
-
   // Auto-detect long silence risk
   const daysSinceContact = getDaysSinceContact(job.lastContactDate);
   const hasLongSilence = daysSinceContact !== null && daysSinceContact >= 7;
@@ -76,10 +40,6 @@ export function JobCard({ job, onClick }: JobCardProps) {
     Remote: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     Other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
   };
-
-  const timeDisplay = nextScheduledStage?.scheduledTime 
-    ? formatDualTimezone(nextScheduledStage.scheduledTime, nextScheduledStage.scheduledTimezone || 'Asia/Shanghai')
-    : null;
 
   return (
     <Card
@@ -127,36 +87,12 @@ export function JobCard({ job, onClick }: JobCardProps) {
           </div>
         )}
 
-        {/* Next scheduled interview with dual timezone */}
-        {timeDisplay && nextScheduledStage && (
-          <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg border border-primary/10">
-            <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-                <span>{nextScheduledStage.name}</span>
-                <span className="text-muted-foreground">·</span>
-                <span>{timeDisplay.dayOfWeek}</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <span className="font-medium">{timeDisplay.local} ET</span>
-                {timeDisplay.remote && (
-                  <>
-                    <span>·</span>
-                    <span>{timeDisplay.remote}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Next action hint (only if no scheduled time) */}
-        {!nextScheduledStage && job.nextAction && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ArrowRight className="w-3 h-3" />
-            <span className="truncate">{job.nextAction}</span>
-          </div>
-        )}
+        {/* Stage status - single momentum line */}
+        <StageStatus 
+          stages={job.stages} 
+          jobStatus={job.status}
+          closedReason={job.closedReason}
+        />
       </div>
     </Card>
   );
