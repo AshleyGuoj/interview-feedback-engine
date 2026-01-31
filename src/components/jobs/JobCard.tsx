@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { parseInTimezone, formatInTimezone } from '@/lib/timezone';
 import { SubStatusBadge, RiskTagBadge, ClosedReasonBadge } from './StatusBadge';
-import { StageProgress } from './StageProgress';
 
 interface JobCardProps {
   job: Job;
@@ -127,12 +126,6 @@ export function JobCard({ job, onClick }: JobCardProps) {
             )}
           </div>
         )}
-
-        {/* Stage-based progress */}
-        <StageProgress 
-          stages={job.stages} 
-          currentStageName={job.currentStage || job.stages.find(s => s.status === 'upcoming')?.name}
-        />
 
         {/* Next scheduled interview with dual timezone */}
         {timeDisplay && nextScheduledStage && (
