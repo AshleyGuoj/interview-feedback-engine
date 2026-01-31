@@ -33,6 +33,7 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><JobBoard /></ProtectedRoute>} />
               <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
+              {/* Legacy route - redirects to Analytics */}
               <Route path="/jobs/:jobId/stages/:stageId/analyze" element={<ProtectedRoute><InterviewAnalysis /></ProtectedRoute>} />
               <Route path="/timeline" element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />

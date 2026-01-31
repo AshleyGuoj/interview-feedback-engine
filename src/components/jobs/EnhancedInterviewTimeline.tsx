@@ -202,14 +202,14 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                           记录面试内容，构建你的面试数据库
                         </div>
                         <div className="flex gap-2">
-                          {/* AI Transcript Analyzer Button - Navigate to full page */}
+                          {/* AI Transcript Analyzer Button - Navigate to Analytics page */}
                           <Button 
                             variant="outline" 
                             size="sm" 
                             className="gap-1.5"
                             onClick={() => {
                               if (jobContext?.jobId) {
-                                navigate(`/jobs/${jobContext.jobId}/stages/${stage.id}/analyze`);
+                                navigate(`/analytics?jobId=${jobContext.jobId}&stageId=${stage.id}`);
                               }
                             }}
                           >
