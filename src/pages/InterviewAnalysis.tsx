@@ -5,8 +5,6 @@ import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,7 +13,6 @@ import {
   Building2, 
   Briefcase, 
   Calendar,
-  Sparkles, 
   FileText,
   MessageSquare, 
   Lightbulb, 
@@ -40,6 +37,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { TranscriptInput } from '@/components/interview/TranscriptInput';
 
 const QUALITY_CONFIG = {
   high: { label: '回答优秀', color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
@@ -53,7 +51,6 @@ export default function InterviewAnalysis() {
   const navigate = useNavigate();
   const { jobs, updateJob } = useJobs();
   
-  const [transcript, setTranscript] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<TranscriptAnalysisResult | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
@@ -92,7 +89,7 @@ export default function InterviewAnalysis() {
     );
   }
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (transcript: string) => {
     if (!transcript.trim() || transcript.length < 50) {
       toast.error('请输入更详细的面试记录（至少50个字符）');
       return;
@@ -254,54 +251,15 @@ export default function InterviewAnalysis() {
                   <div>
                     <h2 className="text-lg font-semibold">输入面试记录</h2>
                     <p className="text-sm text-muted-foreground">
-                      支持粘贴任意形式的面试记录，AI 将自动提取问题并生成复盘
+                      支持粘贴任意形式的面试记录或上传文件，AI 将自动提取问题并生成复盘
                     </p>
                   </div>
                 </div>
                 
-                <Card>
-                  <CardContent className="p-6">
-                    <Textarea
-                      placeholder={`粘贴你的面试记录...
-
-支持格式：
-- 纯文本笔记
-- 聊天记录
-- 混合中英文
-- 无需格式化
-
-示例：
-面试官问了我为什么想加入这家公司，我说了对产品的理解...
-然后问了一个系统设计题，设计一个电商系统...`}
-                      value={transcript}
-                      onChange={(e) => setTranscript(e.target.value)}
-                      className="min-h-[300px] font-mono text-sm resize-y"
-                    />
-                    <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-                      <span>{transcript.length} 字符</span>
-                      <span>建议 500+ 字符以获得更好的分析效果</span>
-                    </div>
-                    
-                    <Button 
-                      onClick={handleAnalyze} 
-                      disabled={isAnalyzing || transcript.length < 50}
-                      className="w-full mt-6 gap-2"
-                      size="lg"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          正在分析...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          开始 AI 分析
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <TranscriptInput 
+                  onAnalyze={handleAnalyze}
+                  isAnalyzing={isAnalyzing}
+                />
               </section>
             )}
 
@@ -374,10 +332,7 @@ export default function InterviewAnalysis() {
                   <div className="flex items-center justify-between gap-4">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        setResult(null);
-                        setTranscript('');
-                      }}
+                      onClick={() => setResult(null)}
                     >
                       重新分析
                     </Button>
