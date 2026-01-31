@@ -1,11 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Job, InterviewStage, DEFAULT_STAGES, JobStatus } from '@/types/job';
+import { Job, InterviewStage, DEFAULT_STAGES, JobStatus, InterviewingSubStatus, OfferSubStatus, ClosedReason, RiskTag } from '@/types/job';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Transform database row to Job type
 function dbToJob(row: any): Job {
+  // Parse stages JSON which may contain extended fields
+  const stagesData = row.stages || [];
+  
+  // Extract extended fields from stages metadata if stored there
+  // (for backward compatibility with existing data structure)
+  const metadata = stagesData._metadata || {};
+  
   return {
     id: row.id,
     companyName: row.company_name,
@@ -18,9 +25,14 @@ function dbToJob(row: any): Job {
     careerFitNotes: row.career_fit_notes || undefined,
     currentStage: row.current_stage || undefined,
     nextAction: row.next_action || undefined,
-    stages: (row.stages || []) as InterviewStage[],
+    stages: Array.isArray(stagesData) ? stagesData as InterviewStage[] : (stagesData.list || []) as InterviewStage[],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    // Extended fields from metadata
+    subStatus: metadata.subStatus as InterviewingSubStatus | OfferSubStatus | undefined,
+    closedReason: metadata.closedReason as ClosedReason | undefined,
+    riskTags: metadata.riskTags as RiskTag[] | undefined,
+    lastContactDate: metadata.lastContactDate as string | undefined,
   };
 }
 
@@ -38,7 +50,19 @@ function jobToDb(job: Partial<Job>, userId: string) {
   if (job.careerFitNotes !== undefined) result.career_fit_notes = job.careerFitNotes || null;
   if (job.currentStage !== undefined) result.current_stage = job.currentStage || null;
   if (job.nextAction !== undefined) result.next_action = job.nextAction || null;
-  if (job.stages !== undefined) result.stages = job.stages;
+  
+  // Store stages with metadata for extended fields
+  if (job.stages !== undefined || job.subStatus !== undefined || job.closedReason !== undefined || job.riskTags !== undefined || job.lastContactDate !== undefined) {
+    result.stages = {
+      list: job.stages || [],
+      _metadata: {
+        subStatus: job.subStatus,
+        closedReason: job.closedReason,
+        riskTags: job.riskTags,
+        lastContactDate: job.lastContactDate,
+      }
+    };
+  }
   
   return result;
 }

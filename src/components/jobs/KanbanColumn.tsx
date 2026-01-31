@@ -1,5 +1,6 @@
 import { Job, JobStatus } from '@/types/job';
 import { DraggableJobCard } from './DraggableJobCard';
+import { InsightStrip } from './InsightStrip';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -39,12 +40,17 @@ export function KanbanColumn({ status, jobs, onJobClick }: KanbanColumnProps) {
   return (
     <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1">
       {/* Column Header */}
-      <div className="flex items-center gap-2 mb-4 px-1">
-        <div className={cn('w-2 h-2 rounded-full', config.color)} />
-        <h3 className="font-medium text-foreground">{config.label}</h3>
-        <span className="text-sm text-muted-foreground ml-auto">
-          {jobs.length}
-        </span>
+      <div className="mb-3 px-1">
+        <div className="flex items-center gap-2 mb-1">
+          <div className={cn('w-2 h-2 rounded-full', config.color)} />
+          <h3 className="font-medium text-foreground">{config.label}</h3>
+          <span className="text-sm text-muted-foreground ml-auto">
+            {jobs.length}
+          </span>
+        </div>
+        
+        {/* Insight Strip - sub-status breakdown */}
+        <InsightStrip status={status} jobs={jobs} />
       </div>
 
       {/* Cards Container */}
