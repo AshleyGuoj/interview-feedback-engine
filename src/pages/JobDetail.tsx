@@ -569,6 +569,7 @@ export default function JobDetail() {
             stages={job.stages}
             onStageUpdate={handleStageUpdate}
             onAIAction={handleAIAction}
+            jobContext={{ company: job.companyName, role: job.roleTitle }}
           />
         </div>
       </div>
