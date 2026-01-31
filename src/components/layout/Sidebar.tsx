@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -10,11 +10,14 @@ import {
   ChevronRight,
   Sparkles,
   LogOut,
-  Brain
+  Brain,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -25,10 +28,20 @@ const navItems = [
   { to: '/interview-prep', icon: Brain, label: 'Interview Prep' },
 ];
 
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
+
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    return stored === 'true';
+  });
   const location = useLocation();
   const { signOut, user } = useAuth();
+
+  // Persist collapse state
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed));
+  }, [collapsed]);
 
   return (
     <aside
@@ -56,7 +69,7 @@ export function Sidebar() {
           const isActive = location.pathname === item.to || 
             (item.to !== '/' && location.pathname.startsWith(item.to));
           
-          return (
+          const linkContent = (
             <NavLink
               key={item.to}
               to={item.to}
@@ -72,46 +85,83 @@ export function Sidebar() {
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
           );
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.to} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {linkContent}
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return linkContent;
         })}
       </nav>
 
-      {/* User & Logout */}
+      {/* User & Collapse */}
       <div className="p-2 border-t border-border space-y-1">
         {user && !collapsed && (
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">
             {user.email}
           </div>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={signOut}
-          className={cn(
-            'w-full text-muted-foreground hover:text-foreground',
-            collapsed ? 'justify-center' : 'justify-start'
-          )}
-        >
-          <LogOut className="w-4 h-4" />
-          {!collapsed && <span className="ml-2">Sign Out</span>}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            'w-full text-muted-foreground hover:text-foreground',
-            collapsed ? 'justify-center' : 'justify-start'
-          )}
-        >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <>
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              <span>Collapse</span>
-            </>
-          )}
-        </Button>
+        
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="w-full justify-center text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Sign Out</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="ml-2">Sign Out</span>
+          </Button>
+        )}
+        
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCollapsed(false)}
+                className="w-full justify-center text-muted-foreground hover:text-foreground"
+              >
+                <PanelLeft className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">展开侧边栏</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(true)}
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+          >
+            <PanelLeftClose className="w-4 h-4" />
+            <span className="ml-2">Collapse</span>
+          </Button>
+        )}
       </div>
     </aside>
   );
