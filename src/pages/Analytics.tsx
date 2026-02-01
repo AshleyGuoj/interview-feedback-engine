@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { InterviewQuestion, InterviewReflection } from '@/types/job';
 import { AnalyticsJobTree } from '@/components/analytics/AnalyticsJobTree';
+import { AnalyticsContextBar } from '@/components/analytics/AnalyticsContextBar';
 import { AnalysisDetailPanel } from '@/components/analytics/AnalysisDetailPanel';
 import { RoleDebriefPanel } from '@/components/analytics/RoleDebriefPanel';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -20,14 +23,13 @@ import {
   BarChart3,
   FileText,
   Sparkles,
-  ChevronLeft,
   TrendingUp,
+  Lock,
 } from 'lucide-react';
 
 export default function Analytics() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { jobs, updateJob, loading } = useJobs();
+  const { jobs, updateJob } = useJobs();
   
   const [selectedJobId, setSelectedJobId] = useState<string | null>(
     searchParams.get('jobId')
@@ -47,6 +49,8 @@ export default function Analytics() {
       setSelectedJobId(jobId);
       setSelectedStageId(stageId);
       setExpandedJobs(prev => new Set([...prev, jobId]));
+      // Always default to rounds tab when navigating
+      setActiveTab('rounds');
     }
   }, [searchParams]);
 
@@ -54,6 +58,8 @@ export default function Analytics() {
     setSelectedJobId(jobId);
     setSelectedStageId(stageId);
     setSearchParams({ jobId, stageId });
+    // Always default to Interview Analysis when selecting a round
+    setActiveTab('rounds');
   };
 
   const handleToggleJob = (jobId: string) => {
@@ -96,6 +102,7 @@ export default function Analytics() {
   const analyzedRoundsCount = selectedJob?.stages.filter(
     s => s.status === 'completed' && (s.questions?.length || s.reflection)
   ).length || 0;
+  const isDebriefUnlocked = analyzedRoundsCount >= 2;
 
   return (
     <DashboardLayout>
@@ -121,7 +128,7 @@ export default function Analytics() {
         <div className="flex-1 min-h-0">
           <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Left Panel - Job Tree */}
-            <ResizablePanel defaultSize={28} minSize={20} maxSize={40}>
+            <ResizablePanel defaultSize={22} minSize={18} maxSize={30}>
               <div className="h-full border-r bg-muted/30 flex flex-col">
                 <div className="p-3 border-b shrink-0">
                   <h2 className="text-sm font-medium text-muted-foreground px-2">
@@ -144,92 +151,94 @@ export default function Analytics() {
             <ResizableHandle withHandle />
 
             {/* Right Panel - Detail View with Tabs */}
-            <ResizablePanel defaultSize={72}>
+            <ResizablePanel defaultSize={78}>
               <div className="h-full bg-background flex flex-col">
                 {selectedJob ? (
                   <>
+                    {/* Context Bar - Always visible */}
+                    <AnalyticsContextBar job={selectedJob} stage={selectedStage} />
+
                     {/* Tab Navigation */}
                     <div className="shrink-0 border-b px-4">
-                      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'rounds' | 'debrief')}>
+                      <Tabs value={activeTab} onValueChange={(v) => {
+                        if (v === 'debrief' && !isDebriefUnlocked) return;
+                        setActiveTab(v as 'rounds' | 'debrief');
+                      }}>
                         <TabsList className="h-12 bg-transparent p-0 gap-4">
                           <TabsTrigger 
                             value="rounds" 
                             className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
                           >
                             <FileText className="w-4 h-4 mr-2" />
-                            轮次分析
+                            面试分析
                           </TabsTrigger>
-                          <TabsTrigger 
-                            value="debrief" 
-                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
-                          >
-                            <TrendingUp className="w-4 h-4 mr-2" />
-                            Role Debrief
-                            {analyzedRoundsCount >= 2 && (
-                              <Badge variant="secondary" className="ml-2 text-xs">
-                                NEW
-                              </Badge>
-                            )}
-                          </TabsTrigger>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <TabsTrigger 
+                                  value="debrief" 
+                                  disabled={!isDebriefUnlocked}
+                                  className={`data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3 ${!isDebriefUnlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  {!isDebriefUnlocked ? (
+                                    <Lock className="w-4 h-4 mr-2" />
+                                  ) : (
+                                    <TrendingUp className="w-4 h-4 mr-2" />
+                                  )}
+                                  Role Debrief
+                                  {isDebriefUnlocked && (
+                                    <span className="ml-2 text-xs text-primary">✨</span>
+                                  )}
+                                </TabsTrigger>
+                              </TooltipTrigger>
+                              {!isDebriefUnlocked && (
+                                <TooltipContent>
+                                  <p>完成至少 2 轮面试分析后解锁</p>
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </TooltipProvider>
                         </TabsList>
                       </Tabs>
                     </div>
 
                     {/* Tab Content */}
-                    <div className="flex-1 min-h-0">
-                      {activeTab === 'rounds' ? (
-                        selectedStage ? (
-                          <AnalysisDetailPanel
-                            job={selectedJob}
-                            stage={selectedStage}
-                            onSave={handleSaveAnalysis}
-                          />
-                        ) : (
-                          <div className="h-full flex items-center justify-center">
-                            <div className="text-center max-w-sm p-8">
-                              <FileText className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                              <p className="text-sm text-muted-foreground">
-                                从左侧选择一个面试轮次查看或添加分析
-                              </p>
+                    <div className="flex-1 min-h-0 overflow-auto">
+                      <div className="max-w-4xl mx-auto">
+                        {activeTab === 'rounds' ? (
+                          selectedStage ? (
+                            <AnalysisDetailPanel
+                              job={selectedJob}
+                              stage={selectedStage}
+                              onSave={handleSaveAnalysis}
+                            />
+                          ) : (
+                            <div className="h-full flex items-center justify-center py-24">
+                              <div className="text-center max-w-sm">
+                                <FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-4" />
+                                <p className="text-muted-foreground">
+                                  从左侧选择一个面试轮次查看分析
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )
-                      ) : (
-                        <RoleDebriefPanel job={selectedJob} />
-                      )}
+                          )
+                        ) : (
+                          <RoleDebriefPanel job={selectedJob} />
+                        )}
+                      </div>
                     </div>
                   </>
                 ) : (
-                  /* Empty State */
+                  /* Empty State - Calm, AI-native language */
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center max-w-md p-8">
-                      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                        <Sparkles className="w-8 h-8 text-primary" />
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                        <Sparkles className="w-7 h-7 text-primary" />
                       </div>
-                      <h2 className="text-lg font-semibold mb-2">选择一轮面试开始分析</h2>
-                      <p className="text-sm text-muted-foreground mb-6">
-                        从左侧选择一个职位和面试轮次，粘贴面试记录后 AI 将自动提取问题并生成复盘分析
+                      <h2 className="text-lg font-semibold mb-3">选择一轮面试开始分析</h2>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        粘贴你的面试笔记或录音转写，我们会自动提取问题模式、评估表现并提供改进建议。
                       </p>
-                      <div className="flex flex-col gap-3 text-left bg-muted/50 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-medium text-primary">
-                            1
-                          </div>
-                          <p className="text-sm">选择左侧的公司和面试轮次</p>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-medium text-primary">
-                            2
-                          </div>
-                          <p className="text-sm">粘贴或上传面试记录</p>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 text-xs font-medium text-primary">
-                            3
-                          </div>
-                          <p className="text-sm">AI 自动提取问题并生成复盘</p>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}
