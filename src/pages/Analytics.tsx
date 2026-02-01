@@ -5,9 +5,12 @@ import { useJobs } from '@/contexts/JobsContext';
 import { InterviewQuestion, InterviewReflection } from '@/types/job';
 import { AnalyticsJobTree } from '@/components/analytics/AnalyticsJobTree';
 import { AnalysisDetailPanel } from '@/components/analytics/AnalysisDetailPanel';
+import { RoleDebriefPanel } from '@/components/analytics/RoleDebriefPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -18,6 +21,7 @@ import {
   FileText,
   Sparkles,
   ChevronLeft,
+  TrendingUp,
 } from 'lucide-react';
 
 export default function Analytics() {
@@ -32,6 +36,7 @@ export default function Analytics() {
     searchParams.get('stageId')
   );
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'rounds' | 'debrief'>('rounds');
 
   // Sync URL params with state
   useEffect(() => {
@@ -87,6 +92,11 @@ export default function Analytics() {
   const selectedJob = selectedJobId ? jobs.find(j => j.id === selectedJobId) : null;
   const selectedStage = selectedJob?.stages.find(s => s.id === selectedStageId);
 
+  // Check if job has enough analyzed rounds for debrief
+  const analyzedRoundsCount = selectedJob?.stages.filter(
+    s => s.status === 'completed' && (s.questions?.length || s.reflection)
+  ).length || 0;
+
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-3.5rem)] flex flex-col">
@@ -133,15 +143,62 @@ export default function Analytics() {
 
             <ResizableHandle withHandle />
 
-            {/* Right Panel - Detail View */}
+            {/* Right Panel - Detail View with Tabs */}
             <ResizablePanel defaultSize={72}>
-              <div className="h-full bg-background">
-                {selectedJob && selectedStage ? (
-                  <AnalysisDetailPanel
-                    job={selectedJob}
-                    stage={selectedStage}
-                    onSave={handleSaveAnalysis}
-                  />
+              <div className="h-full bg-background flex flex-col">
+                {selectedJob ? (
+                  <>
+                    {/* Tab Navigation */}
+                    <div className="shrink-0 border-b px-4">
+                      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'rounds' | 'debrief')}>
+                        <TabsList className="h-12 bg-transparent p-0 gap-4">
+                          <TabsTrigger 
+                            value="rounds" 
+                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            轮次分析
+                          </TabsTrigger>
+                          <TabsTrigger 
+                            value="debrief" 
+                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
+                          >
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Role Debrief
+                            {analyzedRoundsCount >= 2 && (
+                              <Badge variant="secondary" className="ml-2 text-xs">
+                                NEW
+                              </Badge>
+                            )}
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="flex-1 min-h-0">
+                      {activeTab === 'rounds' ? (
+                        selectedStage ? (
+                          <AnalysisDetailPanel
+                            job={selectedJob}
+                            stage={selectedStage}
+                            onSave={handleSaveAnalysis}
+                          />
+                        ) : (
+                          <div className="h-full flex items-center justify-center">
+                            <div className="text-center max-w-sm p-8">
+                              <FileText className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                              <p className="text-sm text-muted-foreground">
+                                从左侧选择一个面试轮次查看或添加分析
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <RoleDebriefPanel job={selectedJob} />
+                      )}
+                    </div>
+                  </>
                 ) : (
                   /* Empty State */
                   <div className="h-full flex items-center justify-center">
