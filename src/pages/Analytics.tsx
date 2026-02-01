@@ -174,22 +174,24 @@ export default function Analytics() {
                           </TabsTrigger>
                           <TooltipProvider>
                             <Tooltip>
-                              <TooltipTrigger asChild>
-                                <TabsTrigger 
-                                  value="debrief" 
-                                  disabled={!isDebriefUnlocked}
-                                  className={`data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3 ${!isDebriefUnlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                  {!isDebriefUnlocked ? (
-                                    <Lock className="w-4 h-4 mr-2" />
-                                  ) : (
-                                    <TrendingUp className="w-4 h-4 mr-2" />
-                                  )}
-                                  Role Debrief
-                                  {isDebriefUnlocked && (
-                                    <span className="ml-2 text-xs text-primary">✨</span>
-                                  )}
-                                </TabsTrigger>
+                          <TooltipTrigger asChild>
+                                <span className={!isDebriefUnlocked ? 'cursor-not-allowed' : ''}>
+                                  <TabsTrigger 
+                                    value="debrief" 
+                                    disabled={!isDebriefUnlocked}
+                                    className={`data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3 ${!isDebriefUnlocked ? 'opacity-50 pointer-events-none' : ''}`}
+                                  >
+                                    {!isDebriefUnlocked ? (
+                                      <Lock className="w-4 h-4 mr-2" />
+                                    ) : (
+                                      <TrendingUp className="w-4 h-4 mr-2" />
+                                    )}
+                                    Role Debrief
+                                    {isDebriefUnlocked && (
+                                      <span className="ml-2 text-xs text-primary">✨</span>
+                                    )}
+                                  </TabsTrigger>
+                                </span>
                               </TooltipTrigger>
                               {!isDebriefUnlocked && (
                                 <TooltipContent>
