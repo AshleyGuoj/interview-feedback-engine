@@ -69,12 +69,30 @@ function jobToDb(job: Partial<Job>, userId: string) {
 
 /**
  * Derive job status from interview stages
+ * Priority: closed (manual) > offer (from stages) > interviewing > applied
  */
 export function deriveJobStatusFromStages(stages: InterviewStage[], currentStatus: JobStatus): JobStatus {
-  if (currentStatus === 'offer' || currentStatus === 'closed') {
+  // Closed is a terminal state, only changeable manually
+  if (currentStatus === 'closed') {
     return currentStatus;
   }
   
+  // Check if offer stage is completed - this takes priority
+  const offerStageCompleted = stages.some(
+    s => s.status === 'completed' && 
+         (s.name.toLowerCase().includes('offer') || s.name.toLowerCase() === 'offer discussion')
+  );
+  
+  if (offerStageCompleted) {
+    return 'offer';
+  }
+  
+  // If current status is offer (manually set), keep it unless we need to derive
+  if (currentStatus === 'offer') {
+    return currentStatus;
+  }
+  
+  // Check for interview activity
   const hasInterviewActivity = stages.some(
     s => (s.status === 'upcoming' || s.status === 'completed') && 
          s.name.toLowerCase() !== 'applied'
