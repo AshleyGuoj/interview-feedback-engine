@@ -3,11 +3,27 @@ import { InterviewStage } from '@/types/job';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, GripVertical, X, Pencil, Check, Settings } from 'lucide-react';
+import { Plus, GripVertical, X, Pencil, Check, Settings, Sparkles } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+
+// Recommended stage suggestions
+const STAGE_SUGGESTIONS = [
+  { name: 'Phone Screen', nameZh: '电话面试' },
+  { name: 'Technical Round', nameZh: '技术面' },
+  { name: 'Behavioral Round', nameZh: '行为面' },
+  { name: 'System Design', nameZh: '系统设计' },
+  { name: 'Coding Interview', nameZh: '代码面试' },
+  { name: 'Case Study', nameZh: '案例分析' },
+  { name: 'Manager Round', nameZh: 'Manager面' },
+  { name: 'HR Round', nameZh: 'HR面' },
+  { name: 'Team Fit', nameZh: '团队匹配' },
+  { name: 'Final Round', nameZh: '终面' },
+  { name: 'Offer Discussion', nameZh: 'Offer谈判' },
+];
 
 interface StageEditorProps {
   stages: InterviewStage[];
@@ -133,15 +149,23 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     setLocalStages((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const handleAddStage = () => {
-    if (!newStageName.trim()) return;
+  const handleAddStage = (stageName?: string) => {
+    const nameToAdd = stageName || newStageName.trim();
+    if (!nameToAdd) return;
+    
+    // Check if stage with similar name already exists
+    const exists = localStages.some(
+      s => s.name.toLowerCase() === nameToAdd.toLowerCase()
+    );
+    if (exists) return;
+    
     const newStage: InterviewStage = {
       id: `stage-${Date.now()}`,
-      name: newStageName.trim(),
+      name: nameToAdd,
       status: 'upcoming',
     };
     setLocalStages((prev) => [...prev, newStage]);
-    setNewStageName('');
+    if (!stageName) setNewStageName('');
   };
 
   const handleSave = () => {
@@ -155,6 +179,14 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     }
     setOpen(isOpen);
   };
+
+  // Filter out suggestions that are already added
+  const availableSuggestions = STAGE_SUGGESTIONS.filter(
+    suggestion => !localStages.some(
+      s => s.name.toLowerCase() === suggestion.name.toLowerCase() || 
+           s.name.toLowerCase() === suggestion.nameZh.toLowerCase()
+    )
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -171,7 +203,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
         
         <div className="space-y-4 mt-4">
           <p className="text-sm text-muted-foreground">
-            Drag to reorder, click pencil to rename, or add new stages.
+            拖拽排序，点击编辑重命名，或添加新阶段
           </p>
           
           <DndContext
@@ -183,7 +215,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
               items={localStages.map((s) => s.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
                 {localStages.map((stage) => (
                   <SortableStageItem
                     key={stage.id}
@@ -196,23 +228,46 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
             </SortableContext>
           </DndContext>
 
+          {/* Quick add suggestions */}
+          {availableSuggestions.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Sparkles className="w-3 h-3" />
+                <span>快速添加常用阶段</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {availableSuggestions.map((suggestion) => (
+                  <Badge
+                    key={suggestion.name}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-2 py-1"
+                    onClick={() => handleAddStage(suggestion.name)}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    {suggestion.nameZh}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Input
-              placeholder="New stage name..."
+              placeholder="输入自定义阶段名称..."
               value={newStageName}
               onChange={(e) => setNewStageName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddStage()}
             />
-            <Button onClick={handleAddStage} disabled={!newStageName.trim()}>
+            <Button onClick={() => handleAddStage()} disabled={!newStageName.trim()}>
               <Plus className="w-4 h-4" />
             </Button>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              取消
             </Button>
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button onClick={handleSave}>保存</Button>
           </div>
         </div>
       </DialogContent>
