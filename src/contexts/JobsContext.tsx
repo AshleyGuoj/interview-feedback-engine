@@ -74,35 +74,29 @@ function jobToDb(job: Partial<Job>, userId: string) {
 export function deriveJobStatusFromStages(stages: InterviewStage[], currentStatus: JobStatus): JobStatus {
   // Closed is a terminal state, only changeable manually
   if (currentStatus === 'closed') {
-    return currentStatus;
+    return 'closed';
   }
-  
-  // Check if offer stage is completed - this takes priority
-  const offerStageCompleted = stages.some(
-    s => s.status === 'completed' && 
-         (s.name.toLowerCase().includes('offer') || s.name.toLowerCase() === 'offer discussion')
+
+  // Always derive from stages for consistency (workflow is the source of truth)
+  const normalized = stages.map(s => ({
+    ...s,
+    _name: (s.name || '').toLowerCase().trim(),
+  }));
+
+  // Offer: any "offer" stage completed
+  const offerStageCompleted = normalized.some(
+    s => s.status === 'completed' && s._name.includes('offer')
   );
-  
-  if (offerStageCompleted) {
-    return 'offer';
-  }
-  
-  // If current status is offer (manually set), keep it unless we need to derive
-  if (currentStatus === 'offer') {
-    return currentStatus;
-  }
-  
-  // Check for interview activity
-  const hasInterviewActivity = stages.some(
-    s => (s.status === 'upcoming' || s.status === 'completed') && 
-         s.name.toLowerCase() !== 'applied'
+  if (offerStageCompleted) return 'offer';
+
+  // Interviewing: any non-applied stage has activity
+  const hasInterviewActivity = normalized.some(
+    s => (s.status === 'upcoming' || s.status === 'completed') && s._name !== 'applied'
   );
-  
-  if (hasInterviewActivity) {
-    return 'interviewing';
-  }
-  
-  return currentStatus;
+  if (hasInterviewActivity) return 'interviewing';
+
+  // Default
+  return 'applied';
 }
 
 interface JobsContextType {

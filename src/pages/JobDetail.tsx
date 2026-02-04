@@ -207,7 +207,11 @@ export default function JobDetail() {
   };
 
   const handleStagesChange = async (newStages: InterviewStage[]) => {
-    await updateJob(job.id, { stages: newStages });
+    const nextStatus = deriveJobStatusFromStages(newStages, job.status);
+    await updateJob(job.id, {
+      stages: newStages,
+      status: nextStatus,
+    });
   };
 
   const handleAIAction = (action: 'summarize' | 'suggest-prep' | 'extract-insights', stageId?: string) => {
