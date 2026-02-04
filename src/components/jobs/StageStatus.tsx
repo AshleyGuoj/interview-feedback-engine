@@ -9,15 +9,16 @@ interface StageStatusProps {
   closedReason?: ClosedReason;
 }
 
-// Format scheduled time for display
-function formatScheduledTime(scheduledTime: string, timezone: string): string {
+// Format scheduled time for dual timezone display (Beijing + US Eastern)
+function formatDualTimezoneCompact(scheduledTime: string, timezone: string): string {
   try {
     const utcDate = parseInTimezone(scheduledTime, timezone);
-    const formatted = formatInTimezone(utcDate, timezone, 'MMM d · HH:mm');
-    const tzLabel = timezone === 'Asia/Shanghai' ? '北京时间' : 
-                    timezone === 'America/New_York' ? 'ET' : 
-                    timezone.split('/')[1] || '';
-    return `${formatted} ${tzLabel}`;
+    
+    // Always show Beijing time and US Eastern time
+    const bjTime = formatInTimezone(utcDate, 'Asia/Shanghai', 'M月d日 HH:mm');
+    const etTime = formatInTimezone(utcDate, 'America/New_York', 'M月d日 HH:mm');
+    
+    return `${bjTime} (北京) / ${etTime} (美东)`;
   } catch {
     return scheduledTime;
   }
@@ -164,7 +165,7 @@ export function StageStatus({ stages, jobStatus, closedReason }: StageStatusProp
       {status.scheduledTime && status.scheduledTimezone && (
         <div className="flex items-center gap-1.5 pl-5.5 text-xs text-muted-foreground">
           <Clock className="w-3 h-3 shrink-0" />
-          <span>{formatScheduledTime(status.scheduledTime, status.scheduledTimezone)}</span>
+          <span>{formatDualTimezoneCompact(status.scheduledTime, status.scheduledTimezone)}</span>
         </div>
       )}
     </div>
