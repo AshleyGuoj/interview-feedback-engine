@@ -80,7 +80,7 @@ export default function Dashboard() {
     const jobMap = new Map(jobs.map(j => [j.id, j]));
     
     return activities
-      .slice(0, 8)
+      .slice(0, 5)
       .map(activity => {
         const job = jobMap.get(activity.jobId);
         return {
