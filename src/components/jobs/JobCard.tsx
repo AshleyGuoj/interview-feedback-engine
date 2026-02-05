@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { SubStatusBadge, RiskTagBadge, ClosedReasonBadge } from './StatusBadge';
-import { StageStatus } from './StageStatus';
+import { PipelineStatus } from './PipelineStatus';
 
 interface JobCardProps {
   job: Job;
@@ -87,12 +87,8 @@ export function JobCard({ job, onClick }: JobCardProps) {
           </div>
         )}
 
-        {/* Stage status - single momentum line */}
-        <StageStatus 
-          stages={job.stages} 
-          jobStatus={job.status}
-          closedReason={job.closedReason}
-        />
+        {/* Pipeline status - single momentum line using resolver */}
+        <PipelineStatus job={job} />
       </div>
     </Card>
   );

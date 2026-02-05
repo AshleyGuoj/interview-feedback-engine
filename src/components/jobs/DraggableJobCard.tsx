@@ -7,7 +7,7 @@ import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { SubStatusBadge, RiskTagBadge, ClosedReasonBadge } from './StatusBadge';
-import { StageStatus } from './StageStatus';
+import { PipelineStatus } from './PipelineStatus';
 
 interface DraggableJobCardProps {
   job: Job;
@@ -119,13 +119,9 @@ export function DraggableJobCard({ job, onClick }: DraggableJobCardProps) {
             </div>
           )}
 
-          {/* Stage status - single momentum line */}
+          {/* Pipeline status - single momentum line using resolver */}
           <div onClick={onClick}>
-            <StageStatus 
-              stages={job.stages} 
-              jobStatus={job.status}
-              closedReason={job.closedReason}
-            />
+            <PipelineStatus job={job} />
           </div>
         </div>
       </Card>
