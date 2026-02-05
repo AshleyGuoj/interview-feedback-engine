@@ -74,6 +74,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
     setEditData({
       name: stage.name,
       status: stage.status,
+      result: stage.result,
       scheduledTime: stage.scheduledTime,
       scheduledTimezone: stage.scheduledTimezone || 'Asia/Shanghai',
     });
