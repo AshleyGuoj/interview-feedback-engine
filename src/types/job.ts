@@ -1,3 +1,4 @@
+// Job types and utilities
 export type JobStatus = 'applied' | 'interviewing' | 'offer' | 'closed';
 
 export type InterviewFormat = 'phone' | 'zoom' | 'onsite';
