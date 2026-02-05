@@ -257,17 +257,17 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                               <div className="space-y-2">
                                 <Label>Result</Label>
                                 <Select
-                                  value={editData.result || ''}
+                                  value={editData.result || '_none'}
                                   onValueChange={(value) => setEditData(prev => ({ 
                                     ...prev, 
-                                    result: value === '' ? null : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
+                                    result: value === '_none' ? undefined : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
                                   }))}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select result..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">🔄 Pending</SelectItem>
+                                    <SelectItem value="_none">🔄 Pending</SelectItem>
                                     <SelectItem value="passed">🎉 Passed</SelectItem>
                                     <SelectItem value="rejected">❌ Rejected</SelectItem>
                                     <SelectItem value="on_hold">🧊 On Hold</SelectItem>
