@@ -74,7 +74,7 @@ export default function JobDetail() {
     if (!job) return null;
     
     const upcomingStages = job.stages.filter(s => 
-      s.status === 'upcoming' && s.scheduledTime
+      ['pending', 'scheduled', 'rescheduled'].includes(s.status) && s.scheduledTime
     );
     
     if (upcomingStages.length === 0) return null;

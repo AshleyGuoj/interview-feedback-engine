@@ -66,9 +66,9 @@ export function GlobalInterviewTimeline() {
   // Apply filters
   const filteredInterviews = useMemo(() => {
     return allInterviews.filter(record => {
-      // Status filter
+      // Status filter - 'upcoming' means pending or scheduled
       if (statusFilter === 'completed' && record.stage.status !== 'completed') return false;
-      if (statusFilter === 'upcoming' && record.stage.status !== 'upcoming') return false;
+      if (statusFilter === 'upcoming' && !['pending', 'scheduled', 'rescheduled'].includes(record.stage.status)) return false;
       
       // Search filter
       if (searchQuery) {
@@ -101,7 +101,7 @@ export function GlobalInterviewTimeline() {
     
     return {
       totalInterviews: completedInterviews.length,
-      upcomingInterviews: allInterviews.filter(r => r.stage.status === 'upcoming').length,
+      upcomingInterviews: allInterviews.filter(r => ['pending', 'scheduled', 'rescheduled'].includes(r.stage.status)).length,
       totalQuestions,
       questionsAnsweredWell,
       companies: new Set(allInterviews.map(r => r.job.companyName)).size,
@@ -112,9 +112,15 @@ export function GlobalInterviewTimeline() {
     switch (status) {
       case 'completed':
         return <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">已完成</Badge>;
-      case 'upcoming':
+      case 'pending':
+      case 'scheduled':
+      case 'rescheduled':
         return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">待进行</Badge>;
+      case 'feedback_pending':
+        return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">等反馈</Badge>;
       case 'skipped':
+      case 'withdrawn':
+      default:
         return <Badge variant="secondary">已跳过</Badge>;
     }
   };
@@ -202,8 +208,8 @@ export function GlobalInterviewTimeline() {
                   <div className={cn(
                     'absolute left-2 top-4 w-5 h-5 rounded-full border-2 bg-background',
                     stage.status === 'completed' && 'border-emerald-500',
-                    stage.status === 'upcoming' && 'border-amber-500',
-                    stage.status === 'skipped' && 'border-muted',
+                    ['pending', 'scheduled', 'rescheduled', 'feedback_pending'].includes(stage.status) && 'border-amber-500',
+                    ['skipped', 'withdrawn'].includes(stage.status) && 'border-muted',
                   )} />
 
                   <Collapsible open={isExpanded} onOpenChange={() => setExpandedId(isExpanded ? null : `${job.id}-${stage.id}`)}>

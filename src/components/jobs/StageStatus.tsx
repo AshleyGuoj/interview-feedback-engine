@@ -55,12 +55,13 @@ function deriveStatus(stages: InterviewStage[], jobStatus: JobStatus, closedReas
 
   // Find the furthest progressed stage
   // Priority: first pending stage > last completed stage
-  const pendingStage = stages.find(s => s.status === 'upcoming');
+  const pendingStatuses = ['pending', 'scheduled', 'rescheduled', 'feedback_pending'];
+  const pendingStage = stages.find(s => pendingStatuses.includes(s.status));
   const lastCompletedIndex = stages.map((s, i) => s.status === 'completed' ? i : -1).filter(i => i >= 0).pop();
   const lastCompleted = lastCompletedIndex !== undefined ? stages[lastCompletedIndex] : null;
 
-  // Check for skipped stages
-  const skippedStage = stages.find(s => s.status === 'skipped');
+  // Check for skipped/withdrawn stages
+  const terminalStage = stages.find(s => s.status === 'skipped' || s.status === 'withdrawn');
 
   // If there's a pending stage with scheduled time, show it
   if (pendingStage) {

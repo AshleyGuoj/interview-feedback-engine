@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection } from '@/types/job';
+import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection, StageStatus, StageResult, STAGE_STATUS_CONFIG, STAGE_RESULT_CONFIG } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,17 @@ import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { QuestionRecorder } from '@/components/interview/QuestionRecorder';
 import { ReflectionEditor } from '@/components/interview/ReflectionEditor';
+
+const statusColorClasses: Record<string, string> = {
+  blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  amber: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  orange: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  cyan: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  green: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  red: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  gray: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+};
 
 interface JobContext {
   jobId?: string;
@@ -78,31 +89,25 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
     setEditData({});
   };
 
-  const getStatusIcon = (status: InterviewStage['status']) => {
-    switch (status) {
-      case 'completed':
-        return <Check className="w-4 h-4 text-emerald-500" />;
-      case 'upcoming':
-        return <Clock className="w-4 h-4 text-amber-500" />;
-      case 'skipped':
-        return <Circle className="w-4 h-4 text-muted-foreground" />;
+  const getStatusIcon = (status: StageStatus) => {
+    const positiveStatuses: StageStatus[] = ['completed'];
+    const pendingStatuses: StageStatus[] = ['pending', 'scheduled', 'rescheduled', 'feedback_pending'];
+    
+    if (positiveStatuses.includes(status)) {
+      return <Check className="w-4 h-4 text-emerald-500" />;
+    } else if (pendingStatuses.includes(status)) {
+      return <Clock className="w-4 h-4 text-amber-500" />;
     }
+    return <Circle className="w-4 h-4 text-muted-foreground" />;
   };
 
-  const getStatusBadge = (status: InterviewStage['status']) => {
-    const variants: Record<InterviewStage['status'], { label: string; className: string }> = {
-      completed: { label: '已完成', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-      upcoming: { label: '待进行', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-      skipped: { label: '已跳过', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+  const getStatusBadge = (status: StageStatus) => {
+    const config = STAGE_STATUS_CONFIG[status];
+    if (!config) return { label: status, className: statusColorClasses.gray };
+    return {
+      label: `${config.emoji} ${config.labelZh}`,
+      className: statusColorClasses[config.color] || statusColorClasses.gray
     };
-    return variants[status];
-  };
-
-  const cycleStatus = (stageId: string, currentStatus: InterviewStage['status']) => {
-    const statusOrder: InterviewStage['status'][] = ['upcoming', 'completed', 'skipped'];
-    const currentIndex = statusOrder.indexOf(currentStatus);
-    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
-    onStageUpdate(stageId, { status: nextStatus });
   };
 
   const handleQuestionsChange = (stageId: string, questions: InterviewQuestion[]) => {
@@ -140,7 +145,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
               <div className={cn(
                 'absolute left-2 top-4 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-background',
                 stage.status === 'completed' ? 'border-emerald-500' : 
-                stage.status === 'upcoming' ? 'border-amber-500' : 'border-muted'
+                ['pending', 'scheduled', 'rescheduled', 'feedback_pending'].includes(stage.status) ? 'border-amber-500' : 'border-muted'
               )}>
                 {getStatusIcon(stage.status)}
               </div>
@@ -156,15 +161,24 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                         <span className="font-medium">{stage.name}</span>
                         <Badge 
                           variant="secondary" 
-                          className={cn(statusBadge.className, 'cursor-pointer transition-colors')}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cycleStatus(stage.id, stage.status);
-                          }}
-                          title="点击切换状态"
+                          className={cn(statusBadge.className)}
+                          title="Stage status"
                         >
                           {statusBadge.label}
                         </Badge>
+                        
+                        {/* Result badge - show when completed */}
+                        {stage.result && STAGE_RESULT_CONFIG[stage.result] && (
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              'border-current',
+                              statusColorClasses[STAGE_RESULT_CONFIG[stage.result].color]
+                            )}
+                          >
+                            {STAGE_RESULT_CONFIG[stage.result].emoji} {STAGE_RESULT_CONFIG[stage.result].labelZh}
+                          </Badge>
+                        )}
                         
                         {/* Content indicators */}
                         {questionCount > 0 && (
@@ -253,19 +267,47 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                                 value={editData.status}
                                 onValueChange={(value) => setEditData(prev => ({ 
                                   ...prev, 
-                                  status: value as InterviewStage['status'] 
+                                  status: value as StageStatus 
                                 }))}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="upcoming">待进行</SelectItem>
-                                  <SelectItem value="completed">已完成</SelectItem>
-                                  <SelectItem value="skipped">已跳过</SelectItem>
+                                  <SelectItem value="pending">⏳ 待进行</SelectItem>
+                                  <SelectItem value="scheduled">📅 已安排</SelectItem>
+                                  <SelectItem value="rescheduled">🔄 已改期</SelectItem>
+                                  <SelectItem value="completed">✅ 已完成</SelectItem>
+                                  <SelectItem value="feedback_pending">⏱️ 等反馈</SelectItem>
+                                  <SelectItem value="skipped">⏭️ 已跳过</SelectItem>
+                                  <SelectItem value="withdrawn">🔙 已撤回</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
+                            {/* Result - only shown when completed */}
+                            {(editData.status === 'completed' || editData.status === 'feedback_pending') && (
+                              <div className="space-y-2">
+                                <Label>结果</Label>
+                                <Select
+                                  value={editData.result || ''}
+                                  onValueChange={(value) => setEditData(prev => ({ 
+                                    ...prev, 
+                                    result: value === '' ? null : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
+                                  }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="选择结果..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">🔄 待定</SelectItem>
+                                    <SelectItem value="passed">🎉 通过</SelectItem>
+                                    <SelectItem value="rejected">❌ 未通过</SelectItem>
+                                    <SelectItem value="on_hold">🧊 HC冻结</SelectItem>
+                                    <SelectItem value="mixed_feedback">⚖️ 意见不一</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">

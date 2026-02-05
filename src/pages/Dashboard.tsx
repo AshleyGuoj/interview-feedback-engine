@@ -38,7 +38,8 @@ export default function Dashboard() {
     return jobs
       .flatMap(job => {
         const upcomingStages = job.stages.filter(s => {
-          if (s.status !== 'upcoming') return false;
+          // Include pending, scheduled, or rescheduled stages
+          if (!['pending', 'scheduled', 'rescheduled'].includes(s.status)) return false;
           
           // Include if has scheduled time in the future, or has a deadline
           if (s.scheduledTime) {

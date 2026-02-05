@@ -76,20 +76,74 @@ export interface StoryMaterial {
   effectiveness?: 'high' | 'medium' | 'low';
 }
 
+// ============================================
+// TWO-DIMENSIONAL MODEL: Stage + Status + Result
+// ============================================
+
+// Layer 2A: Behavioral Status (what's happening with this stage)
+// This is system-controlled, not user-customizable
+export type StageStatus = 
+  | 'pending'           // 待进行
+  | 'scheduled'         // 已安排  
+  | 'rescheduled'       // 已改期
+  | 'completed'         // 已完成
+  | 'feedback_pending'  // 等待反馈 ⭐ Key pain point!
+  | 'skipped'           // 跳过
+  | 'withdrawn';        // 候选人退出
+
+// Layer 2B: Decision Result (what was the outcome)
+// Only applicable after stage is completed
+export type StageResult = 
+  | 'passed'            // 通过本轮
+  | 'rejected'          // 未通过
+  | 'on_hold'           // HC冻结/组织调整
+  | 'mixed_feedback'    // 意见不统一
+  | null;               // No result yet
+
+// Status display config
+export const STAGE_STATUS_CONFIG: Record<StageStatus, { label: string; labelZh: string; emoji: string; color: string }> = {
+  pending: { label: 'Pending', labelZh: '待进行', emoji: '⏳', color: 'gray' },
+  scheduled: { label: 'Scheduled', labelZh: '已安排', emoji: '📅', color: 'blue' },
+  rescheduled: { label: 'Rescheduled', labelZh: '已改期', emoji: '🔄', color: 'orange' },
+  completed: { label: 'Completed', labelZh: '已完成', emoji: '✅', color: 'green' },
+  feedback_pending: { label: 'Feedback Pending', labelZh: '等反馈', emoji: '⏱️', color: 'amber' },
+  skipped: { label: 'Skipped', labelZh: '已跳过', emoji: '⏭️', color: 'gray' },
+  withdrawn: { label: 'Withdrawn', labelZh: '已撤回', emoji: '🔙', color: 'gray' },
+};
+
+// Result display config
+export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: string; labelZh: string; emoji: string; color: string }> = {
+  passed: { label: 'Passed', labelZh: '通过', emoji: '🎉', color: 'green' },
+  rejected: { label: 'Rejected', labelZh: '未通过', emoji: '❌', color: 'red' },
+  on_hold: { label: 'On Hold', labelZh: 'HC冻结', emoji: '🧊', color: 'cyan' },
+  mixed_feedback: { label: 'Mixed Feedback', labelZh: '意见不一', emoji: '⚖️', color: 'amber' },
+};
+
+// Layer 1: Interview Stage (customizable timeline)
 export interface InterviewStage {
   id: string;
-  name: string;
-  status: 'upcoming' | 'completed' | 'skipped';
-  date?: string;
+  name: string;              // Customizable: "HR Screen", "Technical", etc.
+  order?: number;            // For drag-and-drop reordering
+  
+  // Two-dimensional state
+  status: StageStatus;       // Behavioral: what's happening
+  result?: StageResult;      // Decision: what was the outcome (only after completed)
+  
+  // Scheduling
   scheduledTime?: string;
   scheduledTimezone?: string;
   deadline?: string;
   deadlineTimezone?: string;
+  date?: string;
   
-  // Interview content for knowledge base
+  // Interview details
+  interviewer?: string;
+  feedbackScore?: number;    // 1-5 rating if available
+  
+  // Content for knowledge base
   questions?: InterviewQuestion[];
   reflection?: InterviewReflection;
-  storiesUsed?: string[]; // IDs of StoryMaterial used in this interview
+  storiesUsed?: string[];
   
   // Legacy fields for compatibility
   preparation?: {
@@ -132,16 +186,16 @@ export interface Job {
   subStatus?: InterviewingSubStatus | OfferSubStatus;
   closedReason?: ClosedReason;
   riskTags?: RiskTag[];
-  lastContactDate?: string; // For calculating "long silence"
+  lastContactDate?: string;
 }
 
 export const DEFAULT_STAGES: Omit<InterviewStage, 'id'>[] = [
-  { name: 'Applied', status: 'completed' },
-  { name: 'HR Screen', status: 'upcoming' },
-  { name: 'Round 1', status: 'upcoming' },
-  { name: 'Round 2', status: 'upcoming' },
-  { name: 'Final Round', status: 'upcoming' },
-  { name: 'Offer Discussion', status: 'upcoming' },
+  { name: 'Applied', status: 'completed', result: 'passed' },
+  { name: 'HR Screen', status: 'pending' },
+  { name: 'Round 1', status: 'pending' },
+  { name: 'Round 2', status: 'pending' },
+  { name: 'Final Round', status: 'pending' },
+  { name: 'Offer Discussion', status: 'pending' },
 ];
 
 // Question categories for display
