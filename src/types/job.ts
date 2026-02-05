@@ -217,12 +217,19 @@ export interface Job {
   lastContactDate?: string;
 }
 
+// Helper: Check if a pipeline has terminal stages (rejected/withdrawn)
+export function isPipelineTerminal(pipeline: Pipeline): boolean {
+  return pipeline.stages.some(stage => 
+    stage.result === 'rejected' || stage.status === 'withdrawn'
+  );
+}
+
 // Helper: Get active pipeline from job
 export function getActivePipeline(job: Job): Pipeline | null {
   if (!job.pipelines || job.pipelines.length === 0) {
     // Backward compatibility: convert stages to pipeline
     if (job.stages && job.stages.length > 0) {
-      return {
+      const legacyPipeline: Pipeline = {
         id: 'legacy-primary',
         type: 'primary',
         status: 'active',
@@ -230,14 +237,36 @@ export function getActivePipeline(job: Job): Pipeline | null {
         stages: job.stages,
         createdAt: job.createdAt,
       };
+      // Check if legacy pipeline is terminal
+      if (isPipelineTerminal(legacyPipeline)) {
+        return legacyPipeline; // Return it but mark as terminal for resolver
+      }
+      return legacyPipeline;
     }
     return null;
   }
   
-  // Priority: newest active/paused pipeline
-  return job.pipelines
-    .filter(p => p.status === 'active' || p.status === 'paused')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
+  // Priority: newest non-terminal active/paused pipeline
+  // A pipeline is considered non-active if:
+  // 1. status is 'closed' or 'completed', OR
+  // 2. It has terminal stages (rejected/withdrawn)
+  const activePipelines = job.pipelines
+    .filter(p => {
+      // Explicit closed/completed status
+      if (p.status === 'closed' || p.status === 'completed') return false;
+      // Check for terminal stages
+      if (isPipelineTerminal(p)) return false;
+      return p.status === 'active' || p.status === 'paused';
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+  // If no truly active pipelines, return the newest one for display purposes
+  if (activePipelines.length === 0) {
+    return job.pipelines
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
+  }
+  
+  return activePipelines[0];
 }
 
 // Helper: Get all stages from active pipeline
