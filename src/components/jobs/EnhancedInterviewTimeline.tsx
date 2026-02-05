@@ -289,17 +289,17 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                               <div className="space-y-2">
                                 <Label>结果</Label>
                                 <Select
-                                  value={editData.result || ''}
+                                  value={editData.result || '_none'}
                                   onValueChange={(value) => setEditData(prev => ({ 
                                     ...prev, 
-                                    result: value === '' ? null : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
+                                    result: value === '_none' ? undefined : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
                                   }))}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="选择结果..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">🔄 待定</SelectItem>
+                                    <SelectItem value="_none">🔄 待定</SelectItem>
                                     <SelectItem value="passed">🎉 通过</SelectItem>
                                     <SelectItem value="rejected">❌ 未通过</SelectItem>
                                     <SelectItem value="on_hold">🧊 HC冻结</SelectItem>
