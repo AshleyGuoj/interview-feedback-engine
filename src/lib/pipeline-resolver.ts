@@ -65,6 +65,70 @@ export function resolvePipeline(job: Job): PipelineResolution {
     p.stages.some(s => s.result === 'rejected' || s.status === 'withdrawn')
   );
 
+  // === Terminal truth fallback (critical for Closed cards) ===
+  // If the job is already closed (or all pipelines are terminal), we should never
+  // show an ambiguous "Awaiting Decision" just because the "active" pipeline selection
+  // is stale. We scan ALL pipelines for the most recent rejected/withdrawn signal.
+  const pipelinesNewestFirst = [...allPipelines].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const mostRecentRejected = pipelinesNewestFirst
+    .map(p => {
+      const idx = [...p.stages].map((s, i) => ({ s, i }))
+        .filter(({ s }) => s?.result === 'rejected')
+        .pop();
+      return idx ? { pipeline: p, stage: idx.s, index: idx.i } : null;
+    })
+    .find(Boolean) as { pipeline: Pipeline; stage: InterviewStage; index: number } | undefined;
+
+  const mostRecentWithdrawn = pipelinesNewestFirst
+    .map(p => {
+      const idx = [...p.stages].map((s, i) => ({ s, i }))
+        .filter(({ s }) => s?.status === 'withdrawn')
+        .pop();
+      return idx ? { pipeline: p, stage: idx.s, index: idx.i } : null;
+    })
+    .find(Boolean) as { pipeline: Pipeline; stage: InterviewStage; index: number } | undefined;
+
+  if ((job.status === 'closed' || allPipelinesTerminal) && mostRecentRejected) {
+    const total = mostRecentRejected.pipeline.stages.length;
+    return {
+      state: {
+        type: 'rejected',
+        atStage: mostRecentRejected.stage,
+        label: `Rejected at ${mostRecentRejected.stage.name}`,
+        stageIndex: mostRecentRejected.index,
+        totalStages: total,
+      },
+      activeStage: mostRecentRejected.stage,
+      activePipeline: mostRecentRejected.pipeline,
+      completedStages: mostRecentRejected.pipeline.stages.slice(0, mostRecentRejected.index),
+      shouldAutoActivateNext: false,
+      failureStage: mostRecentRejected.stage,
+      failureStageIndex: mostRecentRejected.index,
+      totalStages: total,
+      shouldAutoClose: allPipelinesTerminal,
+      autoCloseReason: 'rejected_after_interview',
+      hasMultiplePipelines,
+      allPipelines,
+    };
+  }
+
+  if ((job.status === 'closed' || allPipelinesTerminal) && mostRecentWithdrawn) {
+    return {
+      state: { type: 'withdrawn', label: 'Withdrawn' },
+      activeStage: mostRecentWithdrawn.stage,
+      activePipeline: mostRecentWithdrawn.pipeline,
+      completedStages: mostRecentWithdrawn.pipeline.stages.filter(s => s.status === 'completed'),
+      shouldAutoActivateNext: false,
+      shouldAutoClose: allPipelinesTerminal,
+      autoCloseReason: 'withdrawn',
+      hasMultiplePipelines,
+      allPipelines,
+    };
+  }
+
   if (!stages || stages.length === 0) {
     return {
       state: { type: 'applied', label: 'Applied' },
