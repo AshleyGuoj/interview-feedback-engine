@@ -317,18 +317,50 @@ export default function JobDetail() {
   const handleTerminalClosePipeline = async () => {
     if (!terminalStage || !terminalResult) return;
     
-    // Mark pipeline as closed and update stage
-    await performStageUpdate(terminalStage.id, { result: terminalResult });
+    // Update stage result AND close pipeline in a single atomic update
+    const updatedStages = activeStages.map(s => 
+      s.id === terminalStage.id ? { ...s, result: terminalResult } : s
+    );
     
-    // Close the current pipeline explicitly
     if (activePipeline && job.pipelines?.length > 0) {
       const updatedPipelines = job.pipelines.map(p => 
         p.id === activePipeline.id 
-          ? { ...p, status: 'closed' as const, closedAt: new Date().toISOString(), closedReason: terminalResult === 'rejected' ? 'rejected_after_interview' as const : 'hc_frozen' as const }
+          ? { 
+              ...p, 
+              status: 'closed' as const, 
+              closedAt: new Date().toISOString(), 
+              closedReason: terminalResult === 'rejected' ? 'rejected_after_interview' as const : 'hc_frozen' as const,
+              stages: updatedStages, // Include updated stage result
+            }
           : p
       );
-      await updateJob(job.id, { pipelines: updatedPipelines });
+      
+      // Derive new job status - should become 'closed' if all pipelines are terminal
+      const newStatus = deriveJobStatusFromStages(updatedStages, job.status);
+      
+      await updateJob(job.id, { 
+        pipelines: updatedPipelines,
+        stages: updatedStages, // Keep legacy stages in sync
+        status: 'closed', // Explicitly set to closed since pipeline is closing
+      });
+    } else {
+      // Legacy: update stages directly
+      await updateJob(job.id, { 
+        stages: updatedStages,
+        status: 'closed',
+      });
     }
+    
+    // Log activity
+    await addActivity({
+      jobId: job.id,
+      type: 'stage_updated',
+      message: `${job.companyName} — ${terminalStage.name} ${terminalResult === 'rejected' ? 'not passed' : 'put on hold (hiring freeze)'}`,
+      metadata: { 
+        stageName: terminalStage.name, 
+        result: terminalResult 
+      }
+    });
     
     toast.success('Pipeline closed');
   };
@@ -336,23 +368,59 @@ export default function JobDetail() {
   const handleTerminalTransfer = async (newRole: string) => {
     if (!terminalStage || !terminalResult) return;
     
-    // First, apply the terminal result to the current stage
-    await performStageUpdate(terminalStage.id, { result: terminalResult });
+    // Update stage result in the current pipeline
+    const updatedStages = activeStages.map(s => 
+      s.id === terminalStage.id ? { ...s, result: terminalResult } : s
+    );
     
-    // Then create a new transfer pipeline
-    const newPipeline: Omit<Pipeline, 'id' | 'createdAt'> = {
+    // Create a new transfer pipeline
+    const newPipeline: Pipeline = {
+      id: `pipeline-${Date.now()}`,
       type: 'transfer',
       status: 'active',
       targetRole: newRole,
       originPipelineId: activePipeline?.id,
       transferReason: terminalResult === 'on_hold' ? 'hc_freeze' : 'better_fit',
+      createdAt: new Date().toISOString(),
       stages: DEFAULT_STAGES.map((s, i) => ({
         ...s,
         id: `stage-${Date.now()}-${i}`,
       })) as InterviewStage[],
     };
     
-    await handleCreatePipelineBranch(newPipeline);
+    // Update current pipeline with terminal result AND add new pipeline atomically
+    const updatedPipelines = (job.pipelines || []).map(p => 
+      p.id === activePipeline?.id 
+        ? { 
+            ...p, 
+            status: 'closed' as const, 
+            closedAt: new Date().toISOString(),
+            closedReason: terminalResult === 'rejected' ? 'rejected_after_interview' as const : 'hc_frozen' as const,
+            stages: updatedStages,
+          } 
+        : p
+    );
+    updatedPipelines.push(newPipeline);
+    
+    await updateJob(job.id, { 
+      pipelines: updatedPipelines,
+      roleTitle: newRole, // Update to new role
+      stages: newPipeline.stages, // Sync legacy stages with new pipeline
+      status: 'interviewing', // New pipeline means active again
+    });
+    
+    // Log activity
+    await addActivity({
+      jobId: job.id,
+      type: 'stage_updated',
+      message: `${job.companyName} — Transferred to ${newRole} from ${terminalStage.name}`,
+      metadata: { 
+        stageName: terminalStage.name, 
+        result: terminalResult,
+        newRole,
+      }
+    });
+    
     toast.success(`Transferred to ${newRole}`);
   };
 
