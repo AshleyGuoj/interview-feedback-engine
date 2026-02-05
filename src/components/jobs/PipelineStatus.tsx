@@ -44,7 +44,9 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
         return `Ended at ${state.atStage.name}`;
       
       case 'on_hold':
-        return state.label;
+        // If it's a closed on_hold (HC freeze that was closed), show "Ended at"
+        // Otherwise show the default label
+        return state.label.startsWith('Ended') ? state.label : `Frozen at ${state.atStage.name}`;
       
       case 'offer':
         return 'Offer Received';
