@@ -196,19 +196,30 @@ export default function JobDetail() {
   const handleStageUpdate = async (stageId: string, updates: Partial<InterviewStage>) => {
     const oldStage = activeStages.find(s => s.id === stageId);
     const updatedStage = { ...oldStage, ...updates } as InterviewStage;
-    
+
     // Check if this update introduces a terminal result (rejected/on_hold)
-    const isTerminalResult = updates.result && ['rejected', 'on_hold'].includes(updates.result);
+    const isTerminalResult = !!updates.result && ['rejected', 'on_hold'].includes(updates.result);
     const wasNotTerminal = !oldStage?.result || !['rejected', 'on_hold'].includes(oldStage.result);
-    
+
+    // Debug (helps verify the trigger path)
+    console.debug('[TerminalDecision]', {
+      stageId,
+      updates,
+      oldResult: oldStage?.result,
+      pipelineStatus: activePipeline?.status,
+      isTerminalResult,
+      wasNotTerminal,
+    });
+
     // If terminal result is being set, show decision modal instead of auto-processing
     if (isTerminalResult && wasNotTerminal) {
+      toast.message('需要确认下一步：关闭还是转岗？');
       setTerminalStage(updatedStage);
-      setTerminalResult(updates.result);
+      setTerminalResult(updates.result ?? null);
       setTerminalModalOpen(true);
       return; // Don't update yet - wait for modal decision
     }
-    
+
     // Normal update flow
     await performStageUpdate(stageId, updates);
   };
