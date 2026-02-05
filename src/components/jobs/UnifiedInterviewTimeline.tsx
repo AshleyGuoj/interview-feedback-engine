@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Job, Pipeline, InterviewStage, getActivePipeline } from '@/types/job';
 import { EnhancedInterviewTimeline } from './EnhancedInterviewTimeline';
-import { PipelineTransferMarker } from './PipelineTransferMarker';
+import { CollapsiblePipelineHistory } from './CollapsiblePipelineHistory';
 import { PipelineSelector } from './PipelineSelector';
 import { StageEditor } from './StageEditor';
 import { Badge } from '@/components/ui/badge';
@@ -153,63 +153,34 @@ export function UnifiedInterviewTimeline({
         </div>
       </div>
 
-      {/* Timeline content */}
-      <div className="space-y-4">
-        {timelineItems.map((item, index) => {
-          if (item.type === 'transfer-marker') {
-            return (
-              <PipelineTransferMarker
-                key={`transfer-${item.pipeline.id}`}
-                fromPipeline={item.previousPipeline}
-                toPipeline={item.pipeline}
+      {/* Timeline content - Active pipeline first, then history */}
+      <div className="space-y-6">
+        {/* Active Pipeline - Full display */}
+        {timelineItems
+          .filter(item => item.type === 'stages' && item.isActive)
+          .map(item => (
+            <div key={`stages-${item.pipeline.id}`}>
+              <EnhancedInterviewTimeline
+                stages={item.pipeline.stages}
+                onStageUpdate={onStageUpdate}
+                jobContext={jobContext}
               />
-            );
-          }
-          
-          if (item.type === 'stages') {
-            // For non-active pipelines, show in a collapsed/dimmed state
-            const isCollapsibleHistory = !item.isActive && hasMultiplePipelines;
-            
-            return (
-              <div
-                key={`stages-${item.pipeline.id}`}
-                className={cn(
-                  isCollapsibleHistory && 'opacity-60 border-l-2 border-muted-foreground/20 pl-4'
-                )}
-              >
-                {/* Pipeline section header for history */}
-                {isCollapsibleHistory && (
-                  <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-                    <span className="font-medium">{item.pipeline.targetRole}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {item.pipeline.status === 'paused' ? '已暂停' : 
-                       item.pipeline.status === 'closed' ? '已结束' : ''}
-                    </Badge>
-                    <span className="text-xs">
-                      {new Date(item.pipeline.createdAt).toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                )}
-                
-                <EnhancedInterviewTimeline
-                  stages={item.pipeline.stages}
-                  onStageUpdate={(stageId, updates) => {
-                    if (item.isActive) {
-                      onStageUpdate(stageId, updates);
-                    }
-                  }}
-                  jobContext={jobContext}
-                />
-              </div>
-            );
-          }
-          
-          return null;
-        })}
+            </div>
+          ))
+        }
+
+        {/* Historical Pipelines - Collapsible, only meaningful stages */}
+        {timelineItems
+          .filter(item => item.type === 'stages' && !item.isActive && hasMultiplePipelines)
+          .map(item => (
+            <CollapsiblePipelineHistory
+              key={`history-${item.pipeline.id}`}
+              pipeline={item.pipeline}
+              previousPipeline={item.previousPipeline}
+              jobContext={jobContext}
+            />
+          ))
+        }
       </div>
     </div>
   );
