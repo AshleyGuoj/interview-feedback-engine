@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { EnhancedInterviewTimeline } from '@/components/jobs/EnhancedInterviewTimeline';
+import { UnifiedInterviewTimeline } from '@/components/jobs/UnifiedInterviewTimeline';
 import { StageEditor } from '@/components/jobs/StageEditor';
-import { PipelineSelector } from '@/components/jobs/PipelineSelector';
 import { PipelineTransferDialog } from '@/components/jobs/PipelineTransferDialog';
 import { OnHoldPrompt } from '@/components/jobs/OnHoldPrompt';
 import { Button } from '@/components/ui/button';
@@ -671,58 +670,17 @@ export default function JobDetail() {
           />
         )}
 
-        {/* Interview Timeline */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  面试记录
-                  {pipelineResolution?.hasMultiplePipelines && (
-                    <Badge variant="secondary" className="text-xs">
-                      <GitBranch className="w-3 h-3 mr-1" />
-                      {pipelineResolution.allPipelines.length} Pipelines
-                    </Badge>
-                  )}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {activePipeline?.targetRole || job.roleTitle}
-                  {activePipeline?.type === 'transfer' && (
-                    <span className="ml-1 text-primary">(Transfer)</span>
-                  )}
-                </p>
-              </div>
-              {/* Pipeline Selector */}
-              {(job.pipelines?.length > 1 || pipelineResolution?.hasMultiplePipelines) && (
-                <PipelineSelector
-                  pipelines={pipelineResolution?.allPipelines || job.pipelines || []}
-                  activePipelineId={activePipeline?.id || null}
-                  onSelectPipeline={setSelectedPipelineId}
-                  onCreateBranch={() => setShowTransferDialog(true)}
-                  companyName={job.companyName}
-                />
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowTransferDialog(true)}
-                className="gap-1.5"
-              >
-                <GitBranch className="w-4 h-4" />
-                Transfer
-              </Button>
-              <StageEditor stages={activeStages} onSave={handleStagesChange} />
-            </div>
-          </div>
-          <EnhancedInterviewTimeline 
-            stages={activeStages}
-            onStageUpdate={handleStageUpdate}
-            onAIAction={handleAIAction}
-            jobContext={{ jobId: job.id, company: job.companyName, role: activePipeline?.targetRole || job.roleTitle }}
-          />
-        </div>
+        {/* Interview Timeline - Shows all pipelines with transfer history */}
+        <UnifiedInterviewTimeline
+          job={job}
+          onStageUpdate={handleStageUpdate}
+          onStagesChange={handleStagesChange}
+          onOpenTransfer={() => setShowTransferDialog(true)}
+          onOpenCustomize={() => {/* StageEditor handles its own open state */}}
+          activePipelineId={selectedPipelineId}
+          onSelectPipeline={setSelectedPipelineId}
+          jobContext={{ jobId: job.id, company: job.companyName, role: activePipeline?.targetRole || job.roleTitle }}
+        />
 
         {/* Pipeline Transfer Dialog */}
         <PipelineTransferDialog
