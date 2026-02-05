@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { StatusIcon } from '@/components/ui/status-icon';
 import { 
   ChevronDown, 
   Check, 
@@ -110,9 +111,11 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
 
   const getStatusBadge = (status: StageStatus) => {
     const config = STAGE_STATUS_CONFIG[status];
-    if (!config) return { label: status, className: statusColorClasses.gray };
+    if (!config) return { label: status, icon: 'circle-dashed', color: 'gray', className: statusColorClasses.gray };
     return {
-      label: `${config.emoji} ${config.label}`,
+      label: config.label,
+      icon: config.icon,
+      color: config.color,
       className: statusColorClasses[config.color] || statusColorClasses.gray
     };
   };
@@ -165,9 +168,10 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                         <span className="font-medium">{stage.name}</span>
                         <Badge 
                           variant="secondary" 
-                          className={cn(statusBadge.className)}
+                          className={cn('gap-1.5', statusBadge.className)}
                           title="Stage status"
                         >
+                          <StatusIcon iconName={statusBadge.icon} color={statusBadge.color} size="sm" />
                           {statusBadge.label}
                         </Badge>
                         {stage.scheduledTime && stage.scheduledTimezone && (
