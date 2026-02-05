@@ -33,12 +33,23 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
       id: `stage-${Date.now()}-${index}`,
     }));
 
+    // Create primary pipeline with the initial stages
+    const primaryPipeline = {
+      id: `pipeline-${Date.now()}`,
+      type: 'primary' as const,
+      status: 'active' as const,
+      targetRole: formData.roleTitle,
+      stages,
+      createdAt: new Date().toISOString(),
+    };
+
     onAdd({
       ...formData,
       status: 'applied',
       currentStage: 'Applied',
       nextAction: 'Wait for response',
-      stages,
+      stages,                    // Legacy: keep for backward compatibility
+      pipelines: [primaryPipeline],
     });
 
     setFormData({

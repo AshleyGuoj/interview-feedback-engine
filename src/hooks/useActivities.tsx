@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface Activity {
   id: string;
   jobId: string;
-  type: 'interview_scheduled' | 'stage_completed' | 'status_changed' | 'offer_received' | 'stage_updated';
+  type: 'interview_scheduled' | 'stage_completed' | 'status_changed' | 'offer_received' | 'stage_updated' | 'pipeline_transfer';
   message: string;
   metadata: Record<string, any>;
   createdAt: string;

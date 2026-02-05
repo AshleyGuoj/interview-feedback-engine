@@ -13,6 +13,23 @@ function dbToJob(row: any): Job {
   // (for backward compatibility with existing data structure)
   const metadata = stagesData._metadata || {};
   
+  // Parse pipelines from metadata or create from legacy stages
+  let pipelines: Job['pipelines'] = [];
+  
+  if (metadata.pipelines && Array.isArray(metadata.pipelines)) {
+    pipelines = metadata.pipelines;
+  } else if (Array.isArray(stagesData) && stagesData.length > 0) {
+    // Migrate legacy single pipeline: convert stages to a primary pipeline
+    pipelines = [{
+      id: 'legacy-primary',
+      type: 'primary' as const,
+      status: 'active' as const,
+      targetRole: row.role_title,
+      stages: stagesData,
+      createdAt: row.created_at,
+    }];
+  }
+  
   return {
     id: row.id,
     companyName: row.company_name,
@@ -26,6 +43,7 @@ function dbToJob(row: any): Job {
     currentStage: row.current_stage || undefined,
     nextAction: row.next_action || undefined,
     stages: Array.isArray(stagesData) ? stagesData as InterviewStage[] : (stagesData.list || []) as InterviewStage[],
+    pipelines,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     // Extended fields from metadata
@@ -51,11 +69,19 @@ function jobToDb(job: Partial<Job>, userId: string) {
   if (job.currentStage !== undefined) result.current_stage = job.currentStage || null;
   if (job.nextAction !== undefined) result.next_action = job.nextAction || null;
   
-  // Store stages with metadata for extended fields
-  if (job.stages !== undefined || job.subStatus !== undefined || job.closedReason !== undefined || job.riskTags !== undefined || job.lastContactDate !== undefined) {
+  // Store stages with metadata for extended fields (including pipelines)
+  const hasExtendedFields = job.stages !== undefined || 
+    job.pipelines !== undefined ||
+    job.subStatus !== undefined || 
+    job.closedReason !== undefined || 
+    job.riskTags !== undefined || 
+    job.lastContactDate !== undefined;
+    
+  if (hasExtendedFields) {
     result.stages = {
       list: job.stages || [],
       _metadata: {
+        pipelines: job.pipelines,
         subStatus: job.subStatus,
         closedReason: job.closedReason,
         riskTags: job.riskTags,

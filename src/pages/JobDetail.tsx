@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { EnhancedInterviewTimeline } from '@/components/jobs/EnhancedInterviewTimeline';
 import { StageEditor } from '@/components/jobs/StageEditor';
+import { PipelineSelector } from '@/components/jobs/PipelineSelector';
+import { PipelineTransferDialog } from '@/components/jobs/PipelineTransferDialog';
+import { OnHoldPrompt } from '@/components/jobs/OnHoldPrompt';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,14 +26,16 @@ import {
   X,
   Trash2,
   Upload,
-  FileText
+  FileText,
+  GitBranch
 } from 'lucide-react';
-import { Job, InterviewStage, JobStatus, JobSource } from '@/types/job';
+import { Job, InterviewStage, JobStatus, JobSource, Pipeline, getActivePipeline } from '@/types/job';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useJobs, deriveJobStatusFromStages } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
 import { formatDualTimezone } from '@/lib/timezone';
+import { resolvePipeline } from '@/lib/pipeline-resolver';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,12 +73,45 @@ export default function JobDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Job>>({});
   const [attachments, setAttachments] = useState<{ name: string; type: string; url: string }[]>([]);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [dismissedOnHoldPrompt, setDismissedOnHoldPrompt] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+
+  // Pipeline resolution
+  const pipelineResolution = useMemo(() => {
+    if (!job) return null;
+    return resolvePipeline(job);
+  }, [job]);
+
+  // Get active pipeline and stages
+  const activePipeline = useMemo(() => {
+    if (!job) return null;
+    if (selectedPipelineId && job.pipelines?.length > 0) {
+      return job.pipelines.find(p => p.id === selectedPipelineId) || getActivePipeline(job);
+    }
+    return getActivePipeline(job);
+  }, [job, selectedPipelineId]);
+
+  const activeStages = useMemo(() => {
+    return activePipeline?.stages || job?.stages || [];
+  }, [activePipeline, job?.stages]);
+
+  // Check for on_hold state to show transfer prompt
+  const showOnHoldPrompt = useMemo(() => {
+    if (dismissedOnHoldPrompt) return false;
+    if (!pipelineResolution) return false;
+    return pipelineResolution.state.type === 'on_hold';
+  }, [pipelineResolution, dismissedOnHoldPrompt]);
+
+  const onHoldStage = pipelineResolution?.state.type === 'on_hold' 
+    ? pipelineResolution.state.atStage 
+    : null;
 
   // Derive next upcoming event from stages (single source of truth)
   const nextUpcomingEvent = useMemo(() => {
     if (!job) return null;
     
-    const upcomingStages = job.stages.filter(s => 
+    const upcomingStages = activeStages.filter(s => 
       ['pending', 'scheduled', 'rescheduled'].includes(s.status) && s.scheduledTime
     );
     
@@ -85,7 +123,7 @@ export default function JobDetail() {
     );
     
     return upcomingStages[0];
-  }, [job?.stages]);
+  }, [activeStages]);
 
   if (!job) {
     return (
@@ -151,26 +189,41 @@ export default function JobDetail() {
   };
 
   const handleStageUpdate = async (stageId: string, updates: Partial<InterviewStage>) => {
-    const oldStage = job.stages.find(s => s.id === stageId);
-    const updatedStages = job.stages.map(s => 
+    const oldStage = activeStages.find(s => s.id === stageId);
+    const updatedStages = activeStages.map(s => 
       s.id === stageId ? { ...s, ...updates } : s
     );
     
-    // Derive new job status from stages
-    const newStatus = deriveJobStatusFromStages(updatedStages, job.status);
-    const statusChanged = newStatus !== job.status;
-    
-    // Update job with stages and potentially new status
-    await updateJob(job.id, { 
-      stages: updatedStages,
-      ...(statusChanged ? { status: newStatus } : {})
-    });
+    // Update the active pipeline's stages
+    if (activePipeline && job.pipelines?.length > 0) {
+      const updatedPipelines = job.pipelines.map(p => 
+        p.id === activePipeline.id ? { ...p, stages: updatedStages } : p
+      );
+      
+      // Derive new job status from stages
+      const newStatus = deriveJobStatusFromStages(updatedStages, job.status);
+      const statusChanged = newStatus !== job.status;
+      
+      await updateJob(job.id, { 
+        pipelines: updatedPipelines,
+        stages: updatedStages, // Keep legacy stages in sync
+        ...(statusChanged ? { status: newStatus } : {})
+      });
+    } else {
+      // Legacy: update stages directly
+      const newStatus = deriveJobStatusFromStages(updatedStages, job.status);
+      const statusChanged = newStatus !== job.status;
+      
+      await updateJob(job.id, { 
+        stages: updatedStages,
+        ...(statusChanged ? { status: newStatus } : {})
+      });
+    }
     
     // Log activity for stage updates
     const stageName = oldStage?.name || 'Stage';
     
     if (updates.status && oldStage?.status !== updates.status) {
-      // Status change activity
       const activityType = updates.status === 'completed' ? 'stage_completed' : 'stage_updated';
       const message = updates.status === 'completed'
         ? `${job.companyName} — ${stageName} completed`
@@ -189,7 +242,6 @@ export default function JobDetail() {
     }
     
     if (updates.scheduledTime && updates.scheduledTime !== oldStage?.scheduledTime) {
-      // Interview scheduled activity
       const timezone = updates.scheduledTimezone || oldStage?.scheduledTimezone || 'Asia/Shanghai';
       const timeDisplay = formatDualTimezone(updates.scheduledTime, timezone);
       
@@ -207,11 +259,61 @@ export default function JobDetail() {
   };
 
   const handleStagesChange = async (newStages: InterviewStage[]) => {
-    const nextStatus = deriveJobStatusFromStages(newStages, job.status);
+    if (activePipeline && job.pipelines?.length > 0) {
+      const updatedPipelines = job.pipelines.map(p => 
+        p.id === activePipeline.id ? { ...p, stages: newStages } : p
+      );
+      const nextStatus = deriveJobStatusFromStages(newStages, job.status);
+      await updateJob(job.id, {
+        pipelines: updatedPipelines,
+        stages: newStages,
+        status: nextStatus,
+      });
+    } else {
+      const nextStatus = deriveJobStatusFromStages(newStages, job.status);
+      await updateJob(job.id, {
+        stages: newStages,
+        status: nextStatus,
+      });
+    }
+  };
+
+  const handleCreatePipelineBranch = async (newPipeline: Omit<Pipeline, 'id' | 'createdAt'>) => {
+    const pipelineWithId: Pipeline = {
+      ...newPipeline,
+      id: `pipeline-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Mark current active pipeline as paused if it exists
+    const updatedPipelines = (job.pipelines || []).map(p => 
+      p.id === activePipeline?.id ? { ...p, status: 'paused' as const } : p
+    );
+
+    // Add new pipeline and update job role to new target
     await updateJob(job.id, {
-      stages: newStages,
-      status: nextStatus,
+      pipelines: [...updatedPipelines, pipelineWithId],
+      roleTitle: pipelineWithId.targetRole, // Update job role to new target
+      stages: pipelineWithId.stages, // Keep legacy stages in sync
     });
+
+    // Select the new pipeline
+    setSelectedPipelineId(pipelineWithId.id);
+    
+    // Log activity
+    await addActivity({
+      jobId: job.id,
+      type: 'pipeline_transfer',
+      message: `${job.companyName} — Transferred to ${pipelineWithId.targetRole}`,
+      metadata: { 
+        fromRole: activePipeline?.targetRole,
+        toRole: pipelineWithId.targetRole,
+        reason: newPipeline.transferReason,
+      }
+    });
+
+    toast.success(`Created transfer pipeline: ${pipelineWithId.targetRole}`);
+    setDismissedOnHoldPrompt(true);
   };
 
   const handleAIAction = (action: 'summarize' | 'suggest-prep' | 'extract-insights', stageId?: string) => {
@@ -560,22 +662,76 @@ export default function JobDetail() {
           </CardContent>
         </Card>
 
+        {/* On Hold Prompt */}
+        {showOnHoldPrompt && onHoldStage && (
+          <OnHoldPrompt 
+            stage={onHoldStage}
+            onCreateTransfer={() => setShowTransferDialog(true)}
+            onDismiss={() => setDismissedOnHoldPrompt(true)}
+          />
+        )}
+
         {/* Interview Timeline */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">面试记录</h2>
-              <p className="text-sm text-muted-foreground">记录每轮面试的问题与反思，沉淀为你的面试数据库</p>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  面试记录
+                  {pipelineResolution?.hasMultiplePipelines && (
+                    <Badge variant="secondary" className="text-xs">
+                      <GitBranch className="w-3 h-3 mr-1" />
+                      {pipelineResolution.allPipelines.length} Pipelines
+                    </Badge>
+                  )}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {activePipeline?.targetRole || job.roleTitle}
+                  {activePipeline?.type === 'transfer' && (
+                    <span className="ml-1 text-primary">(Transfer)</span>
+                  )}
+                </p>
+              </div>
+              {/* Pipeline Selector */}
+              {(job.pipelines?.length > 1 || pipelineResolution?.hasMultiplePipelines) && (
+                <PipelineSelector
+                  pipelines={pipelineResolution?.allPipelines || job.pipelines || []}
+                  activePipelineId={activePipeline?.id || null}
+                  onSelectPipeline={setSelectedPipelineId}
+                  onCreateBranch={() => setShowTransferDialog(true)}
+                  companyName={job.companyName}
+                />
+              )}
             </div>
-            <StageEditor stages={job.stages} onSave={handleStagesChange} />
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowTransferDialog(true)}
+                className="gap-1.5"
+              >
+                <GitBranch className="w-4 h-4" />
+                Transfer
+              </Button>
+              <StageEditor stages={activeStages} onSave={handleStagesChange} />
+            </div>
           </div>
           <EnhancedInterviewTimeline 
-            stages={job.stages}
+            stages={activeStages}
             onStageUpdate={handleStageUpdate}
             onAIAction={handleAIAction}
-            jobContext={{ jobId: job.id, company: job.companyName, role: job.roleTitle }}
+            jobContext={{ jobId: job.id, company: job.companyName, role: activePipeline?.targetRole || job.roleTitle }}
           />
         </div>
+
+        {/* Pipeline Transfer Dialog */}
+        <PipelineTransferDialog
+          open={showTransferDialog}
+          onOpenChange={setShowTransferDialog}
+          currentPipeline={activePipeline}
+          companyName={job.companyName}
+          onCreateBranch={handleCreatePipelineBranch}
+        />
       </div>
     </DashboardLayout>
   );
