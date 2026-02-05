@@ -82,6 +82,18 @@ export function resolvePipeline(job: Job): PipelineResolution {
     })
     .find(Boolean) as { pipeline: Pipeline; stage: InterviewStage; index: number } | undefined;
 
+  // Also check for on_hold with closed pipeline
+  const mostRecentOnHold = pipelinesNewestFirst
+    .map(p => {
+      // Only count on_hold as terminal if the pipeline is explicitly closed
+      if (p.status !== 'closed') return null;
+      const idx = [...p.stages].map((s, i) => ({ s, i }))
+        .filter(({ s }) => s?.result === 'on_hold')
+        .pop();
+      return idx ? { pipeline: p, stage: idx.s, index: idx.i } : null;
+    })
+    .find(Boolean) as { pipeline: Pipeline; stage: InterviewStage; index: number } | undefined;
+
   const mostRecentWithdrawn = pipelinesNewestFirst
     .map(p => {
       const idx = [...p.stages].map((s, i) => ({ s, i }))
@@ -110,6 +122,29 @@ export function resolvePipeline(job: Job): PipelineResolution {
       totalStages: total,
       shouldAutoClose: allPipelinesTerminal,
       autoCloseReason: 'rejected_after_interview',
+      hasMultiplePipelines,
+      allPipelines,
+    };
+  }
+
+  // Handle on_hold with closed pipeline (HC Freeze that user chose to close)
+  if ((job.status === 'closed' || allPipelinesTerminal) && mostRecentOnHold) {
+    const total = mostRecentOnHold.pipeline.stages.length;
+    return {
+      state: {
+        type: 'on_hold',
+        atStage: mostRecentOnHold.stage,
+        label: `Ended at ${mostRecentOnHold.stage.name}`,
+      },
+      activeStage: mostRecentOnHold.stage,
+      activePipeline: mostRecentOnHold.pipeline,
+      completedStages: mostRecentOnHold.pipeline.stages.slice(0, mostRecentOnHold.index),
+      shouldAutoActivateNext: false,
+      failureStage: mostRecentOnHold.stage,
+      failureStageIndex: mostRecentOnHold.index,
+      totalStages: total,
+      shouldAutoClose: allPipelinesTerminal,
+      autoCloseReason: 'hc_frozen',
       hasMultiplePipelines,
       allPipelines,
     };
