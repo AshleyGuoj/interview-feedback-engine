@@ -97,8 +97,9 @@ function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) 
           <span className={cn(
             "text-xs px-2 py-0.5 rounded-full",
             stage.status === 'completed' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-            stage.status === 'upcoming' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-            stage.status === 'skipped' && "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+            ['pending', 'scheduled', 'rescheduled'].includes(stage.status) && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+            stage.status === 'feedback_pending' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+            ['skipped', 'withdrawn'].includes(stage.status) && "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
           )}>
             {stage.status}
           </span>
@@ -162,7 +163,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     const newStage: InterviewStage = {
       id: `stage-${Date.now()}`,
       name: nameToAdd,
-      status: 'upcoming',
+      status: 'pending',
     };
     setLocalStages((prev) => [...prev, newStage]);
     if (!stageName) setNewStageName('');

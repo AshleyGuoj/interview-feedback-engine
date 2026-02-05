@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { InterviewStage, InterviewFormat } from '@/types/job';
+import { InterviewStage, InterviewFormat, StageStatus, STAGE_STATUS_CONFIG } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
+
+const statusColorClasses: Record<string, string> = {
+  blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50',
+  amber: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50',
+  orange: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50',
+  purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50',
+  cyan: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 hover:bg-cyan-200 dark:hover:bg-cyan-900/50',
+  green: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50',
+  red: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50',
+  gray: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
+};
 
 interface InterviewTimelineProps {
   stages: InterviewStage[];
@@ -85,31 +96,25 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
     setEditData({});
   };
 
-  const getStatusIcon = (status: InterviewStage['status']) => {
-    switch (status) {
-      case 'completed':
-        return <Check className="w-4 h-4 text-emerald-500" />;
-      case 'upcoming':
-        return <Clock className="w-4 h-4 text-amber-500" />;
-      case 'skipped':
-        return <Circle className="w-4 h-4 text-muted-foreground" />;
+  const getStatusIcon = (status: StageStatus) => {
+    const positiveStatuses: StageStatus[] = ['completed'];
+    const pendingStatuses: StageStatus[] = ['pending', 'scheduled', 'rescheduled', 'feedback_pending'];
+    
+    if (positiveStatuses.includes(status)) {
+      return <Check className="w-4 h-4 text-emerald-500" />;
+    } else if (pendingStatuses.includes(status)) {
+      return <Clock className="w-4 h-4 text-amber-500" />;
     }
+    return <Circle className="w-4 h-4 text-muted-foreground" />;
   };
 
-  const getStatusBadge = (status: InterviewStage['status']) => {
-    const variants: Record<InterviewStage['status'], { label: string; className: string }> = {
-      completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50' },
-      upcoming: { label: 'Upcoming', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50' },
-      skipped: { label: 'Skipped', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' },
+  const getStatusBadge = (status: StageStatus) => {
+    const config = STAGE_STATUS_CONFIG[status];
+    if (!config) return { label: status, className: statusColorClasses.gray };
+    return {
+      label: `${config.emoji} ${config.label}`,
+      className: statusColorClasses[config.color] || statusColorClasses.gray
     };
-    return variants[status];
-  };
-
-  const cycleStatus = (stageId: string, currentStatus: InterviewStage['status']) => {
-    const statusOrder: InterviewStage['status'][] = ['upcoming', 'completed', 'skipped'];
-    const currentIndex = statusOrder.indexOf(currentStatus);
-    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
-    onStageUpdate(stageId, { status: nextStatus });
   };
 
   const updateArrayField = (
@@ -144,7 +149,7 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
               <div className={cn(
                 'absolute left-2 top-4 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-background',
                 stage.status === 'completed' ? 'border-emerald-500' : 
-                stage.status === 'upcoming' ? 'border-amber-500' : 'border-muted'
+                ['pending', 'scheduled', 'rescheduled', 'feedback_pending'].includes(stage.status) ? 'border-amber-500' : 'border-muted'
               )}>
                 {getStatusIcon(stage.status)}
               </div>
@@ -160,12 +165,8 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                         <span className="font-medium">{stage.name}</span>
                         <Badge 
                           variant="secondary" 
-                          className={cn(statusBadge.className, 'cursor-pointer transition-colors')}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cycleStatus(stage.id, stage.status);
-                          }}
-                          title="Click to change status"
+                          className={cn(statusBadge.className)}
+                          title="Stage status"
                         >
                           {statusBadge.label}
                         </Badge>
@@ -234,19 +235,47 @@ export function InterviewTimeline({ stages, onStageUpdate, onAIAction }: Intervi
                                 value={editData.status}
                                 onValueChange={(value) => setEditData(prev => ({ 
                                   ...prev, 
-                                  status: value as InterviewStage['status'] 
+                                  status: value as StageStatus 
                                 }))}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="upcoming">Upcoming</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                  <SelectItem value="skipped">Skipped</SelectItem>
+                                  <SelectItem value="pending">⏳ Pending</SelectItem>
+                                  <SelectItem value="scheduled">📅 Scheduled</SelectItem>
+                                  <SelectItem value="rescheduled">🔄 Rescheduled</SelectItem>
+                                  <SelectItem value="completed">✅ Completed</SelectItem>
+                                  <SelectItem value="feedback_pending">⏱️ Feedback Pending</SelectItem>
+                                  <SelectItem value="skipped">⏭️ Skipped</SelectItem>
+                                  <SelectItem value="withdrawn">🔙 Withdrawn</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
+                            {/* Result - only shown when completed */}
+                            {(editData.status === 'completed' || editData.status === 'feedback_pending') && (
+                              <div className="space-y-2">
+                                <Label>Result</Label>
+                                <Select
+                                  value={editData.result || ''}
+                                  onValueChange={(value) => setEditData(prev => ({ 
+                                    ...prev, 
+                                    result: value === '' ? null : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
+                                  }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select result..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">🔄 Pending</SelectItem>
+                                    <SelectItem value="passed">🎉 Passed</SelectItem>
+                                    <SelectItem value="rejected">❌ Rejected</SelectItem>
+                                    <SelectItem value="on_hold">🧊 On Hold</SelectItem>
+                                    <SelectItem value="mixed_feedback">⚖️ Mixed Feedback</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                           </div>
 
                           {/* Scheduled Time with Timezone */}
