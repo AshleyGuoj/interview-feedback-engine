@@ -1,4 +1,4 @@
-import { InterviewStage, Job, StageStatus, StageResult } from '@/types/job';
+import { InterviewStage, Job, StageStatus, StageResult, Pipeline, getActivePipeline } from '@/types/job';
 
 // Terminal states that indicate a stage/job is no longer active
 const TERMINAL_RESULTS: StageResult[] = ['rejected'];
@@ -11,29 +11,57 @@ export type ResolvedPipelineState =
   | { type: 'on_hold'; atStage: InterviewStage; label: string }
   | { type: 'offer'; label: string }
   | { type: 'applied'; label: string }
-  | { type: 'withdrawn'; label: string };
+  | { type: 'withdrawn'; label: string }
+  | { type: 'transferred'; toPipeline: Pipeline; label: string };
 
 export interface PipelineResolution {
   state: ResolvedPipelineState;
   activeStage: InterviewStage | null;
+  activePipeline: Pipeline | null;
   completedStages: InterviewStage[];
   shouldAutoActivateNext: boolean;
   suggestedNextAction?: string;
+  // Transfer info
+  hasMultiplePipelines: boolean;
+  allPipelines: Pipeline[];
 }
 
 /**
  * Core Pipeline Resolver
- * Automatically calculates the current job's global state based on stage progression
+ * Step 1: Find Active Pipeline (newest non-terminal)
+ * Step 2: Find Active Stage within that pipeline
+ * Step 3: Derive display state
  */
 export function resolvePipeline(job: Job): PipelineResolution {
-  const stages = job.stages;
+  // Get all pipelines (with backward compatibility)
+  const allPipelines = job.pipelines && job.pipelines.length > 0 
+    ? job.pipelines 
+    : job.stages && job.stages.length > 0
+      ? [{
+          id: 'legacy-primary',
+          type: 'primary' as const,
+          status: 'active' as const,
+          targetRole: job.roleTitle,
+          stages: job.stages,
+          createdAt: job.createdAt,
+        }]
+      : [];
+  
+  const hasMultiplePipelines = allPipelines.length > 1;
+  
+  // Step 1: Get active pipeline
+  const activePipeline = getActivePipeline(job);
+  const stages = activePipeline?.stages || job.stages || [];
   
   if (!stages || stages.length === 0) {
     return {
       state: { type: 'applied', label: 'Applied' },
       activeStage: null,
+      activePipeline,
       completedStages: [],
       shouldAutoActivateNext: false,
+      hasMultiplePipelines,
+      allPipelines,
     };
   }
 
@@ -82,6 +110,12 @@ export function resolvePipeline(job: Job): PipelineResolution {
   }
 
   // === Determine the resolved state ===
+  // Helper to add common fields
+  const commonFields = {
+    activePipeline,
+    hasMultiplePipelines,
+    allPipelines,
+  };
 
   // Case 1: Candidate withdrew
   if (withdrawnStage) {
@@ -90,6 +124,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
       activeStage: withdrawnStage,
       completedStages,
       shouldAutoActivateNext: false,
+      ...commonFields,
     };
   }
 
@@ -104,10 +139,11 @@ export function resolvePipeline(job: Job): PipelineResolution {
       activeStage: rejectedStage,
       completedStages,
       shouldAutoActivateNext: false,
+      ...commonFields,
     };
   }
 
-  // Case 3: On Hold (HC Freeze)
+  // Case 3: On Hold (HC Freeze) - Prompt for transfer
   if (onHoldStage && !activeStage) {
     return {
       state: { 
@@ -118,6 +154,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
       activeStage: onHoldStage,
       completedStages,
       shouldAutoActivateNext: false,
+      ...commonFields,
     };
   }
 
@@ -133,6 +170,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
       activeStage: offerStage || null,
       completedStages,
       shouldAutoActivateNext: false,
+      ...commonFields,
     };
   }
 
@@ -154,6 +192,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         suggestedNextAction: activeStage.scheduledTime 
           ? `Interview on ${new Date(activeStage.scheduledTime).toLocaleDateString()}`
           : 'Schedule interview',
+        ...commonFields,
       };
     }
 
@@ -168,6 +207,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage,
         completedStages,
         shouldAutoActivateNext: false,
+        ...commonFields,
       };
     }
 
@@ -182,6 +222,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage,
         completedStages,
         shouldAutoActivateNext: false,
+        ...commonFields,
       };
     }
   }
@@ -203,6 +244,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage: nextStage,
         completedStages,
         shouldAutoActivateNext: true, // Signal that we should auto-activate
+        ...commonFields,
       };
     }
 
@@ -217,6 +259,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage: lastCompleted,
         completedStages,
         shouldAutoActivateNext: false,
+        ...commonFields,
       };
     }
   }
@@ -227,6 +270,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
     activeStage: stages[0] || null,
     completedStages,
     shouldAutoActivateNext: false,
+    ...commonFields,
   };
 }
 

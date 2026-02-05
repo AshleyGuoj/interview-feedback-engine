@@ -166,10 +166,32 @@ export interface InterviewStage {
   };
 }
 
+// ============================================
+// PIPELINE BRANCH ARCHITECTURE
+// Supports HC Freeze -> Transfer, Multi-role, etc.
+// ============================================
+
+export type PipelineType = 'primary' | 'transfer' | 'internal_move' | 'reapply';
+
+export type PipelineStatus = 'active' | 'paused' | 'completed' | 'closed';
+
+export interface Pipeline {
+  id: string;
+  type: PipelineType;
+  status: PipelineStatus;
+  targetRole: string;              // Role title for this specific pipeline
+  originPipelineId?: string;       // For transfer: which pipeline did this branch from
+  transferReason?: 'hc_freeze' | 'better_fit' | 'team_change' | 'reorg';
+  stages: InterviewStage[];
+  createdAt: string;
+  closedAt?: string;
+  closedReason?: ClosedReason;
+}
+
 export interface Job {
   id: string;
   companyName: string;
-  roleTitle: string;
+  roleTitle: string;               // Current active role (synced from active pipeline)
   location: 'CN' | 'US' | 'Remote' | 'Other';
   status: JobStatus;
   jobLink?: string;
@@ -178,7 +200,13 @@ export interface Job {
   careerFitNotes?: string;
   currentStage?: string;
   nextAction?: string;
+  
+  // NEW: Multi-pipeline architecture
+  pipelines: Pipeline[];
+  
+  // Legacy: single stages array (for backward compatibility during migration)
   stages: InterviewStage[];
+  
   createdAt: string;
   updatedAt: string;
   
@@ -187,6 +215,35 @@ export interface Job {
   closedReason?: ClosedReason;
   riskTags?: RiskTag[];
   lastContactDate?: string;
+}
+
+// Helper: Get active pipeline from job
+export function getActivePipeline(job: Job): Pipeline | null {
+  if (!job.pipelines || job.pipelines.length === 0) {
+    // Backward compatibility: convert stages to pipeline
+    if (job.stages && job.stages.length > 0) {
+      return {
+        id: 'legacy-primary',
+        type: 'primary',
+        status: 'active',
+        targetRole: job.roleTitle,
+        stages: job.stages,
+        createdAt: job.createdAt,
+      };
+    }
+    return null;
+  }
+  
+  // Priority: newest active/paused pipeline
+  return job.pipelines
+    .filter(p => p.status === 'active' || p.status === 'paused')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
+}
+
+// Helper: Get all stages from active pipeline
+export function getActiveStages(job: Job): InterviewStage[] {
+  const pipeline = getActivePipeline(job);
+  return pipeline?.stages || job.stages || [];
 }
 
 export const DEFAULT_STAGES: Omit<InterviewStage, 'id'>[] = [
