@@ -3,6 +3,7 @@ import { Job, InterviewStage, DEFAULT_STAGES, JobStatus, InterviewingSubStatus, 
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { resolvePipeline } from '@/lib/pipeline-resolver';
 
 // Transform database row to Job type
 function dbToJob(row: any): Job {
@@ -219,12 +220,28 @@ export function JobsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Check if we need to auto-close based on resolver
+    let finalUpdates = { ...updates };
+    
+    // Get the current job to merge with updates
+    const currentJob = jobs.find(j => j.id === id);
+    if (currentJob) {
+      const mergedJob = { ...currentJob, ...updates };
+      const resolution = resolvePipeline(mergedJob);
+      
+      // Auto-close if all pipelines are terminal (rejected/withdrawn)
+      if (resolution.shouldAutoClose && resolution.autoCloseReason && mergedJob.status !== 'closed') {
+        finalUpdates.status = 'closed';
+        finalUpdates.closedReason = resolution.autoCloseReason;
+      }
+    }
+
     // Optimistic update - immediately update local state
     setJobs(prev => prev.map(job => 
-      job.id === id ? { ...job, ...updates, updatedAt: new Date().toISOString() } : job
+      job.id === id ? { ...job, ...finalUpdates, updatedAt: new Date().toISOString() } : job
     ));
 
-    const dbData = jobToDb(updates, user.id);
+    const dbData = jobToDb(finalUpdates, user.id);
     delete dbData.user_id;
 
     try {

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { SubStatusBadge, RiskTagBadge, ClosedReasonBadge } from './StatusBadge';
 import { PipelineStatus } from './PipelineStatus';
+import { resolvePipeline } from '@/lib/pipeline-resolver';
 
 interface JobCardProps {
   job: Job;
@@ -21,6 +22,12 @@ function getDaysSinceContact(lastContactDate?: string): number | null {
 }
 
 export function JobCard({ job, onClick }: JobCardProps) {
+  // Get pipeline resolution to check if job is terminal
+  const resolution = resolvePipeline(job);
+  const isTerminal = resolution.state.type === 'rejected' || 
+                     resolution.state.type === 'withdrawn' || 
+                     job.status === 'closed';
+  
   // Auto-detect long silence risk
   const daysSinceContact = getDaysSinceContact(job.lastContactDate);
   const hasLongSilence = daysSinceContact !== null && daysSinceContact >= 7;
@@ -44,13 +51,22 @@ export function JobCard({ job, onClick }: JobCardProps) {
   return (
     <Card
       onClick={onClick}
-      className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/30 group"
+      className={cn(
+        "p-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/30 group",
+        // Dimmed styling for closed/terminal jobs
+        isTerminal && "opacity-75 bg-muted/30"
+      )}
     >
       <div className="space-y-3">
         {/* Header with location and sub-status/risk */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+            <h3 className={cn(
+              "font-semibold truncate transition-colors",
+              isTerminal 
+                ? "text-muted-foreground" 
+                : "text-foreground group-hover:text-primary"
+            )}>
               {job.companyName}
             </h3>
             <p className="text-sm text-muted-foreground truncate">
@@ -64,19 +80,19 @@ export function JobCard({ job, onClick }: JobCardProps) {
             >
               {job.location}
             </Badge>
-            {/* Sub-status badge */}
-            {job.subStatus && job.status !== 'closed' && (
+            {/* Sub-status badge - only for non-closed jobs */}
+            {job.subStatus && job.status !== 'closed' && !isTerminal && (
               <SubStatusBadge subStatus={job.subStatus} size="sm" />
             )}
             {/* Closed reason badge */}
-            {job.status === 'closed' && job.closedReason && (
+            {(job.status === 'closed' || isTerminal) && job.closedReason && (
               <ClosedReasonBadge reason={job.closedReason} size="sm" />
             )}
           </div>
         </div>
 
-        {/* Risk signals */}
-        {allRiskTags.length > 0 && (
+        {/* Risk signals - hide for terminal jobs */}
+        {!isTerminal && allRiskTags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {allRiskTags.slice(0, 3).map((tag) => (
               <RiskTagBadge key={tag} tag={tag} size="sm" />
