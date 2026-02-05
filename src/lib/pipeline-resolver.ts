@@ -1,4 +1,4 @@
-import { InterviewStage, Job, StageStatus, StageResult, Pipeline, getActivePipeline } from '@/types/job';
+import { InterviewStage, Job, StageStatus, StageResult, Pipeline, getActivePipeline, ClosedReason } from '@/types/job';
 
 // Terminal states that indicate a stage/job is no longer active
 const TERMINAL_RESULTS: StageResult[] = ['rejected'];
@@ -7,7 +7,7 @@ const TERMINAL_STATUSES: StageStatus[] = ['withdrawn', 'skipped'];
 export type ResolvedPipelineState = 
   | { type: 'next_interview'; stage: InterviewStage; label: string }
   | { type: 'awaiting_decision'; lastStage: InterviewStage; label: string }
-  | { type: 'rejected'; atStage: InterviewStage; label: string }
+  | { type: 'rejected'; atStage: InterviewStage; label: string; stageIndex: number; totalStages: number }
   | { type: 'on_hold'; atStage: InterviewStage; label: string }
   | { type: 'offer'; label: string }
   | { type: 'applied'; label: string }
@@ -24,6 +24,12 @@ export interface PipelineResolution {
   // Transfer info
   hasMultiplePipelines: boolean;
   allPipelines: Pipeline[];
+  // Rejection/closure info
+  failureStage?: InterviewStage;
+  failureStageIndex?: number;
+  totalStages?: number;
+  shouldAutoClose: boolean;
+  autoCloseReason?: ClosedReason;
 }
 
 /**
@@ -53,6 +59,12 @@ export function resolvePipeline(job: Job): PipelineResolution {
   const activePipeline = getActivePipeline(job);
   const stages = activePipeline?.stages || job.stages || [];
   
+  // Check if all pipelines are terminal (for auto-close logic)
+  const allPipelinesTerminal = allPipelines.length > 0 && allPipelines.every(p => 
+    p.status === 'closed' || p.status === 'completed' ||
+    p.stages.some(s => s.result === 'rejected' || s.status === 'withdrawn')
+  );
+
   if (!stages || stages.length === 0) {
     return {
       state: { type: 'applied', label: 'Applied' },
@@ -62,8 +74,11 @@ export function resolvePipeline(job: Job): PipelineResolution {
       shouldAutoActivateNext: false,
       hasMultiplePipelines,
       allPipelines,
+      shouldAutoClose: false,
     };
   }
+
+  const totalStages = stages.length;
 
   // Find completed stages and the active stage
   const completedStages: InterviewStage[] = [];
@@ -124,26 +139,36 @@ export function resolvePipeline(job: Job): PipelineResolution {
       activeStage: withdrawnStage,
       completedStages,
       shouldAutoActivateNext: false,
+      shouldAutoClose: allPipelinesTerminal,
+      autoCloseReason: 'withdrawn',
       ...commonFields,
     };
   }
 
   // Case 2: Rejected at some stage
   if (rejectedStage) {
+    const rejectedIndex = stages.findIndex(s => s.id === rejectedStage.id);
     return {
       state: { 
         type: 'rejected', 
         atStage: rejectedStage, 
-        label: `Rejected at ${rejectedStage.name}` 
+        label: `Rejected at ${rejectedStage.name}`,
+        stageIndex: rejectedIndex,
+        totalStages,
       },
       activeStage: rejectedStage,
       completedStages,
       shouldAutoActivateNext: false,
+      failureStage: rejectedStage,
+      failureStageIndex: rejectedIndex,
+      totalStages,
+      shouldAutoClose: allPipelinesTerminal,
+      autoCloseReason: 'rejected_after_interview',
       ...commonFields,
     };
   }
 
-  // Case 3: On Hold (HC Freeze) - Prompt for transfer
+  // Case 3: On Hold (HC Freeze) - Prompt for transfer (NOT auto-close)
   if (onHoldStage && !activeStage) {
     return {
       state: { 
@@ -152,6 +177,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         label: 'Hiring Freeze — Pipeline Paused' 
       },
       activeStage: onHoldStage,
+      shouldAutoClose: false, // On hold should NOT auto-close
       completedStages,
       shouldAutoActivateNext: false,
       ...commonFields,
@@ -159,7 +185,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
   }
 
   // Case 4: Check for offer
-  const offerStage = stages.find(s => 
+  const offerStage = stages.find(s =>
     s.name.toLowerCase().includes('offer') && 
     s.status === 'completed' &&
     s.result === 'passed'
@@ -170,6 +196,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
       activeStage: offerStage || null,
       completedStages,
       shouldAutoActivateNext: false,
+      shouldAutoClose: false,
       ...commonFields,
     };
   }
@@ -189,6 +216,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage,
         completedStages,
         shouldAutoActivateNext: false,
+        shouldAutoClose: false,
         suggestedNextAction: activeStage.scheduledTime 
           ? `Interview on ${new Date(activeStage.scheduledTime).toLocaleDateString()}`
           : 'Schedule interview',
@@ -207,6 +235,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage,
         completedStages,
         shouldAutoActivateNext: false,
+        shouldAutoClose: false,
         ...commonFields,
       };
     }
@@ -222,6 +251,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage,
         completedStages,
         shouldAutoActivateNext: false,
+        shouldAutoClose: false,
         ...commonFields,
       };
     }
@@ -244,6 +274,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage: nextStage,
         completedStages,
         shouldAutoActivateNext: true, // Signal that we should auto-activate
+        shouldAutoClose: false,
         ...commonFields,
       };
     }
@@ -259,6 +290,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
         activeStage: lastCompleted,
         completedStages,
         shouldAutoActivateNext: false,
+        shouldAutoClose: false,
         ...commonFields,
       };
     }
@@ -270,6 +302,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
     activeStage: stages[0] || null,
     completedStages,
     shouldAutoActivateNext: false,
+    shouldAutoClose: false,
     ...commonFields,
   };
 }

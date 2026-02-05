@@ -3,6 +3,7 @@ import { Job } from '@/types/job';
 import { resolvePipeline, getStateDisplayConfig, formatScheduledTime } from '@/lib/pipeline-resolver';
 import { StatusIcon } from '@/components/ui/status-icon';
 import { Calendar } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface PipelineStatusProps {
   job: Job;
@@ -39,7 +40,8 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
         return state.label;
       
       case 'rejected':
-        return state.label;
+        // Softer tone: "Process Ended at [Stage]"
+        return `Ended at ${state.atStage.name}`;
       
       case 'on_hold':
         return state.label;
@@ -56,6 +58,19 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
     }
   };
 
+  // Calculate progress for rejected state
+  const getProgressInfo = () => {
+    if (state.type === 'rejected') {
+      const completed = state.stageIndex + 1; // Stages completed including rejection stage
+      const total = state.totalStages;
+      const percentage = Math.round((completed / total) * 100);
+      return { completed, total, percentage };
+    }
+    return null;
+  };
+
+  const progressInfo = getProgressInfo();
+
   if (compact) {
     return (
       <div className={cn(
@@ -65,6 +80,32 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
       )}>
         <StatusIcon iconName={displayConfig.icon} color={displayConfig.color} size="sm" />
         <span className="truncate max-w-[140px]">{getStatusText()}</span>
+      </div>
+    );
+  }
+
+  // Rejected state with progress visualization
+  if (state.type === 'rejected' && progressInfo) {
+    return (
+      <div className="space-y-2 animate-fade-in">
+        {/* Primary status line */}
+        <div className="flex items-center gap-1.5">
+          <StatusIcon iconName={displayConfig.icon} color={displayConfig.color} size="md" />
+          <span className={cn('text-sm truncate font-medium', displayConfig.textColor)}>
+            {getStatusText()}
+          </span>
+        </div>
+        
+        {/* Progress indicator - reframes failure as progress */}
+        <div className="space-y-1">
+          <Progress 
+            value={progressInfo.percentage} 
+            className="h-1.5 bg-muted"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Completed {progressInfo.completed} / {progressInfo.total} stages
+          </p>
+        </div>
       </div>
     );
   }
