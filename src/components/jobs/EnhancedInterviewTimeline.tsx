@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StatusIcon } from '@/components/ui/status-icon';
 import { 
   ChevronDown, 
   Check, 
@@ -103,9 +104,11 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
 
   const getStatusBadge = (status: StageStatus) => {
     const config = STAGE_STATUS_CONFIG[status];
-    if (!config) return { label: status, className: statusColorClasses.gray };
+    if (!config) return { label: status, icon: 'circle-dashed', color: 'gray', className: statusColorClasses.gray };
     return {
-      label: `${config.emoji} ${config.labelZh}`,
+      label: config.labelZh,
+      icon: config.icon,
+      color: config.color,
       className: statusColorClasses[config.color] || statusColorClasses.gray
     };
   };
@@ -161,9 +164,10 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                         <span className="font-medium">{stage.name}</span>
                         <Badge 
                           variant="secondary" 
-                          className={cn(statusBadge.className)}
+                          className={cn('gap-1.5', statusBadge.className)}
                           title="Stage status"
                         >
+                          <StatusIcon iconName={statusBadge.icon} color={statusBadge.color} size="sm" />
                           {statusBadge.label}
                         </Badge>
                         
@@ -172,11 +176,16 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                           <Badge 
                             variant="outline" 
                             className={cn(
-                              'border-current',
+                              'gap-1.5 border-current',
                               statusColorClasses[STAGE_RESULT_CONFIG[stage.result].color]
                             )}
                           >
-                            {STAGE_RESULT_CONFIG[stage.result].emoji} {STAGE_RESULT_CONFIG[stage.result].labelZh}
+                            <StatusIcon 
+                              iconName={STAGE_RESULT_CONFIG[stage.result].icon} 
+                              color={STAGE_RESULT_CONFIG[stage.result].color} 
+                              size="sm" 
+                            />
+                            {STAGE_RESULT_CONFIG[stage.result].labelZh}
                           </Badge>
                         )}
                         

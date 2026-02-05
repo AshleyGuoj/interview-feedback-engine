@@ -100,23 +100,23 @@ export type StageResult =
   | 'mixed_feedback'    // 意见不统一
   | null;               // No result yet
 
-// Status display config
-export const STAGE_STATUS_CONFIG: Record<StageStatus, { label: string; labelZh: string; emoji: string; color: string }> = {
-  pending: { label: 'Pending', labelZh: '待进行', emoji: '⏳', color: 'gray' },
-  scheduled: { label: 'Scheduled', labelZh: '已安排', emoji: '📅', color: 'blue' },
-  rescheduled: { label: 'Rescheduled', labelZh: '已改期', emoji: '🔄', color: 'orange' },
-  completed: { label: 'Completed', labelZh: '已完成', emoji: '✅', color: 'green' },
-  feedback_pending: { label: 'Feedback Pending', labelZh: '等反馈', emoji: '⏱️', color: 'amber' },
-  skipped: { label: 'Skipped', labelZh: '已跳过', emoji: '⏭️', color: 'gray' },
-  withdrawn: { label: 'Withdrawn', labelZh: '已撤回', emoji: '🔙', color: 'gray' },
+// Status display config - using Lucide icon names
+export const STAGE_STATUS_CONFIG: Record<StageStatus, { label: string; labelZh: string; icon: string; color: string }> = {
+  pending: { label: 'Pending', labelZh: '待进行', icon: 'circle-dashed', color: 'gray' },
+  scheduled: { label: 'Scheduled', labelZh: '已安排', icon: 'calendar-check', color: 'blue' },
+  rescheduled: { label: 'Rescheduled', labelZh: '已改期', icon: 'calendar-clock', color: 'orange' },
+  completed: { label: 'Completed', labelZh: '已完成', icon: 'check-circle-2', color: 'green' },
+  feedback_pending: { label: 'Feedback Pending', labelZh: '等反馈', icon: 'clock', color: 'amber' },
+  skipped: { label: 'Skipped', labelZh: '已跳过', icon: 'skip-forward', color: 'gray' },
+  withdrawn: { label: 'Withdrawn', labelZh: '已撤回', icon: 'undo-2', color: 'gray' },
 };
 
-// Result display config
-export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: string; labelZh: string; emoji: string; color: string }> = {
-  passed: { label: 'Passed', labelZh: '通过', emoji: '🎉', color: 'green' },
-  rejected: { label: 'Rejected', labelZh: '未通过', emoji: '❌', color: 'red' },
-  on_hold: { label: 'On Hold', labelZh: 'HC冻结', emoji: '🧊', color: 'cyan' },
-  mixed_feedback: { label: 'Mixed Feedback', labelZh: '意见不一', emoji: '⚖️', color: 'amber' },
+// Result display config - using Lucide icon names
+export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: string; labelZh: string; icon: string; color: string }> = {
+  passed: { label: 'Passed', labelZh: '通过', icon: 'trophy', color: 'green' },
+  rejected: { label: 'Rejected', labelZh: '未通过', icon: 'x-circle', color: 'red' },
+  on_hold: { label: 'On Hold', labelZh: 'HC冻结', icon: 'snowflake', color: 'cyan' },
+  mixed_feedback: { label: 'Mixed Feedback', labelZh: '意见不一', icon: 'scale', color: 'amber' },
 };
 
 // Layer 1: Interview Stage (customizable timeline)
