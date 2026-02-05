@@ -10,6 +10,8 @@ import {
   XCircle,
   Snowflake,
   Scale,
+  ArrowRight,
+  Send,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,6 +29,8 @@ const iconMap: Record<string, LucideIcon> = {
   'x-circle': XCircle,
   'snowflake': Snowflake,
   'scale': Scale,
+  'arrow-right': ArrowRight,
+  'send': Send,
 };
 
 // Color class mapping
@@ -39,6 +43,7 @@ const colorClasses: Record<string, string> = {
   red: 'text-red-600 dark:text-red-400',
   cyan: 'text-cyan-600 dark:text-cyan-400',
   purple: 'text-purple-600 dark:text-purple-400',
+  primary: 'text-primary',
 };
 
 interface StatusIconProps {
