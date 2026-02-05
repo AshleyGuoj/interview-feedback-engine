@@ -5,6 +5,7 @@ import { UnifiedInterviewTimeline } from '@/components/jobs/UnifiedInterviewTime
 import { StageEditor } from '@/components/jobs/StageEditor';
 import { PipelineTransferDialog } from '@/components/jobs/PipelineTransferDialog';
 import { OnHoldPrompt } from '@/components/jobs/OnHoldPrompt';
+import { TerminalDecisionModal } from '@/components/jobs/TerminalDecisionModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +29,7 @@ import {
   FileText,
   GitBranch
 } from 'lucide-react';
-import { Job, InterviewStage, JobStatus, JobSource, Pipeline, getActivePipeline } from '@/types/job';
+import { Job, InterviewStage, JobStatus, JobSource, Pipeline, getActivePipeline, StageResult, DEFAULT_STAGES } from '@/types/job';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useJobs, deriveJobStatusFromStages } from '@/contexts/JobsContext';
@@ -75,6 +76,11 @@ export default function JobDetail() {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [dismissedOnHoldPrompt, setDismissedOnHoldPrompt] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  
+  // Terminal decision modal state
+  const [terminalModalOpen, setTerminalModalOpen] = useState(false);
+  const [terminalStage, setTerminalStage] = useState<InterviewStage | null>(null);
+  const [terminalResult, setTerminalResult] = useState<StageResult>(null);
 
   // Pipeline resolution
   const pipelineResolution = useMemo(() => {
@@ -189,6 +195,27 @@ export default function JobDetail() {
 
   const handleStageUpdate = async (stageId: string, updates: Partial<InterviewStage>) => {
     const oldStage = activeStages.find(s => s.id === stageId);
+    const updatedStage = { ...oldStage, ...updates } as InterviewStage;
+    
+    // Check if this update introduces a terminal result (rejected/on_hold)
+    const isTerminalResult = updates.result && ['rejected', 'on_hold'].includes(updates.result);
+    const wasNotTerminal = !oldStage?.result || !['rejected', 'on_hold'].includes(oldStage.result);
+    
+    // If terminal result is being set, show decision modal instead of auto-processing
+    if (isTerminalResult && wasNotTerminal) {
+      setTerminalStage(updatedStage);
+      setTerminalResult(updates.result);
+      setTerminalModalOpen(true);
+      return; // Don't update yet - wait for modal decision
+    }
+    
+    // Normal update flow
+    await performStageUpdate(stageId, updates);
+  };
+
+  // Separated update logic for reuse
+  const performStageUpdate = async (stageId: string, updates: Partial<InterviewStage>) => {
+    const oldStage = activeStages.find(s => s.id === stageId);
     const updatedStages = activeStages.map(s => 
       s.id === stageId ? { ...s, ...updates } : s
     );
@@ -255,6 +282,67 @@ export default function JobDetail() {
         }
       });
     }
+
+    // Log terminal result
+    if (updates.result && ['rejected', 'on_hold'].includes(updates.result)) {
+      const resultMessages: Record<string, string> = {
+        rejected: 'not passed',
+        on_hold: 'put on hold (hiring freeze)',
+      };
+      
+      await addActivity({
+        jobId: job.id,
+        type: 'stage_updated',
+        message: `${job.companyName} — ${stageName} ${resultMessages[updates.result]}`,
+        metadata: { 
+          stageName, 
+          result: updates.result 
+        }
+      });
+    }
+  };
+
+  // Handle terminal modal decisions
+  const handleTerminalClosePipeline = async () => {
+    if (!terminalStage || !terminalResult) return;
+    
+    // Mark pipeline as closed and update stage
+    await performStageUpdate(terminalStage.id, { result: terminalResult });
+    
+    // Close the current pipeline explicitly
+    if (activePipeline && job.pipelines?.length > 0) {
+      const updatedPipelines = job.pipelines.map(p => 
+        p.id === activePipeline.id 
+          ? { ...p, status: 'closed' as const, closedAt: new Date().toISOString(), closedReason: terminalResult === 'rejected' ? 'rejected_after_interview' as const : 'hc_frozen' as const }
+          : p
+      );
+      await updateJob(job.id, { pipelines: updatedPipelines });
+    }
+    
+    toast.success('Pipeline closed');
+  };
+
+  const handleTerminalTransfer = async (newRole: string) => {
+    if (!terminalStage || !terminalResult) return;
+    
+    // First, apply the terminal result to the current stage
+    await performStageUpdate(terminalStage.id, { result: terminalResult });
+    
+    // Then create a new transfer pipeline
+    const newPipeline: Omit<Pipeline, 'id' | 'createdAt'> = {
+      type: 'transfer',
+      status: 'active',
+      targetRole: newRole,
+      originPipelineId: activePipeline?.id,
+      transferReason: terminalResult === 'on_hold' ? 'hc_freeze' : 'better_fit',
+      stages: DEFAULT_STAGES.map((s, i) => ({
+        ...s,
+        id: `stage-${Date.now()}-${i}`,
+      })) as InterviewStage[],
+    };
+    
+    await handleCreatePipelineBranch(newPipeline);
+    toast.success(`Transferred to ${newRole}`);
   };
 
   const handleStagesChange = async (newStages: InterviewStage[]) => {
@@ -690,6 +778,20 @@ export default function JobDetail() {
           companyName={job.companyName}
           onCreateBranch={handleCreatePipelineBranch}
         />
+
+        {/* Terminal Decision Modal */}
+        {terminalStage && (
+          <TerminalDecisionModal
+            open={terminalModalOpen}
+            onOpenChange={setTerminalModalOpen}
+            stage={terminalStage}
+            result={terminalResult}
+            currentPipeline={activePipeline}
+            companyName={job.companyName}
+            onClosePipeline={handleTerminalClosePipeline}
+            onTransfer={handleTerminalTransfer}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
