@@ -10,7 +10,15 @@ export interface CompetencyTrend {
   scoresOverTime: CompetencyTrendPoint[];
   trend: 'improving' | 'stable' | 'declining';
   delta: number; // Change from first to last score
+  stability: 'high' | 'medium' | 'low'; // Performance consistency
   interpretation: string;
+}
+
+export interface TurningPoint {
+  date: string; // YYYY-MM format
+  competency: string;
+  change: string; // e.g. "+0.8"
+  cause: string;
 }
 
 export interface LineChartData {
@@ -38,6 +46,7 @@ export interface GrowthPriority {
   focusArea: string;
   reason: string;
   expectedImpact: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
 }
 
 export interface InsightSummary {
@@ -57,9 +66,11 @@ export interface TimelineOverview {
 export interface CareerGrowthAnalysis {
   timelineOverview: TimelineOverview;
   competencyTrends: CompetencyTrend[];
+  turningPoints: TurningPoint[];
   visualizationData: VisualizationData;
   insightSummary: InsightSummary;
   nextGrowthPriorities: GrowthPriority[];
+  counterfactualInsight: string;
   coachMessage: string;
   generatedAt: string;
 }
