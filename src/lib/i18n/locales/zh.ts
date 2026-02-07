@@ -22,6 +22,60 @@ export default {
     noMatchFound: '未找到匹配的结果',
   },
 
+  // Question Recorder
+  questionRecorder: {
+    title: '面试问题记录',
+    count: '{{count}} 题',
+    addQuestion: '添加问题',
+    emptyTitle: '暂无问题记录',
+    emptyDescription: '记录面试中被问到的问题，方便复盘和准备',
+    inputPlaceholder: '输入面试问题...',
+    category: '类别',
+    difficulty: '难度',
+    howAnswered: '回答如何',
+    myAnswer: '我的回答',
+    myAnswerOptional: '我的回答（可选）',
+    myAnswerPlaceholder: '记录你当时的回答...',
+    idealAnswer: '理想答案',
+  },
+
+  // Reflection Editor
+  reflection: {
+    title: '面试反思',
+    overallFeeling: '整体感觉',
+    feelingGreat: '非常好',
+    feelingGood: '还不错',
+    feelingNeutral: '一般般',
+    feelingPoor: '不太好',
+    feelingBad: '很糟糕',
+    whatWentWell: '表现好的地方',
+    whatWentWellPlaceholder: '每行一条，例如：\n- 项目经验讲述流畅\n- 技术问题回答准确',
+    whatCouldImprove: '可以改进的地方',
+    whatCouldImprovePlaceholder: '每行一条，例如：\n- 系统设计题思路不够清晰\n- 应该多问clarifying questions',
+    keyTakeaways: '关键收获',
+    keyTakeawaysPlaceholder: '每行一条，例如：\n- 这类公司更看重实际落地经验\n- 需要准备更多数据驱动的案例',
+    interviewerVibe: '面试官印象',
+    interviewerVibePlaceholder: '面试官的态度、风格、关注点等...',
+    companyInsights: '公司新认知',
+    companyInsightsPlaceholder: '面试中了解到的公司信息、团队情况、业务方向等...',
+  },
+
+  // Stage Detail Editor tabs
+  stageDetail: {
+    questionsTab: '问题记录',
+    reflectionTab: '反思复盘',
+  },
+
+  // Question categories
+  questionCategory: {
+    behavioral: '行为面试',
+    technical: '技术问题',
+    situational: '情景问题',
+    case: '案例分析',
+    motivation: '动机问题',
+    other: '其他',
+  },
+
   // Navigation
   nav: {
     dashboard: '仪表盘',

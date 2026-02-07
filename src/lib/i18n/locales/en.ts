@@ -22,6 +22,60 @@ export default {
     noMatchFound: 'No matching results found',
   },
 
+  // Question Recorder
+  questionRecorder: {
+    title: 'Interview Questions',
+    count: '{{count}} questions',
+    addQuestion: 'Add Question',
+    emptyTitle: 'No questions recorded',
+    emptyDescription: 'Record interview questions for review and preparation',
+    inputPlaceholder: 'Enter the interview question...',
+    category: 'Category',
+    difficulty: 'Difficulty',
+    howAnswered: 'How did you answer?',
+    myAnswer: 'My Answer',
+    myAnswerOptional: 'My Answer (optional)',
+    myAnswerPlaceholder: 'Record your answer...',
+    idealAnswer: 'Ideal Answer',
+  },
+
+  // Reflection Editor
+  reflection: {
+    title: 'Interview Reflection',
+    overallFeeling: 'Overall Feeling',
+    feelingGreat: 'Great',
+    feelingGood: 'Good',
+    feelingNeutral: 'Neutral',
+    feelingPoor: 'Poor',
+    feelingBad: 'Bad',
+    whatWentWell: 'What Went Well',
+    whatWentWellPlaceholder: 'One item per line, e.g.:\n- Project experience was clearly articulated\n- Technical questions answered accurately',
+    whatCouldImprove: 'Areas for Improvement',
+    whatCouldImprovePlaceholder: 'One item per line, e.g.:\n- System design thinking could be clearer\n- Should ask more clarifying questions',
+    keyTakeaways: 'Key Takeaways',
+    keyTakeawaysPlaceholder: 'One item per line, e.g.:\n- This type of company values practical experience\n- Need more data-driven examples',
+    interviewerVibe: 'Interviewer Impression',
+    interviewerVibePlaceholder: "Interviewer's attitude, style, focus areas...",
+    companyInsights: 'Company Insights',
+    companyInsightsPlaceholder: 'Company info, team dynamics, business direction learned during interview...',
+  },
+
+  // Stage Detail Editor tabs
+  stageDetail: {
+    questionsTab: 'Questions',
+    reflectionTab: 'Reflection',
+  },
+
+  // Question categories
+  questionCategory: {
+    behavioral: 'Behavioral',
+    technical: 'Technical',
+    situational: 'Situational',
+    case: 'Case Study',
+    motivation: 'Motivation',
+    other: 'Other',
+  },
+
   // Navigation
   nav: {
     dashboard: 'Dashboard',

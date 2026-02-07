@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InterviewQuestion, QUESTION_CATEGORIES } from '@/types/job';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,6 +27,7 @@ interface QuestionRecorderProps {
 }
 
 export function QuestionRecorder({ questions, onChange, readOnly = false }: QuestionRecorderProps) {
+  const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newQuestion, setNewQuestion] = useState<Partial<InterviewQuestion>>({
@@ -63,6 +64,10 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
     onChange(questions.filter(q => q.id !== id));
   };
 
+  const getCategoryLabel = (category: InterviewQuestion['category']) => {
+    return t(`questionCategory.${category}`);
+  };
+
   const getCategoryConfig = (category: InterviewQuestion['category']) => {
     return QUESTION_CATEGORIES[category];
   };
@@ -91,9 +96,9 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-primary" />
-            面试问题记录
+            {t('questionRecorder.title')}
             <Badge variant="secondary" className="text-xs">
-              {questions.length} 题
+              {t('questionRecorder.count', { count: questions.length })}
             </Badge>
           </CardTitle>
           {!readOnly && (
@@ -104,7 +109,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
               className="gap-1"
             >
               <Plus className="w-3 h-3" />
-              添加问题
+              {t('questionRecorder.addQuestion')}
             </Button>
           )}
         </div>
@@ -115,7 +120,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
           <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
             <div className="space-y-2">
               <Textarea
-                placeholder="输入面试问题..."
+                placeholder={t('questionRecorder.inputPlaceholder')}
                 value={newQuestion.question || ''}
                 onChange={(e) => setNewQuestion(prev => ({ ...prev, question: e.target.value }))}
                 rows={2}
@@ -124,7 +129,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">类别</label>
+                <label className="text-xs text-muted-foreground">{t('questionRecorder.category')}</label>
                 <Select
                   value={newQuestion.category}
                   onValueChange={(v) => setNewQuestion(prev => ({ 
@@ -136,9 +141,9 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(QUESTION_CATEGORIES).map(([key, config]) => (
+                    {Object.keys(QUESTION_CATEGORIES).map((key) => (
                       <SelectItem key={key} value={key} className="text-xs">
-                        {config.label}
+                        {t(`questionCategory.${key}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -146,7 +151,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
               </div>
               
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">难度</label>
+                <label className="text-xs text-muted-foreground">{t('questionRecorder.difficulty')}</label>
                 <div className="h-8 flex items-center">
                   {renderDifficultyStars(newQuestion.difficulty || 3, (d) => 
                     setNewQuestion(prev => ({ ...prev, difficulty: d as 1|2|3|4|5 }))
@@ -155,7 +160,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
               </div>
               
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">回答如何</label>
+                <label className="text-xs text-muted-foreground">{t('questionRecorder.howAnswered')}</label>
                 <div className="h-8 flex items-center gap-2">
                   <Button
                     variant={newQuestion.answeredWell === true ? 'default' : 'outline'}
@@ -178,9 +183,9 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs text-muted-foreground">我的回答（可选）</label>
+              <label className="text-xs text-muted-foreground">{t('questionRecorder.myAnswerOptional')}</label>
               <Textarea
-                placeholder="记录你当时的回答..."
+                placeholder={t('questionRecorder.myAnswerPlaceholder')}
                 value={newQuestion.myAnswer || ''}
                 onChange={(e) => setNewQuestion(prev => ({ ...prev, myAnswer: e.target.value }))}
                 rows={2}
@@ -189,10 +194,10 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
 
             <div className="flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setIsAddingNew(false)}>
-                取消
+                {t('questionRecorder.cancel')}
               </Button>
               <Button size="sm" onClick={handleAddQuestion} disabled={!newQuestion.question?.trim()}>
-                保存
+                {t('questionRecorder.save')}
               </Button>
             </div>
           </div>
@@ -202,8 +207,8 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
         {questions.length === 0 && !isAddingNew ? (
           <div className="text-center py-8 text-muted-foreground">
             <HelpCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">暂无问题记录</p>
-            <p className="text-xs">记录面试中被问到的问题，方便复盘和准备</p>
+            <p className="text-sm">{t('questionRecorder.emptyTitle')}</p>
+            <p className="text-xs">{t('questionRecorder.emptyDescription')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -233,7 +238,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
                                 categoryConfig.color === 'gray' && 'border-gray-300 text-gray-700 bg-gray-50',
                               )}
                             >
-                              {categoryConfig.label}
+                              {getCategoryLabel(q.category)}
                             </Badge>
                             {renderDifficultyStars(q.difficulty)}
                             {q.answeredWell === true && (
@@ -257,13 +262,13 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
                       <div className="px-3 pb-3 pt-0 border-t space-y-3">
                         {q.myAnswer && (
                           <div className="space-y-1 pt-3">
-                            <label className="text-xs text-muted-foreground">我的回答</label>
+                            <label className="text-xs text-muted-foreground">{t('questionRecorder.myAnswer')}</label>
                             <p className="text-sm bg-muted/50 p-2 rounded">{q.myAnswer}</p>
                           </div>
                         )}
                         {q.idealAnswer && (
                           <div className="space-y-1">
-                            <label className="text-xs text-muted-foreground">理想答案</label>
+                            <label className="text-xs text-muted-foreground">{t('questionRecorder.idealAnswer')}</label>
                             <p className="text-sm bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded text-emerald-800 dark:text-emerald-200">
                               {q.idealAnswer}
                             </p>
@@ -279,7 +284,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
                               onClick={() => handleDeleteQuestion(q.id)}
                             >
                               <Trash2 className="w-3 h-3 mr-1" />
-                              删除
+                              {t('questionRecorder.delete')}
                             </Button>
                           </div>
                         )}
