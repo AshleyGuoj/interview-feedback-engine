@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UnifiedInterviewTimeline } from '@/components/jobs/UnifiedInterviewTimeline';
 import { StageEditor } from '@/components/jobs/StageEditor';
@@ -48,14 +49,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const sourceLabels: Record<string, string> = {
-  linkedin: 'LinkedIn',
-  boss: 'BOSS直聘',
-  referral: 'Referral',
-  website: 'Company Website',
-  other: 'Other',
-};
-
 const locationColors: Record<string, string> = {
   CN: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   US: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -64,6 +57,7 @@ const locationColors: Record<string, string> = {
 };
 
 export default function JobDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJob } = useJobs();
@@ -76,6 +70,15 @@ export default function JobDetail() {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [dismissedOnHoldPrompt, setDismissedOnHoldPrompt] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
+  
+  // Source labels using i18n
+  const sourceLabels: Record<string, string> = {
+    linkedin: t('jobs.sourceLinkedIn'),
+    boss: t('jobs.sourceBoss'),
+    referral: t('jobs.sourceReferral'),
+    website: t('jobs.sourceWebsite'),
+    other: t('jobs.sourceOther'),
+  };
   
   // Terminal decision modal state
   const [terminalModalOpen, setTerminalModalOpen] = useState(false);

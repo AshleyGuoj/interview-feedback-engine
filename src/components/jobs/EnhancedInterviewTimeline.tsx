@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection, StageStatus, StageResult, STAGE_STATUS_CONFIG, STAGE_RESULT_CONFIG } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,7 @@ interface EnhancedInterviewTimelineProps {
 }
 
 export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, jobContext }: EnhancedInterviewTimelineProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [openStages, setOpenStages] = useState<string[]>([]);
   const [editingStage, setEditingStage] = useState<string | null>(null);
@@ -106,12 +108,28 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
   const getStatusBadge = (status: StageStatus) => {
     const config = STAGE_STATUS_CONFIG[status];
     if (!config) return { label: status, icon: 'circle-dashed', color: 'gray', className: statusColorClasses.gray };
+    
+    // Get localized label
+    const statusKey = `jobs.stageStatus${status.charAt(0).toUpperCase() + status.slice(1).replace('_', '')}` as const;
+    const label = t(statusKey, config.label);
+    
     return {
-      label: config.labelZh,
+      label,
       icon: config.icon,
       color: config.color,
       className: statusColorClasses[config.color] || statusColorClasses.gray
     };
+  };
+
+  const getResultLabel = (result: StageResult) => {
+    if (!result) return '';
+    const resultKeyMap: Record<NonNullable<StageResult>, string> = {
+      passed: 'jobs.resultPassed',
+      rejected: 'jobs.resultRejected',
+      on_hold: 'jobs.resultOnHold',
+      mixed_feedback: 'jobs.resultMixed',
+    };
+    return t(resultKeyMap[result]);
   };
 
   const handleQuestionsChange = (stageId: string, questions: InterviewQuestion[]) => {
@@ -166,7 +184,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                         <Badge 
                           variant="secondary" 
                           className={cn('gap-1.5', statusBadge.className)}
-                          title="Stage status"
+                          title={t('jobs.stageStatus')}
                         >
                           <StatusIcon iconName={statusBadge.icon} color={statusBadge.color} size="sm" />
                           {statusBadge.label}
@@ -186,7 +204,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                               color={STAGE_RESULT_CONFIG[stage.result].color} 
                               size="sm" 
                             />
-                            {STAGE_RESULT_CONFIG[stage.result].labelZh}
+                            {getResultLabel(stage.result)}
                           </Badge>
                         )}
                         
@@ -194,13 +212,13 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                         {questionCount > 0 && (
                           <div className="flex items-center gap-1 text-xs text-primary">
                             <MessageSquare className="w-3 h-3" />
-                            {questionCount}题
+                            {t('jobs.questionsCount', { count: questionCount })}
                           </div>
                         )}
                         {hasReflection && (
                           <div className="flex items-center gap-1 text-xs text-amber-600">
                             <Lightbulb className="w-3 h-3" />
-                            已反思
+                            {t('jobs.hasReflection')}
                           </div>
                         )}
                         
@@ -223,7 +241,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                       {/* Edit Controls */}
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-muted-foreground">
-                          记录面试内容，构建你的面试数据库
+                          {t('jobs.buildingDatabase')}
                         </div>
                         <div className="flex gap-2">
                           {/* AI Transcript Analyzer Button - Navigate to Analytics page */}
@@ -238,24 +256,24 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                             }}
                           >
                             <Sparkles className="w-3 h-3" />
-                            AI 分析记录
+                            {t('jobs.aiAnalyzeRecord')}
                           </Button>
                           
                           {isEditing ? (
                             <>
                               <Button variant="ghost" size="sm" onClick={cancelEditing}>
                                 <X className="w-3 h-3 mr-1" />
-                                取消
+                                {t('common.cancel')}
                               </Button>
                               <Button size="sm" onClick={() => saveEditing(stage.id)}>
                                 <Save className="w-3 h-3 mr-1" />
-                                保存
+                                {t('common.save')}
                               </Button>
                             </>
                           ) : (
                             <Button variant="outline" size="sm" onClick={() => startEditing(stage)}>
                               <Pencil className="w-3 h-3 mr-1" />
-                              编辑信息
+                              {t('jobs.editInfo')}
                             </Button>
                           )}
                         </div>
@@ -265,14 +283,14 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                         <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label>阶段名称</Label>
+                              <Label>{t('jobs.stageName')}</Label>
                               <Input
                                 value={editData.name || ''}
                                 onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label>状态</Label>
+                              <Label>{t('jobs.stageStatus')}</Label>
                               <Select
                                 value={editData.status}
                                 onValueChange={(value) => setEditData(prev => ({ 
@@ -284,20 +302,20 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="pending">⏳ 待进行</SelectItem>
-                                  <SelectItem value="scheduled">📅 已安排</SelectItem>
-                                  <SelectItem value="rescheduled">🔄 已改期</SelectItem>
-                                  <SelectItem value="completed">✅ 已完成</SelectItem>
-                                  <SelectItem value="feedback_pending">⏱️ 等反馈</SelectItem>
-                                  <SelectItem value="skipped">⏭️ 已跳过</SelectItem>
-                                  <SelectItem value="withdrawn">🔙 已撤回</SelectItem>
+                                  <SelectItem value="pending">⏳ {t('jobs.stageStatusPending')}</SelectItem>
+                                  <SelectItem value="scheduled">📅 {t('jobs.stageStatusScheduled')}</SelectItem>
+                                  <SelectItem value="rescheduled">🔄 {t('jobs.stageStatusRescheduled')}</SelectItem>
+                                  <SelectItem value="completed">✅ {t('jobs.stageStatusCompleted')}</SelectItem>
+                                  <SelectItem value="feedback_pending">⏱️ {t('jobs.stageStatusFeedbackPending')}</SelectItem>
+                                  <SelectItem value="skipped">⏭️ {t('jobs.stageStatusSkipped')}</SelectItem>
+                                  <SelectItem value="withdrawn">🔙 {t('jobs.stageStatusWithdrawn')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
                             {/* Result - only shown when completed */}
                             {(editData.status === 'completed' || editData.status === 'feedback_pending') && (
                               <div className="space-y-2">
-                                <Label>结果</Label>
+                                <Label>{t('jobs.result')}</Label>
                                 <Select
                                   value={editData.result || '_none'}
                                   onValueChange={(value) => setEditData(prev => ({ 
@@ -306,14 +324,14 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                                   }))}
                                 >
                                   <SelectTrigger>
-                                    <SelectValue placeholder="选择结果..." />
+                                    <SelectValue placeholder={t('jobs.resultPending')} />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="_none">🔄 待定</SelectItem>
-                                    <SelectItem value="passed">🎉 通过</SelectItem>
-                                    <SelectItem value="rejected">❌ 未通过</SelectItem>
-                                    <SelectItem value="on_hold">🧊 HC冻结</SelectItem>
-                                    <SelectItem value="mixed_feedback">⚖️ 意见不一</SelectItem>
+                                    <SelectItem value="_none">🔄 {t('jobs.resultPending')}</SelectItem>
+                                    <SelectItem value="passed">🎉 {t('jobs.resultPassed')}</SelectItem>
+                                    <SelectItem value="rejected">❌ {t('jobs.resultRejected')}</SelectItem>
+                                    <SelectItem value="on_hold">🧊 {t('jobs.resultOnHold')}</SelectItem>
+                                    <SelectItem value="mixed_feedback">⚖️ {t('jobs.resultMixed')}</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -322,7 +340,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
 
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label>面试时间</Label>
+                              <Label>{t('jobs.interviewTime')}</Label>
                               <Input
                                 type="datetime-local"
                                 value={editData.scheduledTime || ''}
@@ -330,7 +348,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label>时区</Label>
+                              <Label>{t('jobs.timezone')}</Label>
                               <Select
                                 value={editData.scheduledTimezone || 'Asia/Shanghai'}
                                 onValueChange={(value) => setEditData(prev => ({ ...prev, scheduledTimezone: value }))}
@@ -339,9 +357,9 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Asia/Shanghai">北京时间 (UTC+8)</SelectItem>
-                                  <SelectItem value="America/Los_Angeles">北美西部 (UTC-8)</SelectItem>
-                                  <SelectItem value="America/New_York">北美东部 (UTC-5)</SelectItem>
+                                  <SelectItem value="Asia/Shanghai">{t('jobs.beijingTime')}</SelectItem>
+                                  <SelectItem value="America/Los_Angeles">{t('jobs.pacificTime')}</SelectItem>
+                                  <SelectItem value="America/New_York">{t('jobs.easternTime')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -353,7 +371,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                           <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="questions" className="gap-2">
                               <MessageSquare className="w-4 h-4" />
-                              问题记录
+                              {t('jobs.questionsTab')}
                               {questionCount > 0 && (
                                 <Badge variant="secondary" className="text-xs h-5 px-1.5">
                                   {questionCount}
@@ -362,7 +380,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                             </TabsTrigger>
                             <TabsTrigger value="reflection" className="gap-2">
                               <Lightbulb className="w-4 h-4" />
-                              反思复盘
+                              {t('jobs.reflectionTab')}
                               {hasReflection && (
                                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               )}
