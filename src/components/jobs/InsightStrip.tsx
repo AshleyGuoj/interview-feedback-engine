@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Job, JobStatus, SUB_STATUS_CONFIG, CLOSED_REASON_CONFIG, InterviewingSubStatus, OfferSubStatus, ClosedReason } from '@/types/job';
+import { useTranslation } from 'react-i18next';
+import { Job, JobStatus, InterviewingSubStatus, OfferSubStatus, ClosedReason } from '@/types/job';
 import { cn } from '@/lib/utils';
 
 interface InsightStripProps {
@@ -10,12 +11,37 @@ interface InsightStripProps {
 type SubStatusCount = {
   key: string;
   emoji: string;
-  label: string;
+  labelKey: string;
   count: number;
   color: string;
 };
 
+// Config with i18n keys
+const SUB_STATUS_I18N: Record<InterviewingSubStatus | OfferSubStatus, { labelKey: string; emoji: string; color: string }> = {
+  interview_scheduled: { labelKey: 'jobs.subStatusScheduled', emoji: '📅', color: 'blue' },
+  feedback_pending: { labelKey: 'jobs.subStatusFeedbackPending', emoji: '⏳', color: 'amber' },
+  approval_pending: { labelKey: 'jobs.subStatusApprovalPending', emoji: '⚠️', color: 'orange' },
+  hr_followup: { labelKey: 'jobs.subStatusHrFollowup', emoji: '🧑‍💼', color: 'purple' },
+  preparing: { labelKey: 'jobs.subStatusPreparing', emoji: '📚', color: 'cyan' },
+  offer_discussion: { labelKey: 'jobs.subStatusDiscussing', emoji: '💬', color: 'blue' },
+  offer_pending: { labelKey: 'jobs.subStatusOfferPending', emoji: '⏳', color: 'amber' },
+  offer_received: { labelKey: 'jobs.subStatusOfferReceived', emoji: '📩', color: 'green' },
+  negotiating: { labelKey: 'jobs.subStatusNegotiating', emoji: '🤝', color: 'purple' },
+};
+
+const CLOSED_REASON_I18N: Record<ClosedReason, { labelKey: string; emoji: string; color: string }> = {
+  rejected_after_interview: { labelKey: 'jobs.closedRejected', emoji: '❌', color: 'red' },
+  rejected_resume: { labelKey: 'jobs.closedResumeRejected', emoji: '📄', color: 'gray' },
+  no_response: { labelKey: 'jobs.closedNoResponse', emoji: '💤', color: 'gray' },
+  withdrawn: { labelKey: 'jobs.closedWithdrawn', emoji: '🔁', color: 'blue' },
+  hc_frozen: { labelKey: 'jobs.closedHcFrozen', emoji: '🚫', color: 'orange' },
+  position_cancelled: { labelKey: 'jobs.closedCancelled', emoji: '❌', color: 'gray' },
+  offer_declined: { labelKey: 'jobs.closedDeclinedOffer', emoji: '🙅', color: 'purple' },
+};
+
 export function InsightStrip({ status, jobs }: InsightStripProps) {
+  const { t } = useTranslation();
+  
   const insights = useMemo(() => {
     if (jobs.length === 0) return [];
 
@@ -29,11 +55,11 @@ export function InsightStrip({ status, jobs }: InsightStripProps) {
       
       return Object.entries(counts)
         .map(([key, count]): SubStatusCount => {
-          const config = SUB_STATUS_CONFIG[key as InterviewingSubStatus];
+          const config = SUB_STATUS_I18N[key as InterviewingSubStatus];
           return {
             key,
             emoji: config?.emoji || '📋',
-            label: config?.label || key,
+            labelKey: config?.labelKey || key,
             count,
             color: config?.color || 'gray',
           };
@@ -51,11 +77,11 @@ export function InsightStrip({ status, jobs }: InsightStripProps) {
       
       return Object.entries(counts)
         .map(([key, count]): SubStatusCount => {
-          const config = SUB_STATUS_CONFIG[key as OfferSubStatus];
+          const config = SUB_STATUS_I18N[key as OfferSubStatus];
           return {
             key,
             emoji: config?.emoji || '📋',
-            label: config?.label || key,
+            labelKey: config?.labelKey || key,
             count,
             color: config?.color || 'gray',
           };
@@ -73,11 +99,11 @@ export function InsightStrip({ status, jobs }: InsightStripProps) {
       
       return Object.entries(counts)
         .map(([key, count]): SubStatusCount => {
-          const config = CLOSED_REASON_CONFIG[key as ClosedReason];
+          const config = CLOSED_REASON_I18N[key as ClosedReason];
           return {
             key,
             emoji: config?.emoji || '📋',
-            label: config?.label || key,
+            labelKey: config?.labelKey || key,
             count,
             color: config?.color || 'gray',
           };
@@ -110,7 +136,7 @@ export function InsightStrip({ status, jobs }: InsightStripProps) {
         >
           <span>{insight.emoji}</span>
           <span className="font-medium">{insight.count}</span>
-          <span className="text-muted-foreground hidden sm:inline">{insight.label}</span>
+          <span className="text-muted-foreground hidden sm:inline">{t(insight.labelKey)}</span>
         </span>
       ))}
     </div>

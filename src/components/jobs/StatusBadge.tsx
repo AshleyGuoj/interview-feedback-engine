@@ -1,12 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { 
   InterviewingSubStatus, 
   OfferSubStatus, 
   RiskTag, 
   ClosedReason,
-  SUB_STATUS_CONFIG,
-  RISK_TAG_CONFIG,
-  CLOSED_REASON_CONFIG 
 } from '@/types/job';
 import { cn } from '@/lib/utils';
 
@@ -26,8 +24,22 @@ const colorClasses: Record<string, string> = {
   gray: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
+// Sub-status config with i18n keys
+const SUB_STATUS_I18N: Record<InterviewingSubStatus | OfferSubStatus, { labelKey: string; emoji: string; color: string }> = {
+  interview_scheduled: { labelKey: 'jobs.subStatusScheduled', emoji: '📅', color: 'blue' },
+  feedback_pending: { labelKey: 'jobs.subStatusFeedbackPending', emoji: '⏳', color: 'amber' },
+  approval_pending: { labelKey: 'jobs.subStatusApprovalPending', emoji: '⚠️', color: 'orange' },
+  hr_followup: { labelKey: 'jobs.subStatusHrFollowup', emoji: '🧑‍💼', color: 'purple' },
+  preparing: { labelKey: 'jobs.subStatusPreparing', emoji: '📚', color: 'cyan' },
+  offer_discussion: { labelKey: 'jobs.subStatusDiscussing', emoji: '💬', color: 'blue' },
+  offer_pending: { labelKey: 'jobs.subStatusOfferPending', emoji: '⏳', color: 'amber' },
+  offer_received: { labelKey: 'jobs.subStatusOfferReceived', emoji: '📩', color: 'green' },
+  negotiating: { labelKey: 'jobs.subStatusNegotiating', emoji: '🤝', color: 'purple' },
+};
+
 export function SubStatusBadge({ subStatus, size = 'default' }: SubStatusBadgeProps) {
-  const config = SUB_STATUS_CONFIG[subStatus];
+  const { t } = useTranslation();
+  const config = SUB_STATUS_I18N[subStatus];
   if (!config) return null;
 
   return (
@@ -39,7 +51,7 @@ export function SubStatusBadge({ subStatus, size = 'default' }: SubStatusBadgePr
       )}
     >
       <span className="mr-1">{config.emoji}</span>
-      {config.label}
+      {t(config.labelKey)}
     </Badge>
   );
 }
@@ -49,8 +61,20 @@ interface RiskTagBadgeProps {
   size?: 'sm' | 'default';
 }
 
+// Risk tag config with i18n keys
+const RISK_TAG_I18N: Record<RiskTag, { labelKey: string; emoji: string; color: string }> = {
+  hc_risk: { labelKey: 'jobs.riskHcRisk', emoji: '⚠️', color: 'red' },
+  long_silence: { labelKey: 'jobs.riskLongSilence', emoji: '🕒', color: 'gray' },
+  extra_round: { labelKey: 'jobs.riskExtraRound', emoji: '🔁', color: 'orange' },
+  competing_offer: { labelKey: 'jobs.riskCompetingOffer', emoji: '💰', color: 'green' },
+  timeline_delay: { labelKey: 'jobs.riskDelayed', emoji: '⏰', color: 'amber' },
+  salary_gap: { labelKey: 'jobs.riskSalaryGap', emoji: '💵', color: 'red' },
+  lowball_offer: { labelKey: 'jobs.riskLowball', emoji: '📉', color: 'red' },
+};
+
 export function RiskTagBadge({ tag, size = 'default' }: RiskTagBadgeProps) {
-  const config = RISK_TAG_CONFIG[tag];
+  const { t } = useTranslation();
+  const config = RISK_TAG_I18N[tag];
   if (!config) return null;
 
   return (
@@ -63,7 +87,7 @@ export function RiskTagBadge({ tag, size = 'default' }: RiskTagBadgeProps) {
       )}
     >
       <span className="mr-0.5">{config.emoji}</span>
-      {size === 'default' && config.label}
+      {size === 'default' && t(config.labelKey)}
     </Badge>
   );
 }
@@ -73,8 +97,20 @@ interface ClosedReasonBadgeProps {
   size?: 'sm' | 'default';
 }
 
+// Closed reason config with i18n keys
+const CLOSED_REASON_I18N: Record<ClosedReason, { labelKey: string; emoji: string; color: string }> = {
+  rejected_after_interview: { labelKey: 'jobs.closedRejected', emoji: '❌', color: 'red' },
+  rejected_resume: { labelKey: 'jobs.closedResumeRejected', emoji: '📄', color: 'gray' },
+  no_response: { labelKey: 'jobs.closedNoResponse', emoji: '💤', color: 'gray' },
+  withdrawn: { labelKey: 'jobs.closedWithdrawn', emoji: '🔁', color: 'blue' },
+  hc_frozen: { labelKey: 'jobs.closedHcFrozen', emoji: '🚫', color: 'orange' },
+  position_cancelled: { labelKey: 'jobs.closedCancelled', emoji: '❌', color: 'gray' },
+  offer_declined: { labelKey: 'jobs.closedDeclinedOffer', emoji: '🙅', color: 'purple' },
+};
+
 export function ClosedReasonBadge({ reason, size = 'default' }: ClosedReasonBadgeProps) {
-  const config = CLOSED_REASON_CONFIG[reason];
+  const { t } = useTranslation();
+  const config = CLOSED_REASON_I18N[reason];
   if (!config) return null;
 
   return (
@@ -86,7 +122,7 @@ export function ClosedReasonBadge({ reason, size = 'default' }: ClosedReasonBadg
       )}
     >
       <span className="mr-1">{config.emoji}</span>
-      {config.label}
+      {t(config.labelKey)}
     </Badge>
   );
 }

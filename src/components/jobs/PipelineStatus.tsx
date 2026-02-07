@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Job } from '@/types/job';
 import { resolvePipeline, getStateDisplayConfig, formatScheduledTime } from '@/lib/pipeline-resolver';
@@ -15,6 +16,7 @@ interface PipelineStatusProps {
  * Uses the Pipeline Resolver to determine the current state
  */
 export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
+  const { t } = useTranslation();
   const resolution = resolvePipeline(job);
   const { state } = resolution;
   const displayConfig = getStateDisplayConfig(state);
@@ -32,31 +34,33 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
           return `${state.stage.name} · ${scheduledTime}`;
         }
         if (state.stage.status === 'rescheduled') {
-          return `${state.stage.name} · Rescheduled`;
+          return `${state.stage.name} · ${t('jobs.rescheduled')}`;
         }
-        return `Next: ${state.stage.name}`;
+        return `${t('jobs.next')}: ${state.stage.name}`;
       
       case 'awaiting_decision':
-        return state.label;
+        return t('jobs.subStatusFeedbackPending');
       
       case 'rejected':
-        // Softer tone: "Process Ended at [Stage]"
-        return `Ended at ${state.atStage.name}`;
+        // Softer tone: "Ended at [Stage]"
+        return t('jobs.endedAt', { stage: state.atStage.name });
       
       case 'on_hold':
         // If it's a closed on_hold (HC freeze that was closed), show "Ended at"
         // Otherwise show the default label
-        return state.label.startsWith('Ended') ? state.label : `Frozen at ${state.atStage.name}`;
+        return state.label.startsWith('Ended') 
+          ? t('jobs.endedAt', { stage: state.atStage.name })
+          : t('jobs.frozenAt', { stage: state.atStage.name });
       
       case 'offer':
-        return 'Offer Received';
+        return t('jobs.offerReceived');
       
       case 'withdrawn':
-        return 'Withdrawn';
+        return t('jobs.withdrawn');
       
       case 'applied':
       default:
-        return 'Applied';
+        return t('jobs.applied');
     }
   };
 
@@ -105,7 +109,7 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
             className="h-1.5 bg-muted"
           />
           <p className="text-[10px] text-muted-foreground">
-            Completed {progressInfo.completed} / {progressInfo.total} stages
+            {t('jobs.completedStages', { completed: progressInfo.completed, total: progressInfo.total })}
           </p>
         </div>
       </div>

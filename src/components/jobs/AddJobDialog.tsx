@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ interface AddJobDialogProps {
 }
 
 export function AddJobDialog({ onAdd }: AddJobDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -69,17 +71,17 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
-          Add Job
+          {t('jobs.addJob')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Job Application</DialogTitle>
+          <DialogTitle>{t('jobs.addNewJob')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name *</Label>
+              <Label htmlFor="companyName">{t('jobs.companyName')} *</Label>
               <Input
                 id="companyName"
                 value={formData.companyName}
@@ -89,7 +91,7 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="roleTitle">Role Title *</Label>
+              <Label htmlFor="roleTitle">{t('jobs.roleTitle')} *</Label>
               <Input
                 id="roleTitle"
                 value={formData.roleTitle}
@@ -102,7 +104,7 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">{t('jobs.location')}</Label>
               <Select
                 value={formData.location}
                 onValueChange={(value: 'CN' | 'US' | 'Remote' | 'Other') => 
@@ -113,15 +115,15 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="US">US</SelectItem>
-                  <SelectItem value="CN">China</SelectItem>
-                  <SelectItem value="Remote">Remote</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="US">{t('jobs.locationUS')}</SelectItem>
+                  <SelectItem value="CN">{t('jobs.locationChina')}</SelectItem>
+                  <SelectItem value="Remote">{t('jobs.locationRemote')}</SelectItem>
+                  <SelectItem value="Other">{t('jobs.locationOther')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="source">Source</Label>
+              <Label htmlFor="source">{t('jobs.source')}</Label>
               <Select
                 value={formData.source}
                 onValueChange={(value: JobSource) => 
@@ -132,18 +134,18 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  <SelectItem value="boss">BOSS直聘</SelectItem>
-                  <SelectItem value="referral">Referral</SelectItem>
-                  <SelectItem value="website">Company Website</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="linkedin">{t('jobs.sourceLinkedIn')}</SelectItem>
+                  <SelectItem value="boss">{t('jobs.sourceBoss')}</SelectItem>
+                  <SelectItem value="referral">{t('jobs.sourceReferral')}</SelectItem>
+                  <SelectItem value="website">{t('jobs.sourceWebsite')}</SelectItem>
+                  <SelectItem value="other">{t('jobs.sourceOther')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="jobLink">Job Link</Label>
+            <Label htmlFor="jobLink">{t('jobs.jobLink')}</Label>
             <Input
               id="jobLink"
               type="url"
@@ -154,7 +156,7 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Interest Level</Label>
+            <Label>{t('jobs.interestLevel')}</Label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((level) => (
                 <button
@@ -177,21 +179,21 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="careerFitNotes">Career Fit Notes</Label>
+            <Label htmlFor="careerFitNotes">{t('jobs.careerFitNotes')}</Label>
             <Textarea
               id="careerFitNotes"
               value={formData.careerFitNotes}
               onChange={(e) => setFormData({ ...formData, careerFitNotes: e.target.value })}
-              placeholder="Why does this role interest you? How does it fit your career goals?"
+              placeholder={t('jobs.careerFitPlaceholder')}
               rows={3}
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
-            <Button type="submit">Add Job</Button>
+            <Button type="submit">{t('jobs.addJob')}</Button>
           </div>
         </form>
       </DialogContent>
