@@ -52,17 +52,17 @@ export function Sidebar() {
     >
       {/* Logo & Collapse Toggle */}
       <div className={cn(
-        'h-16 flex items-center border-b border-border',
+        'h-20 flex items-center border-b border-border',
         collapsed ? 'justify-center px-2' : 'justify-between px-3'
       )}>
         <div className={cn('flex items-center', collapsed ? '' : 'gap-3')}>
           <img 
             src={offermindIcon} 
             alt="OfferMind" 
-            className="h-11 w-11 object-contain shrink-0"
+            className="h-14 w-14 object-contain shrink-0"
           />
           {!collapsed && (
-            <span className="font-bold text-xl text-foreground">OfferMind</span>
+            <span className="font-bold text-2xl text-foreground">OfferMind</span>
           )}
         </div>
         
