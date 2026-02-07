@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { MomentumStatus, MOMENTUM_CONFIG } from '@/types/career-signals';
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -14,8 +15,20 @@ const iconMap = {
 };
 
 export function MomentumIndicator({ momentum }: MomentumIndicatorProps) {
+  const { t, i18n } = useTranslation();
   const config = MOMENTUM_CONFIG[momentum.state];
   const Icon = iconMap[config.icon as keyof typeof iconMap] || Minus;
+  const isEnglish = i18n.language === 'en';
+
+  // Get localized momentum state label
+  const getMomentumLabel = () => {
+    switch (momentum.state) {
+      case 'improving': return t('timeline.improving');
+      case 'flat': return t('timeline.flat');
+      case 'declining': return t('timeline.declining');
+      default: return isEnglish ? config.label : config.labelZh;
+    }
+  };
 
   return (
     <Card className={cn(
@@ -37,9 +50,9 @@ export function MomentumIndicator({ momentum }: MomentumIndicatorProps) {
           
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">动量趋势</span>
+              <span className="text-sm text-muted-foreground">{t('timeline.momentumTrend')}</span>
               <span className={cn('font-semibold', config.color)}>
-                {config.labelZh}
+                {getMomentumLabel()}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">

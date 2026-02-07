@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { TimelineItem, SIGNAL_TYPE_CONFIG } from '@/types/career-signals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +19,32 @@ const iconMap = {
 };
 
 export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
+  const { t, i18n } = useTranslation();
   const config = SIGNAL_TYPE_CONFIG[item.type];
   const Icon = iconMap[config.icon as keyof typeof iconMap] || Activity;
   const isTurningPoint = item.type === 'turning_point';
+  const isEnglish = i18n.language === 'en';
+
+  // Get localized signal type label
+  const getSignalLabel = () => {
+    switch (item.type) {
+      case 'turning_point': return t('timeline.turningPoint');
+      case 'strong_signal': return t('timeline.strongSignal');
+      case 'medium_signal': return t('timeline.mediumSignal');
+      case 'weak_signal': return t('timeline.weakSignal');
+      default: return isEnglish ? config.label : config.labelZh;
+    }
+  };
+
+  // Get localized confidence label
+  const getConfidenceLabel = () => {
+    switch (item.confidence) {
+      case 'high': return t('timeline.highConfidence');
+      case 'medium': return t('timeline.mediumConfidence');
+      case 'low': return t('timeline.lowConfidence');
+      default: return '';
+    }
+  };
 
   return (
     <div className="relative pl-10">
@@ -52,14 +76,14 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge className={cn('text-xs', config.bgColor, config.color)}>
-                  {config.labelZh}
+                  {getSignalLabel()}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   {format(new Date(item.date), 'yyyy/MM/dd')}
                 </span>
                 {item.confidence === 'high' && (
                   <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-300">
-                    高置信度
+                    {getConfidenceLabel()}
                   </Badge>
                 )}
               </div>

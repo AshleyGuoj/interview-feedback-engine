@@ -138,7 +138,7 @@ export function CareerSignalTimeline() {
           <Activity className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
           <h3 className="font-semibold mb-2">{t('timeline.noSignals')}</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            {t('ai.startTracking')}
+            {t('timeline.noSignalsHelper')}
           </p>
         </CardContent>
       </Card>
@@ -190,10 +190,7 @@ export function CareerSignalTimeline() {
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
           <span className="text-sm text-muted-foreground">
-            {language === 'en' 
-              ? `Analyzing ${events.length} interview events`
-              : `基于 ${events.length} 个面试事件分析`
-            }
+            {t('timeline.basedOnEvents', { count: events.length })}
           </span>
         </div>
         <Button 
@@ -203,7 +200,7 @@ export function CareerSignalTimeline() {
           disabled={isRefreshing}
         >
           <RefreshCw className={`w-4 h-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {language === 'en' ? 'Refresh' : '刷新分析'}
+          {t('timeline.refresh')}
         </Button>
       </div>
 
@@ -222,17 +219,14 @@ export function CareerSignalTimeline() {
       <div className="space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Activity className="w-5 h-5 text-primary" />
-          {language === 'en' ? 'Signal Timeline' : '信号时间线'}
+          {t('timeline.signalTimeline')}
         </h2>
         
         {timeline.timelineItems.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                {language === 'en' 
-                  ? 'No significant signals detected in current events'
-                  : '当前事件中没有发现显著信号'
-                }
+                {t('timeline.noSignificantSignals')}
               </p>
             </CardContent>
           </Card>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { CareerPattern, RISK_LEVEL_CONFIG } from '@/types/career-signals';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,19 @@ const riskIconMap = {
 };
 
 export function PatternsList({ patterns }: PatternsListProps) {
+  const { t, i18n } = useTranslation();
+  const isEnglish = i18n.language === 'en';
+
+  // Get localized risk level label
+  const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high') => {
+    switch (riskLevel) {
+      case 'low': return t('timeline.riskLow');
+      case 'medium': return t('timeline.riskMedium');
+      case 'high': return t('timeline.riskHigh');
+      default: return riskLevel;
+    }
+  };
+
   if (patterns.length === 0) {
     return null;
   }
@@ -24,7 +38,7 @@ export function PatternsList({ patterns }: PatternsListProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Radar className="w-4 h-4 text-primary" />
-          发现的模式
+          {t('timeline.patternsDiscovered')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -48,7 +62,7 @@ export function PatternsList({ patterns }: PatternsListProps) {
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{pattern.pattern}</span>
                     <Badge variant="outline" className={cn('text-xs', config.color)}>
-                      风险: {config.labelZh}
+                      {t('timeline.riskLevel')}: {getRiskLabel(pattern.riskLevel)}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">

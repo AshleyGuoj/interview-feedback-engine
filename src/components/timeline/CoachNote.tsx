@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { MessageCircle, Sparkles } from 'lucide-react';
 
@@ -6,6 +7,8 @@ interface CoachNoteProps {
 }
 
 export function CoachNote({ note }: CoachNoteProps) {
+  const { t } = useTranslation();
+
   return (
     <Card className="bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20">
       <CardContent className="p-4">
@@ -16,7 +19,7 @@ export function CoachNote({ note }: CoachNoteProps) {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <MessageCircle className="w-4 h-4 text-primary" />
-              <span className="font-medium text-sm text-primary">Career Coach</span>
+              <span className="font-medium text-sm text-primary">{t('timeline.careerCoach')}</span>
             </div>
             <p className="text-sm text-foreground leading-relaxed">
               {note}
