@@ -5,9 +5,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are an Interview Summary Agent designed to help job seekers systematically review and improve their interview performance.
+const getSystemPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are an Interview Summary Agent designed to help job seekers systematically review and improve their interview performance.
 
 Your role is to analyze interview inputs and provide structured, actionable feedback.
+
+IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
 
 Given the interview details, notes, job description (if provided), and resume (if provided), analyze the interview and return a JSON response with the following structure:
 
@@ -16,7 +21,7 @@ Given the interview details, notes, job description (if provided), and resume (i
     "company": "string",
     "role": "string", 
     "round": "string",
-    "interviewFocus": "string (e.g., 'Product Sense & Leadership')",
+    "interviewFocus": "string (e.g., '${isEnglish ? 'Product Sense & Leadership' : '产品感与领导力'}')",
     "signalStrength": "Strong" | "Medium" | "Weak"
   },
   "keyStrengths": ["array of 3-5 bullet points explaining what went well with concrete reasoning"],
@@ -43,7 +48,9 @@ Guidelines:
 - If information is missing (no JD or resume), still provide useful analysis but note the limitations
 - Prioritize actionable insights over generic advice
 - Make the signal strength assessment based on the quality of answers and interviewer signals described
-- Each bullet point should be specific and tied to concrete evidence from the notes`;
+- Each bullet point should be specific and tied to concrete evidence from the notes
+- ALL TEXT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}`;
+};
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -52,9 +59,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { company, role, round, interviewDate, interviewType, interviewContent, jobDescription, resume } = await req.json();
+    const { company, role, round, interviewDate, interviewType, interviewContent, jobDescription, resume, language = 'en' } = await req.json();
 
-    console.log("Analyzing interview for:", company, role);
+    console.log("Analyzing interview for:", company, role, "in language:", language);
 
     // Build the user prompt with all available context
     let userPrompt = `Analyze this interview:\n\n`;
@@ -78,7 +85,7 @@ Deno.serve(async (req) => {
       userPrompt += `\n(No resume provided - provide analysis based on available information)\n`;
     }
 
-    userPrompt += `\nProvide your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text.`;
+    userPrompt += `\nProvide your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text. Remember: ALL text content must be in ${language === 'en' ? 'English' : 'Chinese (中文)'}.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -94,7 +101,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,

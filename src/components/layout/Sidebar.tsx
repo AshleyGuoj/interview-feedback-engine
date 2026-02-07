@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard, 
   Briefcase, 
   Calendar, 
   BarChart3, 
   Archive,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
   Brain,
   PanelLeftClose,
@@ -17,26 +16,29 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import offermindIcon from '@/assets/offermind-icon.png';
-
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/jobs', icon: Briefcase, label: 'Job Board' },
-  { to: '/timeline', icon: Calendar, label: 'Timeline' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/archive', icon: Archive, label: 'Archive' },
-  { to: '/interview-prep', icon: Brain, label: 'Interview Prep' },
-];
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(() => {
     const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return stored === 'true';
   });
   const location = useLocation();
   const { signOut, user } = useAuth();
+
+  // Nav items with translation keys
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+    { to: '/jobs', icon: Briefcase, labelKey: 'nav.jobs' },
+    { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
+    { to: '/analytics', icon: BarChart3, labelKey: 'nav.analytics' },
+    { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
+    { to: '/interview-prep', icon: Brain, labelKey: 'nav.interviewPrep' },
+  ];
 
   // Persist collapse state
   useEffect(() => {
@@ -79,7 +81,7 @@ export function Sidebar() {
                 <PanelLeft className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">展开侧边栏</TooltipContent>
+            <TooltipContent side="right">{t('nav.expandSidebar')}</TooltipContent>
           </Tooltip>
         ) : (
           <Tooltip delayDuration={0}>
@@ -93,7 +95,7 @@ export function Sidebar() {
                 <PanelLeftClose className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">折叠侧边栏</TooltipContent>
+            <TooltipContent side="right">{t('nav.collapseSidebar')}</TooltipContent>
           </Tooltip>
         )}
       </div>
@@ -103,6 +105,7 @@ export function Sidebar() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || 
             (item.to !== '/' && location.pathname.startsWith(item.to));
+          const label = t(item.labelKey);
           
           const linkContent = (
             <NavLink
@@ -117,7 +120,7 @@ export function Sidebar() {
               )}
             >
               <item.icon className="w-5 h-5 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{label}</span>}
             </NavLink>
           );
 
@@ -128,7 +131,7 @@ export function Sidebar() {
                   {linkContent}
                 </TooltipTrigger>
                 <TooltipContent side="right" className="font-medium">
-                  {item.label}
+                  {label}
                 </TooltipContent>
               </Tooltip>
             );
@@ -145,6 +148,9 @@ export function Sidebar() {
             {user.email}
           </div>
         )}
+
+        {/* Language Switcher */}
+        <LanguageSwitcher collapsed={collapsed} />
         
         {collapsed ? (
           <Tooltip delayDuration={0}>
@@ -158,7 +164,7 @@ export function Sidebar() {
                 <LogOut className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">Sign Out</TooltipContent>
+            <TooltipContent side="right">{t('nav.signOut')}</TooltipContent>
           </Tooltip>
         ) : (
           <Button
@@ -168,7 +174,7 @@ export function Sidebar() {
             className="w-full justify-start text-muted-foreground hover:text-foreground"
           >
             <LogOut className="w-4 h-4" />
-            <span className="ml-2">Sign Out</span>
+            <span className="ml-2">{t('nav.signOut')}</span>
           </Button>
         )}
       </div>

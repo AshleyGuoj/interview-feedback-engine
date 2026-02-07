@@ -31,9 +31,15 @@ interface RoleDebriefRequest {
   companyName: string;
   roleTitle: string;
   rounds: RoundAnalysis[];
+  language?: string;
 }
 
-const SYSTEM_PROMPT = `You are a Career Coach AI that aggregates multiple interview round analyses into a comprehensive Role Debrief.
+const getSystemPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are a Career Coach AI that aggregates multiple interview round analyses into a comprehensive Role Debrief.
+
+IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
 
 Given the multi-round interview data, generate a structured JSON analysis with:
 
@@ -98,7 +104,10 @@ Return ONLY valid JSON matching this structure:
     { "action": "string", "priority": "high|medium|low", "targetGap": "string" }
   ],
   "roleSummary": "2-3 sentence overall summary"
-}`;
+}
+
+ALL TEXT CONTENT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}.`;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -106,9 +115,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { jobId, companyName, roleTitle, rounds }: RoleDebriefRequest = await req.json();
+    const { jobId, companyName, roleTitle, rounds, language = 'en' }: RoleDebriefRequest = await req.json();
 
-    console.log("Generating role debrief for:", companyName, roleTitle, `(${rounds.length} rounds)`);
+    console.log("Generating role debrief for:", companyName, roleTitle, `(${rounds.length} rounds)`, "language:", language);
 
     if (!rounds || rounds.length === 0) {
       throw new Error("No round analyses provided");
@@ -159,7 +168,8 @@ Deno.serve(async (req) => {
       userPrompt += `\n`;
     });
 
-    userPrompt += `\nAnalyze all rounds and generate a complete Role Debrief. Return ONLY valid JSON.`;
+    const outputLanguage = language === 'en' ? 'English' : 'Chinese (中文)';
+    userPrompt += `\nAnalyze all rounds and generate a complete Role Debrief. Return ONLY valid JSON. ALL text content must be in ${outputLanguage}.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -175,7 +185,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,

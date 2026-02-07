@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useJobs } from '@/contexts/JobsContext';
+import { useLanguage } from '@/hooks/useLanguage';
 import { CareerSignalTimeline as CareerSignalTimelineType } from '@/types/career-signals';
 import { Job, InterviewStage } from '@/types/job';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,6 +95,8 @@ function extractEvents(jobs: Job[]): JobEvent[] {
 }
 
 export function CareerSignalTimeline() {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const { jobs } = useJobs();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -100,15 +104,15 @@ export function CareerSignalTimeline() {
 
   const fetchSignals = useCallback(async (): Promise<CareerSignalTimelineType> => {
     const { data, error } = await supabase.functions.invoke('analyze-career-signals', {
-      body: { events },
+      body: { events, language },
     });
 
     if (error) throw error;
     return data as CareerSignalTimelineType;
-  }, [events]);
+  }, [events, language]);
 
   const { data: signalData, isLoading, error, refetch } = useQuery({
-    queryKey: ['career-signals', events.length],
+    queryKey: ['career-signals', events.length, language],
     queryFn: fetchSignals,
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: events.length > 0,
@@ -118,9 +122,9 @@ export function CareerSignalTimeline() {
     setIsRefreshing(true);
     try {
       await refetch();
-      toast.success('信号分析已更新');
+      toast.success(t('common.save'));
     } catch {
-      toast.error('更新失败，请重试');
+      toast.error(t('common.error'));
     } finally {
       setIsRefreshing(false);
     }
@@ -132,9 +136,9 @@ export function CareerSignalTimeline() {
       <Card>
         <CardContent className="py-16 text-center">
           <Activity className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <h3 className="font-semibold mb-2">暂无职业信号</h3>
+          <h3 className="font-semibold mb-2">{t('timeline.noSignals')}</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            开始记录你的面试经历，AI将帮助你发现职业发展中的关键信号和模式
+            {t('ai.startTracking')}
           </p>
         </CardContent>
       </Card>
@@ -148,7 +152,7 @@ export function CareerSignalTimeline() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-            <span className="text-sm text-muted-foreground">正在分析职业信号...</span>
+            <span className="text-sm text-muted-foreground">{t('timeline.analyzing')}</span>
           </div>
         </div>
         <Skeleton className="h-24 w-full" />
@@ -164,13 +168,13 @@ export function CareerSignalTimeline() {
       <Card>
         <CardContent className="py-12 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive opacity-70" />
-          <h3 className="font-semibold mb-2">分析失败</h3>
+          <h3 className="font-semibold mb-2">{t('ai.errorOccurred')}</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            无法生成信号分析，请重试
+            {t('ai.tryAgain')}
           </p>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4 mr-1.5" />
-            重试
+            {t('common.retry')}
           </Button>
         </CardContent>
       </Card>
@@ -186,7 +190,10 @@ export function CareerSignalTimeline() {
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
           <span className="text-sm text-muted-foreground">
-            基于 {events.length} 个面试事件分析
+            {language === 'en' 
+              ? `Analyzing ${events.length} interview events`
+              : `基于 ${events.length} 个面试事件分析`
+            }
           </span>
         </div>
         <Button 
@@ -196,7 +203,7 @@ export function CareerSignalTimeline() {
           disabled={isRefreshing}
         >
           <RefreshCw className={`w-4 h-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          刷新分析
+          {language === 'en' ? 'Refresh' : '刷新分析'}
         </Button>
       </div>
 
@@ -215,14 +222,17 @@ export function CareerSignalTimeline() {
       <div className="space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Activity className="w-5 h-5 text-primary" />
-          信号时间线
+          {language === 'en' ? 'Signal Timeline' : '信号时间线'}
         </h2>
         
         {timeline.timelineItems.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                当前事件中没有发现显著信号
+                {language === 'en' 
+                  ? 'No significant signals detected in current events'
+                  : '当前事件中没有发现显著信号'
+                }
               </p>
             </CardContent>
           </Card>

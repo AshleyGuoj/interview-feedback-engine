@@ -5,7 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SYSTEM_PROMPT = `You are a Career Signal Timeline Intelligence Agent.
+const getSystemPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are a Career Signal Timeline Intelligence Agent.
 
 Your task is to transform raw job search events into a meaningful,
 decision-oriented career timeline that helps users understand
@@ -13,6 +16,8 @@ how their interview signals evolve over time.
 
 This timeline is NOT a simple activity log.
 It must provide interpretation, signal strength, and narrative context.
+
+IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
 
 ==============================
 CORE PURPOSE
@@ -46,9 +51,6 @@ B. INTERPRETATION OVER DESCRIPTION
 For each timeline item:
 - Briefly explain why this event matters
 - Focus on implications, not just what happened
-
-Avoid: "Interview completed"
-Prefer: "Repeated metrics weakness detected in PM interviews"
 
 C. TURNING POINT DETECTION
 Explicitly identify turning points, such as:
@@ -113,9 +115,10 @@ STYLE & TONE
 - No generic encouragement
 - No repetition of raw events
 - Think like a career coach reviewing a long-term trajectory
-- Use Chinese for all text content (titles, summaries, patterns, coach notes)
+- ALL TEXT CONTENT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}
 
 Do not include explanations outside of the JSON.`;
+};
 
 interface JobEvent {
   jobId: string;
@@ -142,9 +145,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { events } = await req.json() as { events: JobEvent[] };
+    const { events, language = 'en' } = await req.json() as { events: JobEvent[]; language?: string };
 
     if (!events || events.length === 0) {
+      const noDataMessage = language === 'en' 
+        ? "Start recording your interviews to see AI-powered career signals."
+        : "开始记录你的面试经历，AI将帮助你发现职业发展中的关键信号和模式。";
+      const noDataExplanation = language === 'en'
+        ? "Not enough data for trend analysis"
+        : "暂无足够数据进行趋势分析";
+        
       return new Response(
         JSON.stringify({
           timelinePurpose: "Career Signal Timeline",
@@ -152,9 +162,9 @@ Deno.serve(async (req) => {
           recentPatterns: [],
           momentumStatus: {
             state: "flat",
-            explanation: "暂无足够数据进行趋势分析"
+            explanation: noDataExplanation
           },
-          coachNote: "开始记录你的面试经历，AI将帮助你发现职业发展中的关键信号和模式。"
+          coachNote: noDataMessage
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -182,6 +192,7 @@ Deno.serve(async (req) => {
       return eventDesc;
     }).join('\n');
 
+    const outputLanguage = language === 'en' ? 'English' : 'Chinese (中文)';
     const userPrompt = `Analyze these career events and produce a signal-based timeline:
 
 ${eventsContext}
@@ -191,7 +202,7 @@ Remember:
 2. Focus on interpretation, not description
 3. Detect patterns across jobs
 4. Identify any turning points
-5. Output Chinese text for all content
+5. Output ALL text in ${outputLanguage}
 6. Return ONLY valid JSON`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -208,7 +219,7 @@ Remember:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
@@ -259,9 +270,9 @@ Remember:
         recentPatterns: [],
         momentumStatus: {
           state: "flat",
-          explanation: "分析过程中出现错误"
+          explanation: "An error occurred during analysis"
         },
-        coachNote: "暂时无法生成信号分析，请稍后重试。"
+        coachNote: "Unable to generate signal analysis. Please try again."
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
