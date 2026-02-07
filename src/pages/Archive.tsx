@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { CareerGrowthPanel } from '@/components/analytics/CareerGrowthPanel';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -33,6 +34,7 @@ import {
 import { format } from 'date-fns';
 
 export default function Archive() {
+  const { t } = useTranslation();
   const { jobs } = useJobs();
   const [activeTab, setActiveTab] = useState<'growth' | 'history'>('growth');
 
@@ -57,9 +59,9 @@ export default function Archive() {
               <Trophy className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">Career Growth & Archive</h1>
+              <h1 className="text-xl font-semibold text-foreground">{t('careerGrowth.pageTitle')}</h1>
               <p className="text-sm text-muted-foreground">
-                回顾你的职业成长轨迹，从过去的经验中汲取智慧
+                {t('careerGrowth.pageSubtitle')}
               </p>
             </div>
           </div>
@@ -86,7 +88,7 @@ export default function Archive() {
                         ) : (
                           <LineChart className="w-4 h-4 mr-2" />
                         )}
-                        Career Growth
+                        {t('analytics.careerGrowth')}
                         {isGrowthUnlocked && (
                           <span className="ml-2 text-xs text-primary">✨</span>
                         )}
@@ -95,7 +97,7 @@ export default function Archive() {
                   </TooltipTrigger>
                   {!isGrowthUnlocked && (
                     <TooltipContent>
-                      <p>需要至少 2 轮面试分析数据</p>
+                      <p>{t('careerGrowth.needsMinRounds')}</p>
                     </TooltipContent>
                   )}
                 </Tooltip>
@@ -105,7 +107,7 @@ export default function Archive() {
                 className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
               >
                 <History className="w-4 h-4 mr-2" />
-                Closed Applications
+                {t('careerGrowth.closedApplications')}
                 {closedJobs.length > 0 && (
                   <Badge variant="secondary" className="ml-2 text-xs">
                     {closedJobs.length}
@@ -129,10 +131,10 @@ export default function Archive() {
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                     <Lock className="w-7 h-7 text-primary" />
                   </div>
-                  <h2 className="text-lg font-semibold mb-3">Career Growth 尚未解锁</h2>
+                  <h2 className="text-lg font-semibold mb-3">{t('careerGrowth.notUnlocked')}</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    完成至少 2 轮面试分析后，系统将自动生成你的职业成长趋势分析。
-                    当前已分析: {totalAnalyzedRounds} 轮
+                    {t('careerGrowth.notUnlockedDescription')}
+                    {' '}{t('careerGrowth.currentlyAnalyzed')}: {totalAnalyzedRounds} {t('analytics.rounds')}
                   </p>
                 </div>
               </div>
@@ -144,11 +146,11 @@ export default function Archive() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Closed Date</TableHead>
-                        <TableHead>Rounds</TableHead>
+                        <TableHead>{t('jobs.role')}</TableHead>
+                        <TableHead>{t('jobs.company')}</TableHead>
+                        <TableHead>{t('jobs.location')}</TableHead>
+                        <TableHead>{t('archive.closedDate')}</TableHead>
+                        <TableHead>{t('analytics.rounds')}</TableHead>
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -176,7 +178,7 @@ export default function Archive() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">
-                              {job.stages.filter(s => s.status === 'completed').length} completed
+                              {job.stages.filter(s => s.status === 'completed').length} {t('common.completed')}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -200,10 +202,9 @@ export default function Archive() {
                 <Card className="border-dashed">
                   <CardContent className="py-16 text-center">
                     <ArchiveIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <CardTitle className="text-lg mb-2">No Closed Applications</CardTitle>
+                    <CardTitle className="text-lg mb-2">{t('careerGrowth.noClosedApplications')}</CardTitle>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                      When you close job applications, they'll appear here for future reference
-                      and to help you learn from past experiences.
+                      {t('careerGrowth.closedAppDescription')}
                     </p>
                   </CardContent>
                 </Card>

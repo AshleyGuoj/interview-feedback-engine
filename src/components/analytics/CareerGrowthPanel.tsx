@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Job } from '@/types/job';
 import { CareerGrowthAnalysis } from '@/types/career-growth';
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,6 @@ import {
   Sparkles,
   ArrowUpRight,
   ArrowDownRight,
-  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -34,6 +35,8 @@ interface CareerGrowthPanelProps {
 }
 
 export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [analysis, setAnalysis] = useState<CareerGrowthAnalysis | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,18 +105,18 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('analyze-career-growth', {
-        body: { rounds: allAnalyzedRounds },
+        body: { rounds: allAnalyzedRounds, language },
       });
 
       if (fnError) throw fnError;
       if (data.error) throw new Error(data.error);
 
       setAnalysis(data as CareerGrowthAnalysis);
-      toast.success('Career Growth Analysis 生成成功');
+      toast.success(t('careerGrowth.analysisSuccess'));
     } catch (err) {
       console.error('Error generating career growth analysis:', err);
-      setError(err instanceof Error ? err.message : '生成失败，请重试');
-      toast.error('生成失败，请重试');
+      setError(err instanceof Error ? err.message : t('careerGrowth.analysisFailed'));
+      toast.error(t('careerGrowth.analysisFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -141,6 +144,28 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
     }
   };
 
+  const getTrendLabel = (trend: string) => {
+    switch (trend) {
+      case 'improving':
+        return t('careerGrowth.improving');
+      case 'declining':
+        return t('careerGrowth.declining');
+      default:
+        return t('careerGrowth.stable');
+    }
+  };
+
+  const getImpactLabel = (impact: string) => {
+    switch (impact) {
+      case 'high':
+        return t('careerGrowth.highImpact');
+      case 'medium':
+        return t('careerGrowth.mediumImpact');
+      default:
+        return t('careerGrowth.lowImpact');
+    }
+  };
+
   // Empty state
   if (!analysis && !isGenerating) {
     return (
@@ -149,14 +174,14 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <LineChartIcon className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold mb-2">Career Growth Intelligence</h2>
+          <h2 className="text-lg font-semibold mb-2">{t('careerGrowth.title')}</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            跨职位分析你的面试表现变化趋势，识别能力提升和持续短板，生成个性化成长建议
+            {t('careerGrowth.analysisDescription')}
           </p>
           
           <div className="mb-6 p-4 bg-muted/50 rounded-lg text-left">
             <p className="text-sm font-medium mb-2">
-              可用数据: {allAnalyzedRounds.length} 轮面试
+              {t('careerGrowth.availableData')}: {allAnalyzedRounds.length} {t('careerGrowth.interviewRounds')}
             </p>
             {allAnalyzedRounds.length > 0 ? (
               <div className="space-y-1 max-h-32 overflow-y-auto">
@@ -170,11 +195,13 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
                   </div>
                 ))}
                 {allAnalyzedRounds.length > 5 && (
-                  <p className="text-xs text-muted-foreground">...还有 {allAnalyzedRounds.length - 5} 轮</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('careerGrowth.andMore', { count: allAnalyzedRounds.length - 5 })}
+                  </p>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">暂无已分析的面试数据</p>
+              <p className="text-sm text-muted-foreground">{t('careerGrowth.noAnalyzedData')}</p>
             )}
           </div>
 
@@ -190,19 +217,19 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                正在分析...
+                {t('careerGrowth.analyzing')}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                生成成长分析
+                {t('careerGrowth.generateGrowthAnalysis')}
               </>
             )}
           </Button>
 
           {!canGenerate && (
             <p className="text-xs text-muted-foreground mt-3">
-              需要至少 2 轮已分析的面试数据
+              {t('careerGrowth.needsMinRounds')}
             </p>
           )}
         </div>
@@ -217,7 +244,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-sm text-muted-foreground">
-            正在分析 {allAnalyzedRounds.length} 轮面试数据的成长趋势...
+            {t('careerGrowth.analyzingProgress', { count: allAnalyzedRounds.length })}
           </p>
         </div>
       </div>
@@ -231,18 +258,18 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Career Growth Intelligence</h2>
+            <h2 className="text-lg font-semibold">{t('careerGrowth.title')}</h2>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               {analysis?.timelineOverview.timeRange || '-'}
               <span className="text-muted-foreground">·</span>
-              {analysis?.timelineOverview.totalInterviews || 0} 轮面试
+              {analysis?.timelineOverview.totalInterviews || 0} {t('careerGrowth.interviewRounds')}
               <span className="text-muted-foreground">·</span>
-              {analysis?.timelineOverview.rolesCovered?.length || 0} 个职位
+              {analysis?.timelineOverview.rolesCovered?.length || 0} {t('careerGrowth.positions')}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
             <RefreshCw className={cn("w-4 h-4 mr-2", isGenerating && "animate-spin")} />
-            重新生成
+            {t('common.regenerate')}
           </Button>
         </div>
 
@@ -255,7 +282,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-2">Career Coach</h3>
+                  <h3 className="font-medium mb-2">{t('careerGrowth.coachMessage')}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {analysis.coachMessage}
                   </p>
@@ -272,7 +299,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
                   <ArrowUpRight className="w-4 h-4" />
-                  最大进步
+                  {t('careerGrowth.biggestChange')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -294,7 +321,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
                   <ArrowDownRight className="w-4 h-4" />
-                  待解决风险
+                  {t('careerGrowth.biggestRisk')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -320,7 +347,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <LineChartIcon className="w-4 h-4 text-primary" />
-                能力趋势图
+                {t('careerGrowth.trendChart')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -335,7 +362,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Target className="w-4 h-4 text-primary" />
-                能力对比：过去 vs 现在
+                {t('careerGrowth.radarComparison')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -350,7 +377,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Target className="w-4 h-4 text-primary" />
-                优势 vs 短板
+                {t('careerGrowth.strengthsVsGaps')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -365,7 +392,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                能力变化详情
+                {t('careerGrowth.trendDetails')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -385,7 +412,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {trend.trend === 'improving' ? '提升' : trend.trend === 'declining' ? '下降' : '稳定'}
+                          {getTrendLabel(trend.trend)}
                         </Badge>
                         <span className="text-sm font-medium">
                           {trend.delta > 0 ? '+' : ''}{trend.delta.toFixed(1)}
@@ -406,7 +433,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                下一步成长优先级
+                {t('careerGrowth.nextPriorities')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -426,7 +453,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
                       <p className="text-xs text-muted-foreground mt-1">{priority.reason}</p>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
-                      {priority.expectedImpact === 'high' ? '高影响' : priority.expectedImpact === 'medium' ? '中影响' : '低影响'}
+                      {getImpactLabel(priority.expectedImpact)}
                     </Badge>
                   </div>
                 ))}
@@ -441,7 +468,7 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
                 <CheckCircle2 className="w-4 h-4" />
-                稳定优势 (持续保持)
+                {t('careerGrowth.stableAdvantages')} ({t('careerGrowth.keepingStrong')})
               </CardTitle>
             </CardHeader>
             <CardContent>

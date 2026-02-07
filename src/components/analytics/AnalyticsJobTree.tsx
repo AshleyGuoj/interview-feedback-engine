@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Job, InterviewStage } from '@/types/job';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,7 @@ export function AnalyticsJobTree({
   expandedJobs,
   onToggleJob,
 }: AnalyticsJobTreeProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Group jobs with their interview stages that have content
@@ -103,9 +105,9 @@ export function AnalyticsJobTree({
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center p-6">
         <FileText className="w-10 h-10 text-muted-foreground mb-3 opacity-50" />
-        <p className="text-sm text-muted-foreground">暂无面试记录</p>
+        <p className="text-sm text-muted-foreground">{t('analytics.noInterviewRecords')}</p>
         <p className="text-xs text-muted-foreground mt-1">
-          在 Job Board 添加职位并记录面试
+          {t('analytics.addJobOnBoard')}
         </p>
       </div>
     );
@@ -119,7 +121,7 @@ export function AnalyticsJobTree({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="搜索职位..."
+            placeholder={t('analytics.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 pr-8 h-9 text-sm bg-background"
@@ -140,7 +142,7 @@ export function AnalyticsJobTree({
         <div className="p-2 space-y-1">
           {filteredJobs.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-sm text-muted-foreground">未找到匹配的职位</p>
+              <p className="text-sm text-muted-foreground">{t('common.noMatchFound')}</p>
             </div>
           ) : (
             filteredJobs.map(({ job, stages, totalAnalyses }) => {

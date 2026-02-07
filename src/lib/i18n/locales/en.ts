@@ -17,6 +17,9 @@ export default {
     noData: 'No data available',
     retry: 'Retry',
     close: 'Close',
+    regenerate: 'Regenerate',
+    completed: 'completed',
+    noMatchFound: 'No matching results found',
   },
 
   // Navigation
@@ -90,7 +93,7 @@ export default {
     title: 'Career Timeline',
     subtitle: 'AI-powered signal analysis of your career journey',
     analyzing: 'Analyzing career signals...',
-    noSignals: 'Start tracking interviews to see your career signals',
+    noSignals: 'No career signals yet',
     momentum: 'Momentum',
     improving: 'Improving',
     flat: 'Stable',
@@ -101,12 +104,16 @@ export default {
     strongSignal: 'Strong Signal',
     mediumSignal: 'Medium Signal',
     weakSignal: 'Weak Signal',
+    signalTimeline: 'Signal Timeline',
+    noSignificantSignals: 'No significant signals detected in current events',
+    basedOnEvents: 'Based on {{count}} interview events',
+    refresh: 'Refresh',
   },
 
   // Analytics
   analytics: {
     title: 'Analytics & Insights',
-    subtitle: 'Deep-dive into your interview performance',
+    subtitle: 'AI interview analysis hub · Manage all interview records and debriefs by role',
     selectJob: 'Select a job to view analysis',
     searchPlaceholder: 'Search roles...',
     interviewAnalysis: 'Interview Analysis',
@@ -117,7 +124,13 @@ export default {
     rounds: 'rounds',
     analyzedRounds: 'analyzed rounds',
     howItWorks: 'How It Works',
-    unlockDebrief: 'Analyze at least 2 interview rounds to unlock Role Debrief',
+    unlockDebrief: 'Complete at least 2 interview analyses to unlock',
+    interviewRecords: 'Interview Records',
+    selectRoundToStart: 'Select an interview round to start analysis',
+    selectRoundDescription: 'Paste your interview notes or transcript, and we will automatically extract question patterns, assess performance, and provide improvement suggestions.',
+    noInterviewRecords: 'No interview records yet',
+    addJobOnBoard: 'Add jobs on the Job Board and record interviews',
+    selectRoundFromLeft: 'Select an interview round from the left to view analysis',
   },
 
   // Interview Analysis
@@ -166,7 +179,9 @@ export default {
 
   // Career Growth
   careerGrowth: {
-    title: 'Career Growth Analysis',
+    title: 'Career Growth Intelligence',
+    pageTitle: 'Career Growth & Archive',
+    pageSubtitle: 'Review your career growth trajectory and learn from past experiences',
     timelineOverview: 'Timeline Overview',
     competencyTrends: 'Competency Trends',
     turningPoints: 'Turning Points',
@@ -177,7 +192,7 @@ export default {
     persistentGaps: 'Persistent Gaps',
     biggestChange: 'Biggest Positive Change',
     biggestRisk: 'Biggest Unresolved Risk',
-    coachMessage: 'Coach Message',
+    coachMessage: 'Career Coach',
     focusArea: 'Focus Area',
     reason: 'Reason',
     expectedImpact: 'Expected Impact',
@@ -185,6 +200,33 @@ export default {
     improving: 'Improving',
     stable: 'Stable',
     declining: 'Declining',
+    closedApplications: 'Closed Applications',
+    noClosedApplications: 'No Closed Applications',
+    closedAppDescription: 'When you close job applications, they\'ll appear here for future reference and to help you learn from past experiences.',
+    notUnlocked: 'Career Growth Not Unlocked',
+    notUnlockedDescription: 'Complete at least 2 interview analyses to unlock career growth trend analysis.',
+    currentlyAnalyzed: 'Currently analyzed',
+    needsMinRounds: 'Requires at least 2 analyzed interview rounds',
+    generateGrowthAnalysis: 'Generate Growth Analysis',
+    analyzing: 'Analyzing...',
+    analysisDescription: 'Analyze your interview performance trends across roles, identify skill improvements and persistent gaps, and generate personalized growth recommendations.',
+    availableData: 'Available data',
+    noAnalyzedData: 'No analyzed interview data yet',
+    andMore: 'and {{count}} more',
+    analysisSuccess: 'Career Growth Analysis generated successfully',
+    analysisFailed: 'Analysis failed, please try again',
+    analyzingProgress: 'Analyzing growth trends across {{count}} interview rounds...',
+    interviewRounds: 'interview rounds',
+    positions: 'positions',
+    trendChart: 'Trend Chart',
+    radarComparison: 'Comparison: Past vs Now',
+    strengthsVsGaps: 'Strengths vs Gaps',
+    trendDetails: 'Trend Details',
+    nextPriorities: 'Next Growth Priorities',
+    highImpact: 'High Impact',
+    mediumImpact: 'Medium Impact',
+    lowImpact: 'Low Impact',
+    keepingStrong: 'Keep Strong',
   },
 
   // Competencies
@@ -219,6 +261,7 @@ export default {
     noArchived: 'No archived jobs yet',
     restore: 'Restore',
     permanentDelete: 'Permanently Delete',
+    closedDate: 'Closed Date',
   },
 
   // Language
@@ -237,5 +280,7 @@ export default {
     tryAgain: 'Please try again',
     noDataForAnalysis: 'Not enough data for analysis',
     startTracking: 'Start tracking your interviews to unlock AI insights',
+    analysisFailed: 'Analysis failed',
+    unableToGenerate: 'Unable to generate signal analysis, please try again',
   },
 };
