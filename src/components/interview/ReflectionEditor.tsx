@@ -1,4 +1,5 @@
-import { InterviewReflection, REFLECTION_FEELINGS } from '@/types/job';
+import { useTranslation } from 'react-i18next';
+import { InterviewReflection } from '@/types/job';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +28,17 @@ const emptyReflection: InterviewReflection = {
   keyTakeaways: [],
 };
 
+// Feeling config with emojis and colors
+const FEELING_CONFIG = {
+  great: { emoji: '🎉', color: 'emerald' },
+  good: { emoji: '😊', color: 'green' },
+  neutral: { emoji: '😐', color: 'gray' },
+  poor: { emoji: '😔', color: 'orange' },
+  bad: { emoji: '😢', color: 'red' },
+} as const;
+
 export function ReflectionEditor({ reflection, onChange, readOnly = false }: ReflectionEditorProps) {
+  const { t } = useTranslation();
   const data = reflection || emptyReflection;
 
   const handleFeelingChange = (feeling: InterviewReflection['overallFeeling']) => {
@@ -43,38 +54,52 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
     onChange({ ...data, [field]: value });
   };
 
+  const getFeelingLabel = (feeling: keyof typeof FEELING_CONFIG) => {
+    const labelMap: Record<string, string> = {
+      great: t('reflection.feelingGreat'),
+      good: t('reflection.feelingGood'),
+      neutral: t('reflection.feelingNeutral'),
+      poor: t('reflection.feelingPoor'),
+      bad: t('reflection.feelingBad'),
+    };
+    return labelMap[feeling];
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-primary" />
-          面试反思
+          {t('reflection.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Overall Feeling */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">整体感觉</label>
+          <label className="text-sm font-medium">{t('reflection.overallFeeling')}</label>
           <div className="flex gap-2 flex-wrap">
-            {Object.entries(REFLECTION_FEELINGS).map(([key, config]) => (
-              <Button
-                key={key}
-                variant={data.overallFeeling === key ? 'default' : 'outline'}
-                size="sm"
-                className={cn(
-                  'gap-1.5',
-                  data.overallFeeling === key && config.color === 'emerald' && 'bg-emerald-600 hover:bg-emerald-700',
-                  data.overallFeeling === key && config.color === 'green' && 'bg-green-600 hover:bg-green-700',
-                  data.overallFeeling === key && config.color === 'orange' && 'bg-orange-600 hover:bg-orange-700',
-                  data.overallFeeling === key && config.color === 'red' && 'bg-red-600 hover:bg-red-700',
-                )}
-                onClick={() => !readOnly && handleFeelingChange(key as InterviewReflection['overallFeeling'])}
-                disabled={readOnly}
-              >
-                <span>{config.emoji}</span>
-                {config.label}
-              </Button>
-            ))}
+            {(Object.keys(FEELING_CONFIG) as Array<keyof typeof FEELING_CONFIG>).map((key) => {
+              const config = FEELING_CONFIG[key];
+              return (
+                <Button
+                  key={key}
+                  variant={data.overallFeeling === key ? 'default' : 'outline'}
+                  size="sm"
+                  className={cn(
+                    'gap-1.5',
+                    data.overallFeeling === key && config.color === 'emerald' && 'bg-emerald-600 hover:bg-emerald-700',
+                    data.overallFeeling === key && config.color === 'green' && 'bg-green-600 hover:bg-green-700',
+                    data.overallFeeling === key && config.color === 'orange' && 'bg-orange-600 hover:bg-orange-700',
+                    data.overallFeeling === key && config.color === 'red' && 'bg-red-600 hover:bg-red-700',
+                  )}
+                  onClick={() => !readOnly && handleFeelingChange(key)}
+                  disabled={readOnly}
+                >
+                  <span>{config.emoji}</span>
+                  {getFeelingLabel(key)}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
@@ -82,7 +107,7 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
-            表现好的地方
+            {t('reflection.whatWentWell')}
           </label>
           {readOnly ? (
             <div className="space-y-1">
@@ -95,7 +120,7 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
             </div>
           ) : (
             <Textarea
-              placeholder="每行一条，例如：&#10;- 项目经验讲述流畅&#10;- 技术问题回答准确"
+              placeholder={t('reflection.whatWentWellPlaceholder')}
               value={data.whatWentWell.join('\n')}
               onChange={(e) => handleArrayChange('whatWentWell', e.target.value)}
               rows={3}
@@ -108,7 +133,7 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
             <TrendingDown className="w-4 h-4 text-orange-500" />
-            可以改进的地方
+            {t('reflection.whatCouldImprove')}
           </label>
           {readOnly ? (
             <div className="space-y-1">
@@ -121,7 +146,7 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
             </div>
           ) : (
             <Textarea
-              placeholder="每行一条，例如：&#10;- 系统设计题思路不够清晰&#10;- 应该多问clarifying questions"
+              placeholder={t('reflection.whatCouldImprovePlaceholder')}
               value={data.whatCouldImprove.join('\n')}
               onChange={(e) => handleArrayChange('whatCouldImprove', e.target.value)}
               rows={3}
@@ -134,7 +159,7 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
             <Lightbulb className="w-4 h-4 text-amber-500" />
-            关键收获
+            {t('reflection.keyTakeaways')}
           </label>
           {readOnly ? (
             <div className="flex flex-wrap gap-2">
@@ -144,7 +169,7 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
             </div>
           ) : (
             <Textarea
-              placeholder="每行一条，例如：&#10;- 这类公司更看重实际落地经验&#10;- 需要准备更多数据驱动的案例"
+              placeholder={t('reflection.keyTakeawaysPlaceholder')}
               value={data.keyTakeaways.join('\n')}
               onChange={(e) => handleArrayChange('keyTakeaways', e.target.value)}
               rows={3}
@@ -157,13 +182,13 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
             <User className="w-4 h-4 text-blue-500" />
-            面试官印象
+            {t('reflection.interviewerVibe')}
           </label>
           {readOnly ? (
             data.interviewerVibe && <p className="text-sm text-muted-foreground">{data.interviewerVibe}</p>
           ) : (
             <Textarea
-              placeholder="面试官的态度、风格、关注点等..."
+              placeholder={t('reflection.interviewerVibePlaceholder')}
               value={data.interviewerVibe || ''}
               onChange={(e) => handleTextChange('interviewerVibe', e.target.value)}
               rows={2}
@@ -176,13 +201,13 @@ export function ReflectionEditor({ reflection, onChange, readOnly = false }: Ref
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
             <Building2 className="w-4 h-4 text-purple-500" />
-            公司新认知
+            {t('reflection.companyInsights')}
           </label>
           {readOnly ? (
             data.companyInsights && <p className="text-sm text-muted-foreground">{data.companyInsights}</p>
           ) : (
             <Textarea
-              placeholder="面试中了解到的公司信息、团队情况、业务方向等..."
+              placeholder={t('reflection.companyInsightsPlaceholder')}
               value={data.companyInsights || ''}
               onChange={(e) => handleTextChange('companyInsights', e.target.value)}
               rows={2}

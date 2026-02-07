@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InterviewStage, InterviewQuestion, InterviewReflection } from '@/types/job';
 import { QuestionRecorder } from './QuestionRecorder';
 import { ReflectionEditor } from './ReflectionEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Lightbulb, BookOpen } from 'lucide-react';
+import { MessageSquare, Lightbulb } from 'lucide-react';
 
 interface StageDetailEditorProps {
   stage: InterviewStage;
@@ -13,6 +14,7 @@ interface StageDetailEditorProps {
 }
 
 export function StageDetailEditor({ stage, onUpdate, readOnly = false }: StageDetailEditorProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('questions');
 
   const handleQuestionsChange = (questions: InterviewQuestion[]) => {
@@ -35,7 +37,7 @@ export function StageDetailEditor({ stage, onUpdate, readOnly = false }: StageDe
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="questions" className="gap-2">
           <MessageSquare className="w-4 h-4" />
-          问题记录
+          {t('stageDetail.questionsTab')}
           {questionCount > 0 && (
             <Badge variant="secondary" className="text-xs h-5 px-1.5">
               {questionCount}
@@ -44,7 +46,7 @@ export function StageDetailEditor({ stage, onUpdate, readOnly = false }: StageDe
         </TabsTrigger>
         <TabsTrigger value="reflection" className="gap-2">
           <Lightbulb className="w-4 h-4" />
-          反思复盘
+          {t('stageDetail.reflectionTab')}
           {hasReflection && (
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
           )}
