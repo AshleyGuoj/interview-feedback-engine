@@ -55,14 +55,14 @@ export function Sidebar() {
         'h-20 flex items-center border-b border-border',
         collapsed ? 'justify-center px-2' : 'justify-between px-3'
       )}>
-        <div className={cn('flex items-center', collapsed ? '' : 'gap-3')}>
+        <div className={cn('flex items-center', collapsed ? '' : 'gap-1.5')}>
           <img 
             src={offermindIcon} 
             alt="OfferMind" 
             className="h-14 w-14 object-contain shrink-0"
           />
           {!collapsed && (
-            <span className="font-bold text-2xl text-foreground">OfferMind</span>
+            <span className="font-bold text-lg text-foreground">OfferMind</span>
           )}
         </div>
         
