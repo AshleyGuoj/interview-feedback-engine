@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import offermindLogo from '@/assets/offermind-logo.png';
+import offermindLogo from '@/assets/offermind-logo-clean.png';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -55,13 +55,13 @@ export function Sidebar() {
         'h-16 flex items-center border-b border-border px-3',
         collapsed ? 'justify-center' : 'justify-between'
       )}>
-        <div className={cn('flex items-center', collapsed ? '' : 'gap-2')}>
+        <div className="flex items-center flex-1">
           <img 
             src={offermindLogo} 
             alt="OfferMind" 
             className={cn(
               'object-contain',
-              collapsed ? 'h-8 w-8' : 'h-8'
+              collapsed ? 'h-7 w-7' : 'h-10 max-w-[140px]'
             )} 
           />
         </div>
