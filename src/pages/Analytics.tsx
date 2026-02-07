@@ -7,7 +7,6 @@ import { AnalyticsJobTree } from '@/components/analytics/AnalyticsJobTree';
 import { AnalyticsContextBar } from '@/components/analytics/AnalyticsContextBar';
 import { AnalysisDetailPanel } from '@/components/analytics/AnalysisDetailPanel';
 import { RoleDebriefPanel } from '@/components/analytics/RoleDebriefPanel';
-import { CareerGrowthPanel } from '@/components/analytics/CareerGrowthPanel';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -25,7 +24,6 @@ import {
   FileText,
   Sparkles,
   TrendingUp,
-  LineChart,
   Lock,
 } from 'lucide-react';
 
@@ -40,7 +38,7 @@ export default function Analytics() {
     searchParams.get('stageId')
   );
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<'rounds' | 'debrief' | 'growth'>('rounds');
+  const [activeTab, setActiveTab] = useState<'rounds' | 'debrief'>('rounds');
 
   // Sync URL params with state
   useEffect(() => {
@@ -106,14 +104,6 @@ export default function Analytics() {
   ).length || 0;
   const isDebriefUnlocked = analyzedRoundsCount >= 2;
 
-  // Check total analyzed rounds across all jobs for career growth
-  const totalAnalyzedRounds = jobs.reduce((count, job) => {
-    return count + job.stages.filter(
-      s => s.status === 'completed' && (s.questions?.length || s.reflection)
-    ).length;
-  }, 0);
-  const isGrowthUnlocked = totalAnalyzedRounds >= 2;
-
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-3.5rem)] flex flex-col">
@@ -172,8 +162,7 @@ export default function Analytics() {
                     <div className="shrink-0 border-b px-4">
                       <Tabs value={activeTab} onValueChange={(v) => {
                         if (v === 'debrief' && !isDebriefUnlocked) return;
-                        if (v === 'growth' && !isGrowthUnlocked) return;
-                        setActiveTab(v as 'rounds' | 'debrief' | 'growth');
+                        setActiveTab(v as 'rounds' | 'debrief');
                       }}>
                         <TabsList className="h-12 bg-transparent p-0 gap-4">
                           <TabsTrigger 
@@ -211,34 +200,6 @@ export default function Analytics() {
                               )}
                             </Tooltip>
                           </TooltipProvider>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className={!isGrowthUnlocked ? 'cursor-not-allowed' : ''}>
-                                  <TabsTrigger 
-                                    value="growth" 
-                                    disabled={!isGrowthUnlocked}
-                                    className={`data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3 ${!isGrowthUnlocked ? 'opacity-50 pointer-events-none' : ''}`}
-                                  >
-                                    {!isGrowthUnlocked ? (
-                                      <Lock className="w-4 h-4 mr-2" />
-                                    ) : (
-                                      <LineChart className="w-4 h-4 mr-2" />
-                                    )}
-                                    Career Growth
-                                    {isGrowthUnlocked && (
-                                      <span className="ml-2 text-xs text-primary">✨</span>
-                                    )}
-                                  </TabsTrigger>
-                                </span>
-                              </TooltipTrigger>
-                              {!isGrowthUnlocked && (
-                                <TooltipContent>
-                                  <p>跨职位分析需要至少 2 轮面试数据</p>
-                                </TooltipContent>
-                              )}
-                            </Tooltip>
-                          </TooltipProvider>
                         </TabsList>
                       </Tabs>
                     </div>
@@ -263,10 +224,8 @@ export default function Analytics() {
                               </div>
                             </div>
                           )
-                        ) : activeTab === 'debrief' ? (
-                          <RoleDebriefPanel job={selectedJob} />
                         ) : (
-                          <CareerGrowthPanel jobs={jobs} />
+                          <RoleDebriefPanel job={selectedJob} />
                         )}
                       </div>
                     </div>
