@@ -5,9 +5,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are an Interview Preparation AI Agent.
+const getSystemPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are an Interview Preparation AI Agent.
 
 Your goal is to maximize interview question prediction accuracy and help the candidate prepare targeted, high-quality answers.
+
+IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
 
 Based on the inputs provided, follow this workflow:
 
@@ -70,9 +75,15 @@ Return your analysis in this JSON format:
       "sourceReference": "JD" | "Resume" | "Interview Experience" | "Combined"
     }
   ]
-}`;
+}
 
-const MOCK_INTERVIEW_SYSTEM_PROMPT = `You are conducting a mock interview. You have already analyzed the candidate's profile and predicted likely questions.
+ALL TEXT CONTENT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}.`;
+};
+
+const getMockInterviewPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are conducting a mock interview. You have already analyzed the candidate's profile and predicted likely questions.
 
 Your role:
 1. Ask one question at a time
@@ -86,7 +97,8 @@ Your role:
 
 Be encouraging but honest. Focus on actionable feedback.
 
-Respond in the same language as the candidate's answer (Chinese or English).`;
+IMPORTANT: Respond in ${isEnglish ? 'English' : 'Chinese (中文)'}.`;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -94,7 +106,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { mode, resume, jobDescription, interviewNotes, conversationHistory, analysisContext } = await req.json();
+    const { mode, resume, jobDescription, interviewNotes, conversationHistory, analysisContext, language = 'en' } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -103,8 +115,9 @@ Deno.serve(async (req) => {
 
     if (mode === "analyze") {
       // Analysis mode: Generate predicted questions
-      console.log("Analyzing interview preparation for JD");
+      console.log("Analyzing interview preparation for JD, language:", language);
 
+      const outputLanguage = language === 'en' ? 'English' : 'Chinese (中文)';
       let userPrompt = `Please analyze the following inputs and generate interview preparation insights:\n\n`;
       userPrompt += `**Job Description:**\n${jobDescription}\n\n`;
       userPrompt += `**Candidate Resume:**\n${resume}\n\n`;
@@ -115,7 +128,7 @@ Deno.serve(async (req) => {
         userPrompt += `(No interview experience notes provided)\n\n`;
       }
 
-      userPrompt += `Please provide your analysis in the exact JSON format specified. Ensure the response is valid JSON only.`;
+      userPrompt += `Please provide your analysis in the exact JSON format specified. Ensure the response is valid JSON only. ALL text content must be in ${outputLanguage}.`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -126,7 +139,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: getSystemPrompt(language) },
             { role: "user", content: userPrompt },
           ],
           temperature: 0.7,
@@ -179,12 +192,12 @@ Deno.serve(async (req) => {
 
     } else if (mode === "mock-interview") {
       // Mock interview mode: Conversational
-      console.log("Mock interview mode");
+      console.log("Mock interview mode, language:", language);
 
       const messages = [
         { 
           role: "system", 
-          content: MOCK_INTERVIEW_SYSTEM_PROMPT + `\n\nContext from analysis:\n${JSON.stringify(analysisContext, null, 2)}` 
+          content: getMockInterviewPrompt(language) + `\n\nContext from analysis:\n${JSON.stringify(analysisContext, null, 2)}` 
         },
         ...conversationHistory,
       ];

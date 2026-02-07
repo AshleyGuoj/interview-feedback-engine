@@ -26,11 +26,16 @@ interface RoundData {
   competencyScores?: Record<string, number>;
 }
 
-const SYSTEM_PROMPT = `You are a Career Growth Intelligence Agent.
+const getSystemPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are a Career Growth Intelligence Agent.
 
 Your task is to analyze a user's historical interview analytics data (across multiple interview rounds, roles, and time periods) and generate a time-ordered, evidence-based career growth analysis.
 
 This agent focuses on LONG-TERM EVOLUTION, not single interview feedback.
+
+IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
 
 ==============================
 CORE OBJECTIVES
@@ -185,8 +190,10 @@ STYLE & TONE
 - Never harsh, never patronizing
 - Avoid generic praise
 - Avoid speculative claims
+- ALL TEXT CONTENT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}
 
 Do NOT include explanations outside of the JSON.`;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -194,7 +201,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { rounds }: { rounds: RoundData[] } = await req.json();
+    const { rounds, language = 'en' }: { rounds: RoundData[]; language?: string } = await req.json();
 
     if (!rounds || rounds.length === 0) {
       return new Response(
@@ -203,7 +210,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Analyzing career growth across", rounds.length, "interview rounds");
+    console.log("Analyzing career growth across", rounds.length, "interview rounds", "language:", language);
 
     // Sort rounds chronologically
     const sortedRounds = [...rounds].sort(
@@ -259,7 +266,8 @@ Deno.serve(async (req) => {
       userPrompt += `\n`;
     });
 
-    userPrompt += `\nAnalyze the evolution of this candidate's interview performance over time. Identify trends, improvements, and persistent gaps. Return ONLY valid JSON.`;
+    const outputLanguage = language === 'en' ? 'English' : 'Chinese (中文)';
+    userPrompt += `\nAnalyze the evolution of this candidate's interview performance over time. Identify trends, improvements, and persistent gaps. Return ONLY valid JSON. ALL text content must be in ${outputLanguage}.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -275,7 +283,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.5,

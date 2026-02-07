@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Clock, Trophy, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
@@ -9,6 +10,7 @@ import { formatDistanceToNow, isAfter, parseISO } from 'date-fns';
 import { formatDualTimezone } from '@/lib/timezone';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { jobs } = useJobs();
   const { activities, loading: activitiesLoading } = useActivities();
@@ -24,12 +26,12 @@ export default function Dashboard() {
       : 0;
 
     return [
-      { label: 'Active Applications', value: activeApplications, icon: Briefcase, color: 'text-blue-500' },
-      { label: 'Interviewing', value: interviewing, icon: Clock, color: 'text-amber-500' },
-      { label: 'Offers Received', value: offers, icon: Trophy, color: 'text-emerald-500' },
-      { label: 'Response Rate', value: `${responseRate}%`, icon: TrendingUp, color: 'text-purple-500' },
+      { label: t('dashboard.activeApplications'), value: activeApplications, icon: Briefcase, color: 'text-blue-500' },
+      { label: t('dashboard.interviewing'), value: interviewing, icon: Clock, color: 'text-amber-500' },
+      { label: t('dashboard.offersReceived'), value: offers, icon: Trophy, color: 'text-emerald-500' },
+      { label: t('dashboard.responseRate'), value: `${responseRate}%`, icon: TrendingUp, color: 'text-purple-500' },
     ];
-  }, [jobs]);
+  }, [jobs, t]);
 
   // Upcoming interviews - derived view from stages where status === 'upcoming' AND scheduledTime >= now
   const upcomingInterviews = useMemo(() => {
@@ -100,9 +102,9 @@ export default function Dashboard() {
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t('dashboard.title')}</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's your job search overview.
+            {t('dashboard.welcome')}
           </p>
         </div>
 
@@ -127,12 +129,12 @@ export default function Dashboard() {
           {/* Upcoming Interviews - Derived view */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Upcoming Interviews</CardTitle>
+              <CardTitle className="text-lg">{t('dashboard.upcomingInterviews')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {upcomingInterviews.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  No scheduled interviews
+                  {t('dashboard.noScheduledInterviews')}
                 </p>
               ) : (
                 upcomingInterviews.map((interview, index) => (
@@ -158,7 +160,7 @@ export default function Dashboard() {
                     {interview.deadline && interview.deadlineTimezone && (
                       <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded-full w-fit">
                         <AlertCircle className="w-3 h-3" />
-                        截止: {formatDualTimezone(interview.deadline, interview.deadlineTimezone)}
+                        {t('dashboard.deadline')}: {formatDualTimezone(interview.deadline, interview.deadlineTimezone)}
                       </div>
                     )}
                   </div>
@@ -170,16 +172,16 @@ export default function Dashboard() {
           {/* Recent Activity - Read from activities table */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Recent Activity</CardTitle>
+              <CardTitle className="text-lg">{t('dashboard.recentActivity')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {activitiesLoading ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Loading activities...
+                  {t('dashboard.loadingActivities')}
                 </p>
               ) : recentActivity.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  No recent activity
+                  {t('dashboard.noRecentActivity')}
                 </p>
               ) : (
                 recentActivity.map((activity) => (
@@ -210,16 +212,16 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 className="font-semibold text-lg">Ready to prepare for your next interview?</h3>
+                <h3 className="font-semibold text-lg">{t('dashboard.readyToPrepare')}</h3>
                 <p className="text-muted-foreground text-sm">
-                  Use our AI-powered interview analyzer to get actionable feedback.
+                  {t('dashboard.aiPoweredFeedback')}
                 </p>
               </div>
               <button
                 onClick={() => navigate('/analyze')}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors whitespace-nowrap"
               >
-                Analyze Interview
+                {t('dashboard.analyzeInterview')}
               </button>
             </div>
           </CardContent>

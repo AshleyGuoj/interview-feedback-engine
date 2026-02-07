@@ -6,12 +6,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are an expert interview analysis assistant that helps job seekers extract structured data from raw interview transcripts.
+const getSystemPrompt = (language: string) => {
+  const isEnglish = language === 'en';
+  
+  return `You are an expert interview analysis assistant that helps job seekers extract structured data from raw interview transcripts.
 
 Your task is to analyze messy, unstructured interview transcripts (which may be in mixed Chinese/English) and generate:
 
 1. **Structured Interview Questions** - Extract each distinct question asked by the interviewer
 2. **Interview Reflection** - Generate a comprehensive reflection based on the full transcript
+
+IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
 
 === Question Extraction Guidelines ===
 - Identify interviewer questions vs candidate responses
@@ -58,7 +63,9 @@ Return your analysis as JSON with this exact structure:
   }
 }
 
-Be thorough but concise. Focus on actionable insights over generic observations.`;
+Be thorough but concise. Focus on actionable insights over generic observations.
+ALL TEXT CONTENT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}.`;
+};
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -67,7 +74,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { transcript, context } = await req.json();
+    const { transcript, context, language = 'en' } = await req.json();
 
     if (!transcript || transcript.trim().length < 50) {
       return new Response(
@@ -76,7 +83,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Analyzing transcript, length:", transcript.length);
+    console.log("Analyzing transcript, length:", transcript.length, "language:", language);
 
     // Build user prompt with context
     let userPrompt = `Analyze this interview transcript and extract structured data:\n\n`;
@@ -91,8 +98,9 @@ Deno.serve(async (req) => {
       userPrompt += `**Interview Stage:** ${context.stage}\n`;
     }
     
+    const outputLanguage = language === 'en' ? 'English' : 'Chinese (中文)';
     userPrompt += `\n=== TRANSCRIPT START ===\n${transcript}\n=== TRANSCRIPT END ===\n\n`;
-    userPrompt += `Analyze the above transcript and return your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text.`;
+    userPrompt += `Analyze the above transcript and return your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text. ALL text content must be in ${outputLanguage}.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -108,7 +116,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3, // Lower temperature for more consistent structured output
