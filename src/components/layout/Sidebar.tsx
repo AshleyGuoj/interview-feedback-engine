@@ -8,7 +8,6 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   LogOut,
   Brain,
   PanelLeftClose,
@@ -18,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import offermindLogo from '@/assets/offermind-logo.png';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -56,12 +56,14 @@ export function Sidebar() {
         collapsed ? 'justify-center' : 'justify-between'
       )}>
         <div className={cn('flex items-center', collapsed ? '' : 'gap-2')}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <span className="font-semibold text-foreground">CareerPilot</span>
-          )}
+          <img 
+            src={offermindLogo} 
+            alt="OfferMind" 
+            className={cn(
+              'object-contain',
+              collapsed ? 'h-8 w-8' : 'h-8'
+            )} 
+          />
         </div>
         
         {/* Collapse Toggle Button */}
