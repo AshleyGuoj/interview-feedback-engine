@@ -17,6 +17,9 @@ export default {
     noData: '暂无数据',
     retry: '重试',
     close: '关闭',
+    regenerate: '重新生成',
+    completed: '已完成',
+    noMatchFound: '未找到匹配的结果',
   },
 
   // Navigation
@@ -90,7 +93,7 @@ export default {
     title: '职业时间线',
     subtitle: 'AI 驱动的职业信号分析',
     analyzing: '正在分析职业信号...',
-    noSignals: '开始记录面试，解锁您的职业信号分析',
+    noSignals: '暂无职业信号',
     momentum: '发展趋势',
     improving: '上升中',
     flat: '平稳',
@@ -101,12 +104,16 @@ export default {
     strongSignal: '强信号',
     mediumSignal: '中等信号',
     weakSignal: '弱信号',
+    signalTimeline: '信号时间线',
+    noSignificantSignals: '当前事件中没有发现显著信号',
+    basedOnEvents: '基于 {{count}} 个面试事件分析',
+    refresh: '刷新分析',
   },
 
   // Analytics
   analytics: {
     title: '分析与洞察',
-    subtitle: '深入了解您的面试表现',
+    subtitle: 'AI 面试分析中心 · 按职位管理所有面试记录与复盘',
     selectJob: '选择一个职位查看分析',
     searchPlaceholder: '搜索职位...',
     interviewAnalysis: '面试分析',
@@ -117,7 +124,13 @@ export default {
     rounds: '轮',
     analyzedRounds: '已分析的面试轮次',
     howItWorks: '工作原理',
-    unlockDebrief: '分析至少 2 轮面试以解锁职位复盘',
+    unlockDebrief: '完成至少 2 轮面试分析后解锁',
+    interviewRecords: '面试记录',
+    selectRoundToStart: '选择一轮面试开始分析',
+    selectRoundDescription: '粘贴你的面试笔记或录音转写，我们会自动提取问题模式、评估表现并提供改进建议。',
+    noInterviewRecords: '暂无面试记录',
+    addJobOnBoard: '在职位看板添加职位并记录面试',
+    selectRoundFromLeft: '从左侧选择一个面试轮次查看分析',
   },
 
   // Interview Analysis
@@ -166,7 +179,9 @@ export default {
 
   // Career Growth
   careerGrowth: {
-    title: '职业成长分析',
+    title: '职业成长智能分析',
+    pageTitle: '职业成长与归档',
+    pageSubtitle: '回顾你的职业成长轨迹，从过去的经验中汲取智慧',
     timelineOverview: '时间线概览',
     competencyTrends: '能力趋势',
     turningPoints: '转折点',
@@ -177,7 +192,7 @@ export default {
     persistentGaps: '持续差距',
     biggestChange: '最大的积极变化',
     biggestRisk: '最大的未解决风险',
-    coachMessage: '教练寄语',
+    coachMessage: '职业教练',
     focusArea: '关注领域',
     reason: '原因',
     expectedImpact: '预期影响',
@@ -185,6 +200,33 @@ export default {
     improving: '提升中',
     stable: '稳定',
     declining: '下降中',
+    closedApplications: '已关闭的申请',
+    noClosedApplications: '暂无已关闭的申请',
+    closedAppDescription: '当您关闭职位申请后，它们会显示在这里供您回顾和总结经验。',
+    notUnlocked: 'Career Growth 尚未解锁',
+    notUnlockedDescription: '完成至少 2 轮面试分析后，系统将自动生成你的职业成长趋势分析。',
+    currentlyAnalyzed: '当前已分析',
+    needsMinRounds: '需要至少 2 轮已分析的面试数据',
+    generateGrowthAnalysis: '生成成长分析',
+    analyzing: '正在分析...',
+    analysisDescription: '跨职位分析你的面试表现变化趋势，识别能力提升和持续短板，生成个性化成长建议',
+    availableData: '可用数据',
+    noAnalyzedData: '暂无已分析的面试数据',
+    andMore: '...还有 {{count}} 轮',
+    analysisSuccess: 'Career Growth Analysis 生成成功',
+    analysisFailed: '生成失败，请重试',
+    analyzingProgress: '正在分析 {{count}} 轮面试数据的成长趋势...',
+    interviewRounds: '轮面试',
+    positions: '个职位',
+    trendChart: '能力趋势图',
+    radarComparison: '能力对比：过去 vs 现在',
+    strengthsVsGaps: '优势 vs 短板',
+    trendDetails: '能力变化详情',
+    nextPriorities: '下一步成长优先级',
+    highImpact: '高影响',
+    mediumImpact: '中影响',
+    lowImpact: '低影响',
+    keepingStrong: '持续保持',
   },
 
   // Competencies
@@ -219,6 +261,7 @@ export default {
     noArchived: '暂无归档的职位',
     restore: '恢复',
     permanentDelete: '永久删除',
+    closedDate: '关闭日期',
   },
 
   // Language
@@ -237,5 +280,7 @@ export default {
     tryAgain: '请重试',
     noDataForAnalysis: '数据不足，无法进行分析',
     startTracking: '开始记录您的面试，解锁 AI 洞察',
+    analysisFailed: '分析失败',
+    unableToGenerate: '暂时无法生成信号分析，请稍后重试。',
   },
 };

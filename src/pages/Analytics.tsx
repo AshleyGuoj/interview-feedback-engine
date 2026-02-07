@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { InterviewQuestion, InterviewReflection } from '@/types/job';
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react';
 
 export default function Analytics() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { jobs, updateJob } = useJobs();
   
@@ -115,9 +117,9 @@ export default function Analytics() {
                 <BarChart3 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Analytics & Insights</h1>
+                <h1 className="text-xl font-semibold text-foreground">{t('analytics.title')}</h1>
                 <p className="text-sm text-muted-foreground">
-                  AI 面试分析中心 · 按职位管理所有面试记录与复盘
+                  {t('analytics.subtitle')}
                 </p>
               </div>
             </div>
@@ -132,7 +134,7 @@ export default function Analytics() {
               <div className="h-full border-r bg-muted/30 flex flex-col">
                 <div className="p-3 border-b shrink-0">
                   <h2 className="text-sm font-medium text-muted-foreground px-2">
-                    面试记录
+                    {t('analytics.interviewRecords')}
                   </h2>
                 </div>
                 <div className="flex-1 min-h-0">
@@ -170,7 +172,7 @@ export default function Analytics() {
                             className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
                           >
                             <FileText className="w-4 h-4 mr-2" />
-                            面试分析
+                            {t('analytics.interviewAnalysis')}
                           </TabsTrigger>
                           <TooltipProvider>
                             <Tooltip>
@@ -186,7 +188,7 @@ export default function Analytics() {
                                     ) : (
                                       <TrendingUp className="w-4 h-4 mr-2" />
                                     )}
-                                    Role Debrief
+                                    {t('analytics.roleDebrief')}
                                     {isDebriefUnlocked && (
                                       <span className="ml-2 text-xs text-primary">✨</span>
                                     )}
@@ -195,7 +197,7 @@ export default function Analytics() {
                               </TooltipTrigger>
                               {!isDebriefUnlocked && (
                                 <TooltipContent>
-                                  <p>完成至少 2 轮面试分析后解锁</p>
+                                  <p>{t('analytics.unlockDebrief')}</p>
                                 </TooltipContent>
                               )}
                             </Tooltip>
@@ -219,7 +221,7 @@ export default function Analytics() {
                               <div className="text-center max-w-sm">
                                 <FileText className="w-10 h-10 text-muted-foreground/40 mx-auto mb-4" />
                                 <p className="text-muted-foreground">
-                                  从左侧选择一个面试轮次查看分析
+                                  {t('analytics.selectRoundFromLeft')}
                                 </p>
                               </div>
                             </div>
@@ -237,9 +239,9 @@ export default function Analytics() {
                       <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                         <Sparkles className="w-7 h-7 text-primary" />
                       </div>
-                      <h2 className="text-lg font-semibold mb-3">选择一轮面试开始分析</h2>
+                      <h2 className="text-lg font-semibold mb-3">{t('analytics.selectRoundToStart')}</h2>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        粘贴你的面试笔记或录音转写，我们会自动提取问题模式、评估表现并提供改进建议。
+                        {t('analytics.selectRoundDescription')}
                       </p>
                     </div>
                   </div>
