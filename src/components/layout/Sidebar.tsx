@@ -52,19 +52,16 @@ export function Sidebar() {
     >
       {/* Logo & Collapse Toggle */}
       <div className={cn(
-        'h-16 flex items-center border-b border-border px-3',
-        collapsed ? 'justify-center' : 'justify-between'
+        'h-16 flex items-center border-b border-border',
+        collapsed ? 'justify-center px-2' : 'justify-between px-4'
       )}>
-        <div className="flex items-center flex-1">
+        {!collapsed && (
           <img 
             src={offermindLogo} 
             alt="OfferMind" 
-            className={cn(
-              'object-contain',
-              collapsed ? 'h-7 w-7' : 'h-10 max-w-[140px]'
-            )} 
+            className="h-9 object-contain"
           />
-        </div>
+        )}
         
         {/* Collapse Toggle Button */}
         {collapsed ? (
