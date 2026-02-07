@@ -283,4 +283,103 @@ export default {
     analysisFailed: '分析失败',
     unableToGenerate: '暂时无法生成信号分析，请稍后重试。',
   },
+
+  // Transcript Input & Analysis
+  transcriptInput: {
+    title: '输入面试记录',
+    subtitle: '支持粘贴任意形式的面试记录或上传文件，AI 将自动提取问题并生成复盘',
+    placeholder: `粘贴你的面试记录...
+
+支持格式：
+- 纯文本笔记
+- 聊天记录
+- 混合中英文
+- 无需格式化
+
+示例：
+面试官问了我为什么想加入这家公司，我说了对产品的理解...
+然后问了一个系统设计题，设计一个电商系统...`,
+    uploadFile: '上传文件',
+    uploadHint: '支持拖拽或上传文件（.txt / .md / .pdf / .docx / .json），AI 将自动解析内容',
+    characters: '字符',
+    recommendChars: '建议 500+ 字符以获得更好的分析效果',
+    startAnalysis: '开始 AI 分析',
+    analyzing: '正在分析...',
+    parsingFiles: '正在解析文件...',
+    filesParsed: '个文件已解析',
+    dropToUpload: '松开以上传文件',
+    unsupportedFormat: '暂不支持该文件格式',
+    parsed: '已解析',
+    parseFailed: '解析失败',
+    contentTooShort: '内容太少，请添加更多面试记录（至少50个字符）',
+    minCharsRequired: '请输入更详细的面试记录（至少50个字符）',
+    extractedQuestions: '个问题和完整复盘',
+  },
+
+  // Analysis Detail Panel
+  analysisDetail: {
+    analyzed: '已分析',
+    interviewQuestions: '面试问题记录',
+    totalQuestions: '个问题',
+    interviewDebrief: '面试复盘',
+    whatWentWell: '表现好的地方',
+    whatCouldImprove: '可以改进的地方',
+    keyTakeaways: '核心收获',
+    interviewerStyle: '面试官风格',
+    companyInsights: '公司洞察',
+    reAnalyze: '重新分析',
+    extractedQuestions: '提取的面试问题',
+    aiExtracted: 'AI 从记录中识别出 {{count}} 个问题',
+    difficulty: '难度',
+    qualityHigh: '回答优秀',
+    qualityMedium: '回答一般',
+    qualityLow: '需要改进',
+    feelingGreat: '非常好',
+    feelingGood: '还不错',
+    feelingNeutral: '一般般',
+    feelingPoor: '不太好',
+    feelingBad: '很糟糕',
+    metadataQuestions: '个问题',
+    mainType: '主要类型',
+    difficultyLevel: '难度',
+    language: '语言',
+    saveResults: '保存所有结果',
+    saving: '保存中...',
+    savedSuccess: '已保存分析结果',
+    saveFailed: '保存失败，请重试',
+  },
+
+  // Role Debrief Panel
+  roleDebriefPanel: {
+    title: 'Role Debrief 岗位复盘',
+    subtitle: '聚合分析所有面试轮次，生成面试官矩阵、能力热力图和录用可能性评估',
+    analyzedRounds: '已分析的轮次',
+    noAnalyzedRounds: '暂无已分析的轮次',
+    generating: '正在生成...',
+    generateDebrief: '生成 Role Debrief',
+    requireMinRounds: '请先完成至少1轮面试的 AI 分析',
+    aggregatingAnalysis: '正在聚合分析 {{count}} 轮面试数据...',
+    generatedAt: '生成于',
+    basedOnRounds: '基于 {{count}} 轮分析',
+    regenerate: '重新生成',
+    hiringLikelihood: '录用可能性',
+    confidence: '置信度',
+    interviewerMatrix: '面试官关注点矩阵',
+    round: '轮次',
+    interviewerBackground: '面试官背景',
+    focusDimensions: '关注维度',
+    highlights: '高光点',
+    risks: '风险点',
+    competencyHeatmap: '能力热力图',
+    whatTheyCareMost: '公司最看重',
+    yourStrengths: '你的优势',
+    improvementRisks: '待改进风险',
+    nextActions: '下一步行动建议',
+    targetingGap: '针对',
+    highPriority: '高优先',
+    mediumPriority: '中优先',
+    lowPriority: '低优先',
+    generationSuccess: 'Role Debrief 生成成功',
+    generationFailed: '生成失败，请重试',
+  },
 };

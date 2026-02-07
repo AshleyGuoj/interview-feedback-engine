@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,6 +42,7 @@ const SUPPORTED_MIME_TYPES = [
 ];
 
 export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps) {
+  const { t } = useTranslation();
   const [transcript, setTranscript] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -135,7 +137,7 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
     
     for (const file of fileArray) {
       if (!isFileSupported(file)) {
-        toast.error(`暂不支持该文件格式: ${file.name}`);
+        toast.error(`${t('transcriptInput.unsupportedFormat')}: ${file.name}`);
         continue;
       }
 
@@ -156,9 +158,9 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
       );
 
       if (processedFile.status === 'ready') {
-        toast.success(`已解析: ${file.name}`);
+        toast.success(`${t('transcriptInput.parsed')}: ${file.name}`);
       } else {
-        toast.error(`解析失败: ${file.name}`);
+        toast.error(`${t('transcriptInput.parseFailed')}: ${file.name}`);
       }
     }
   };
@@ -216,7 +218,7 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
   const handleSubmit = () => {
     const content = getCombinedContent();
     if (content.length < 50) {
-      toast.error('内容太少，请添加更多面试记录（至少50个字符）');
+      toast.error(t('transcriptInput.contentTooShort'));
       return;
     }
     onAnalyze(content);
@@ -284,17 +286,7 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
         {/* Text Input Area with Drop Zone */}
         <div className="relative">
           <Textarea
-            placeholder={`粘贴你的面试记录...
-
-支持格式：
-- 纯文本笔记
-- 聊天记录
-- 混合中英文
-- 无需格式化
-
-示例：
-面试官问了我为什么想加入这家公司，我说了对产品的理解...
-然后问了一个系统设计题，设计一个电商系统...`}
+            placeholder={t('transcriptInput.placeholder')}
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
             className={cn(
@@ -308,7 +300,7 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
             <div className="absolute inset-0 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-md pointer-events-none">
               <div className="text-center space-y-2">
                 <Upload className="w-10 h-10 mx-auto text-primary" />
-                <p className="text-sm font-medium text-primary">松开以上传文件</p>
+                <p className="text-sm font-medium text-primary">{t('transcriptInput.dropToUpload')}</p>
               </div>
             </div>
           )}
@@ -332,24 +324,24 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
             className="gap-2"
           >
             <Upload className="w-4 h-4" />
-            上传文件
+            {t('transcriptInput.uploadFile')}
           </Button>
           <span className="text-xs text-muted-foreground">
-            支持拖拽或上传文件（.txt / .md / .pdf / .docx / .json），AI 将自动解析内容
+            {t('transcriptInput.uploadHint')}
           </span>
         </div>
 
         {/* Stats */}
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
-            <span>{totalChars} 字符</span>
+            <span>{totalChars} {t('transcriptInput.characters')}</span>
             {uploadedFiles.filter(f => f.status === 'ready').length > 0 && (
               <span className="text-primary">
-                + {uploadedFiles.filter(f => f.status === 'ready').length} 个文件已解析
+                + {uploadedFiles.filter(f => f.status === 'ready').length} {t('transcriptInput.filesParsed')}
               </span>
             )}
           </div>
-          <span>建议 500+ 字符以获得更好的分析效果</span>
+          <span>{t('transcriptInput.recommendChars')}</span>
         </div>
 
         {/* CTA Button */}
@@ -362,17 +354,17 @@ export function TranscriptInput({ onAnalyze, isAnalyzing }: TranscriptInputProps
           {isAnalyzing ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              正在分析...
+              {t('transcriptInput.analyzing')}
             </>
           ) : isParsing ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              正在解析文件...
+              {t('transcriptInput.parsingFiles')}
             </>
           ) : (
             <>
               <Sparkles className="w-4 h-4" />
-              开始 AI 分析
+              {t('transcriptInput.startAnalysis')}
             </>
           )}
         </Button>

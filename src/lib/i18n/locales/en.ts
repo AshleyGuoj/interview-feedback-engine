@@ -283,4 +283,103 @@ export default {
     analysisFailed: 'Analysis failed',
     unableToGenerate: 'Unable to generate signal analysis, please try again',
   },
+
+  // Transcript Input & Analysis
+  transcriptInput: {
+    title: 'Enter Interview Record',
+    subtitle: 'Paste any format of interview notes or upload files, AI will auto-extract questions and generate debrief',
+    placeholder: `Paste your interview record...
+
+Supported formats:
+- Plain text notes
+- Chat logs
+- Mixed languages
+- No formatting required
+
+Example:
+The interviewer asked why I wanted to join this company, I talked about my understanding of the product...
+Then asked a system design question, design an e-commerce system...`,
+    uploadFile: 'Upload File',
+    uploadHint: 'Drag & drop or upload files (.txt / .md / .pdf / .docx / .json), AI will auto-parse content',
+    characters: 'characters',
+    recommendChars: 'Recommend 500+ characters for better analysis',
+    startAnalysis: 'Start AI Analysis',
+    analyzing: 'Analyzing...',
+    parsingFiles: 'Parsing files...',
+    filesParsed: 'files parsed',
+    dropToUpload: 'Drop to upload file',
+    unsupportedFormat: 'Unsupported file format',
+    parsed: 'Parsed',
+    parseFailed: 'Parse failed',
+    contentTooShort: 'Content too short, please add more interview notes (at least 50 characters)',
+    minCharsRequired: 'Please enter more detailed interview notes (at least 50 characters)',
+    extractedQuestions: 'extracted questions and complete debrief',
+  },
+
+  // Analysis Detail Panel
+  analysisDetail: {
+    analyzed: 'Analyzed',
+    interviewQuestions: 'Interview Questions',
+    totalQuestions: 'questions',
+    interviewDebrief: 'Interview Debrief',
+    whatWentWell: 'What Went Well',
+    whatCouldImprove: 'What Could Improve',
+    keyTakeaways: 'Key Takeaways',
+    interviewerStyle: 'Interviewer Style',
+    companyInsights: 'Company Insights',
+    reAnalyze: 'Re-analyze',
+    extractedQuestions: 'Extracted Questions',
+    aiExtracted: 'AI extracted {{count}} questions from the record',
+    difficulty: 'Difficulty',
+    qualityHigh: 'Excellent answer',
+    qualityMedium: 'Average answer',
+    qualityLow: 'Needs improvement',
+    feelingGreat: 'Excellent',
+    feelingGood: 'Good',
+    feelingNeutral: 'Neutral',
+    feelingPoor: 'Not great',
+    feelingBad: 'Poor',
+    metadataQuestions: 'questions',
+    mainType: 'Main type',
+    difficultyLevel: 'Difficulty',
+    language: 'Language',
+    saveResults: 'Save All Results',
+    saving: 'Saving...',
+    savedSuccess: 'Analysis results saved',
+    saveFailed: 'Save failed, please retry',
+  },
+
+  // Role Debrief Panel
+  roleDebriefPanel: {
+    title: 'Role Debrief',
+    subtitle: 'Aggregate analysis of all interview rounds, generate interviewer matrix, competency heatmap, and hiring likelihood assessment',
+    analyzedRounds: 'Analyzed Rounds',
+    noAnalyzedRounds: 'No analyzed rounds yet',
+    generating: 'Generating...',
+    generateDebrief: 'Generate Role Debrief',
+    requireMinRounds: 'Please complete AI analysis for at least 1 interview round first',
+    aggregatingAnalysis: 'Aggregating analysis of {{count}} interview rounds...',
+    generatedAt: 'Generated at',
+    basedOnRounds: 'Based on {{count}} round analysis',
+    regenerate: 'Regenerate',
+    hiringLikelihood: 'Hiring Likelihood',
+    confidence: 'Confidence',
+    interviewerMatrix: 'Interviewer Focus Matrix',
+    round: 'Round',
+    interviewerBackground: 'Interviewer Background',
+    focusDimensions: 'Focus Areas',
+    highlights: 'Highlights',
+    risks: 'Risks',
+    competencyHeatmap: 'Competency Heatmap',
+    whatTheyCareMost: 'What They Care Most',
+    yourStrengths: 'Your Strengths',
+    improvementRisks: 'Improvement Risks',
+    nextActions: 'Next Best Actions',
+    targetingGap: 'Targeting',
+    highPriority: 'High priority',
+    mediumPriority: 'Medium priority',
+    lowPriority: 'Low priority',
+    generationSuccess: 'Role Debrief generated successfully',
+    generationFailed: 'Generation failed, please retry',
+  },
 };

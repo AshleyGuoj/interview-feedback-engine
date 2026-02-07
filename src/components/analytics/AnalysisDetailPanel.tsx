@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Job, InterviewStage, InterviewQuestion, InterviewReflection, QUESTION_CATEGORIES } from '@/types/job';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -40,20 +41,21 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { TranscriptInput } from '@/components/interview/TranscriptInput';
+import { useLanguage } from '@/hooks/useLanguage';
 
-const QUALITY_CONFIG = {
-  high: { label: '回答优秀', color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
-  medium: { label: '回答一般', color: 'text-amber-600 bg-amber-50 border-amber-200', icon: AlertCircle },
-  low: { label: '需要改进', color: 'text-red-600 bg-red-50 border-red-200', icon: AlertCircle },
-};
+const getQualityConfig = (t: (key: string) => string) => ({
+  high: { label: t('analysisDetail.qualityHigh'), color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
+  medium: { label: t('analysisDetail.qualityMedium'), color: 'text-amber-600 bg-amber-50 border-amber-200', icon: AlertCircle },
+  low: { label: t('analysisDetail.qualityLow'), color: 'text-red-600 bg-red-50 border-red-200', icon: AlertCircle },
+});
 
-const FEELING_CONFIG = {
-  great: { label: '非常好', emoji: '🎉', color: 'text-emerald-600' },
-  good: { label: '还不错', emoji: '😊', color: 'text-green-600' },
-  neutral: { label: '一般般', emoji: '😐', color: 'text-gray-600' },
-  poor: { label: '不太好', emoji: '😔', color: 'text-orange-600' },
-  bad: { label: '很糟糕', emoji: '😢', color: 'text-red-600' },
-};
+const getFeelingConfig = (t: (key: string) => string) => ({
+  great: { label: t('analysisDetail.feelingGreat'), emoji: '🎉', color: 'text-emerald-600' },
+  good: { label: t('analysisDetail.feelingGood'), emoji: '😊', color: 'text-green-600' },
+  neutral: { label: t('analysisDetail.feelingNeutral'), emoji: '😐', color: 'text-gray-600' },
+  poor: { label: t('analysisDetail.feelingPoor'), emoji: '😔', color: 'text-orange-600' },
+  bad: { label: t('analysisDetail.feelingBad'), emoji: '😢', color: 'text-red-600' },
+});
 
 interface AnalysisDetailPanelProps {
   job: Job;
@@ -62,16 +64,21 @@ interface AnalysisDetailPanelProps {
 }
 
 export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelProps) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<TranscriptAnalysisResult | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
 
+  const QUALITY_CONFIG = getQualityConfig(t);
+  const FEELING_CONFIG = getFeelingConfig(t);
+
   const hasExistingAnalysis = (stage.questions?.length || 0) > 0 || !!stage.reflection;
 
   const handleAnalyze = async (transcript: string) => {
     if (!transcript.trim() || transcript.length < 50) {
-      toast.error('请输入更详细的面试记录（至少50个字符）');
+      toast.error(t('transcriptInput.minCharsRequired'));
       return;
     }
 
@@ -86,6 +93,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
             role: job.roleTitle,
             stage: stage.name,
           },
+          language,
         },
       });
 
@@ -93,10 +101,10 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
       if (data.error) throw new Error(data.error);
 
       setResult(data);
-      toast.success(`成功提取 ${data.questions.length} 个问题和完整复盘`);
+      toast.success(`${t('common.completed')} ${data.questions.length} ${t('transcriptInput.extractedQuestions')}`);
     } catch (error) {
       console.error('Error analyzing transcript:', error);
-      toast.error(error instanceof Error ? error.message : '分析失败，请重试');
+      toast.error(error instanceof Error ? error.message : t('ai.analysisFailed'));
     } finally {
       setIsAnalyzing(false);
     }
@@ -139,11 +147,11 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
       };
 
       await onSave(newQuestions, newReflection);
-      toast.success('已保存分析结果');
+      toast.success(t('analysisDetail.savedSuccess'));
       setResult(null);
     } catch (error) {
       console.error('Error saving analysis:', error);
-      toast.error('保存失败，请重试');
+      toast.error(t('analysisDetail.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -180,7 +188,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
               )}
               <Badge className="bg-emerald-100 text-emerald-700">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
-                已分析
+                {t('analysisDetail.analyzed')}
               </Badge>
             </div>
           </div>
@@ -195,9 +203,9 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                   <MessageSquare className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold">面试问题记录</h2>
+                  <h2 className="text-lg font-semibold">{t('analysisDetail.interviewQuestions')}</h2>
                   <p className="text-sm text-muted-foreground">
-                    共 {stage.questions.length} 个问题
+                    {t('common.completed')} {stage.questions.length} {t('analysisDetail.totalQuestions')}
                   </p>
                 </div>
               </div>
@@ -216,7 +224,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                             {QUESTION_CATEGORIES[q.category]?.label || q.category}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            难度 {q.difficulty}/5
+                            {t('analysisDetail.difficulty')} {q.difficulty}/5
                           </span>
                           {q.answeredWell === true && (
                             <ThumbsUp className="w-3.5 h-3.5 text-emerald-500" />
@@ -246,7 +254,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                   <Lightbulb className="w-4 h-4 text-amber-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold">面试复盘</h2>
+                  <h2 className="text-lg font-semibold">{t('analysisDetail.interviewDebrief')}</h2>
                   <p className="text-sm text-muted-foreground">
                     {FEELING_CONFIG[stage.reflection.overallFeeling]?.emoji} {FEELING_CONFIG[stage.reflection.overallFeeling]?.label}
                   </p>
@@ -259,7 +267,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                     <CardHeader className="pb-2">
                       <h3 className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
-                        表现好的地方
+                        {t('analysisDetail.whatWentWell')}
                       </h3>
                     </CardHeader>
                     <CardContent className="pt-0">
@@ -280,7 +288,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                     <CardHeader className="pb-2">
                       <h3 className="text-sm font-semibold text-amber-700 flex items-center gap-2">
                         <AlertCircle className="w-4 h-4" />
-                        可以改进的地方
+                        {t('analysisDetail.whatCouldImprove')}
                       </h3>
                     </CardHeader>
                     <CardContent className="pt-0">
@@ -301,7 +309,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                     <CardHeader className="pb-2">
                       <h3 className="text-sm font-semibold flex items-center gap-2">
                         <Lightbulb className="w-4 h-4 text-amber-500" />
-                        核心收获
+                        {t('analysisDetail.keyTakeaways')}
                       </h3>
                     </CardHeader>
                     <CardContent className="pt-0">
@@ -319,7 +327,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                 {stage.reflection.interviewerVibe && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold">面试官风格</h3>
+                      <h3 className="text-sm font-semibold">{t('analysisDetail.interviewerStyle')}</h3>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <p className="text-sm text-muted-foreground">{stage.reflection.interviewerVibe}</p>
@@ -330,7 +338,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                 {stage.reflection.companyInsights && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold">公司洞察</h3>
+                      <h3 className="text-sm font-semibold">{t('analysisDetail.companyInsights')}</h3>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <p className="text-sm text-muted-foreground">{stage.reflection.companyInsights}</p>
@@ -349,7 +357,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
               className="gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              重新分析
+              {t('analysisDetail.reAnalyze')}
             </Button>
           </div>
         </div>
@@ -398,9 +406,9 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                 <FileText className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">输入面试记录</h2>
+                <h2 className="text-lg font-semibold">{t('transcriptInput.title')}</h2>
                 <p className="text-sm text-muted-foreground">
-                  支持粘贴任意形式的面试记录或上传文件，AI 将自动提取问题并生成复盘
+                  {t('transcriptInput.subtitle')}
                 </p>
               </div>
             </div>
@@ -414,11 +422,11 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
             <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-muted/50 border">
               <Badge variant="outline" className="gap-1.5">
                 <MessageSquare className="w-3 h-3" />
-                共 {result.metadata.totalQuestions} 个问题
+                {result.metadata.totalQuestions} {t('analysisDetail.metadataQuestions')}
               </Badge>
-              <Badge variant="outline">主要类型: {result.metadata.dominantCategory}</Badge>
-              <Badge variant="outline">难度: {result.metadata.overallDifficulty}</Badge>
-              <Badge variant="outline">语言: {result.metadata.languageDetected}</Badge>
+              <Badge variant="outline">{t('analysisDetail.mainType')}: {result.metadata.dominantCategory}</Badge>
+              <Badge variant="outline">{t('analysisDetail.difficultyLevel')}: {result.metadata.overallDifficulty}</Badge>
+              <Badge variant="outline">{t('analysisDetail.language')}: {result.metadata.languageDetected}</Badge>
             </div>
 
             {/* Extracted Questions */}
@@ -428,9 +436,9 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                   <MessageSquare className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold">提取的面试问题</h2>
+                  <h2 className="text-lg font-semibold">{t('analysisDetail.extractedQuestions')}</h2>
                   <p className="text-sm text-muted-foreground">
-                    AI 从记录中识别出 {result.questions.length} 个问题
+                    {t('analysisDetail.aiExtracted', { count: result.questions.length })}
                   </p>
                 </div>
               </div>
@@ -443,6 +451,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                     index={index}
                     isExpanded={expandedQuestions.has(index)}
                     onToggle={() => toggleQuestion(index)}
+                    t={t}
                   />
                 ))}
               </div>
@@ -455,23 +464,23 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                   <Lightbulb className="w-4 h-4 text-amber-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold">面试复盘分析</h2>
-                  <p className="text-sm text-muted-foreground">基于你的面试记录生成的详细复盘</p>
+                  <h2 className="text-lg font-semibold">{t('analysisDetail.interviewDebrief')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('transcriptInput.subtitle')}</p>
                 </div>
               </div>
 
-              <ReflectionDisplay reflection={result.reflection} />
+              <ReflectionDisplay reflection={result.reflection} t={t} />
             </section>
 
             {/* Save Actions */}
             <div className="sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t py-4 -mx-6 px-6 mt-6">
               <div className="flex items-center justify-between gap-4">
                 <Button variant="outline" onClick={() => setResult(null)}>
-                  重新分析
+                  {t('analysisDetail.reAnalyze')}
                 </Button>
                 <Button onClick={handleSaveAll} disabled={isSaving} className="gap-2" size="lg">
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  保存分析结果
+                  {isSaving ? t('analysisDetail.saving') : t('analysisDetail.saveResults')}
                 </Button>
               </div>
             </div>
@@ -488,13 +497,16 @@ function QuestionCard({
   index,
   isExpanded,
   onToggle,
+  t,
 }: {
   question: ExtractedQuestion;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
+  t: (key: string) => string;
 }) {
   const categoryConfig = QUESTION_CATEGORIES[question.category];
+  const QUALITY_CONFIG = getQualityConfig(t);
   const qualityConfig = QUALITY_CONFIG[question.responseQuality];
   const QualityIcon = qualityConfig.icon;
 
@@ -514,7 +526,7 @@ function QuestionCard({
                   <QualityIcon className="w-3 h-3 mr-1" />
                   {qualityConfig.label}
                 </Badge>
-                <span className="text-xs text-muted-foreground">难度 {question.difficulty}/5</span>
+                <span className="text-xs text-muted-foreground">{t('analysisDetail.difficulty')} {question.difficulty}/5</span>
               </div>
             </div>
             {isExpanded ? (
@@ -528,15 +540,15 @@ function QuestionCard({
         <CollapsibleContent>
           <div className="px-4 pb-4 pt-0 space-y-3 border-t bg-muted/30 ml-8">
             <div className="pt-3">
-              <p className="text-xs font-medium text-muted-foreground mb-1">我的回答概要</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">{t('interview.whatWorked')}</p>
               <p className="text-sm">{question.myAnswerSummary}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">考察重点</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">{t('interview.interviewFocus')}</p>
               <p className="text-sm">{question.evaluationFocus}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">评价说明</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">{t('roleDebrief.reasons')}</p>
               <p className="text-sm text-muted-foreground">{question.qualityReasoning}</p>
             </div>
             {question.tags.length > 0 && (
@@ -556,7 +568,7 @@ function QuestionCard({
 }
 
 // Reflection display component
-function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) {
+function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection; t: (key: string) => string }) {
   return (
     <div className="space-y-4">
       {/* Overall assessment */}
@@ -564,7 +576,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
         <CardHeader className="pb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">1</span>
-            整体评估
+            {t('interview.overview')}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">
@@ -578,7 +590,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
           <h3 className="text-sm font-semibold flex items-center gap-2 text-emerald-700">
             <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs">2</span>
             <CheckCircle2 className="w-4 h-4" />
-            表现好的地方
+            {t('analysisDetail.whatWentWell')}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">
@@ -599,7 +611,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
           <h3 className="text-sm font-semibold flex items-center gap-2 text-amber-700">
             <span className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-xs">3</span>
             <AlertCircle className="w-4 h-4" />
-            可以改进的地方
+            {t('analysisDetail.whatCouldImprove')}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">
@@ -620,7 +632,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">4</span>
             <Lightbulb className="w-4 h-4 text-amber-500" />
-            核心收获
+            {t('analysisDetail.keyTakeaways')}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">
@@ -639,7 +651,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
         <CardHeader className="pb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">5</span>
-            面试官风格与关注点
+            {t('analysisDetail.interviewerStyle')}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">
@@ -652,7 +664,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
         <CardHeader className="pb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">6</span>
-            公司 & 职位洞察
+            {t('analysisDetail.companyInsights')}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">

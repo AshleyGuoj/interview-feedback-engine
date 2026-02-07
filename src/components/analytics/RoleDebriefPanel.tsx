@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Job } from '@/types/job';
 import { RoleDebrief, COMPETENCY_CONFIG, HIRING_LIKELIHOOD_CONFIG, CompetencyKey } from '@/types/role-debrief';
 import { Button } from '@/components/ui/button';
@@ -22,12 +23,15 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface RoleDebriefPanelProps {
   job: Job;
 }
 
 export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [debrief, setDebrief] = useState<RoleDebrief | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +77,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
           companyName: job.companyName,
           roleTitle: job.roleTitle,
           rounds: roundsData,
+          language,
         },
       });
 
@@ -80,11 +85,11 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
       if (data.error) throw new Error(data.error);
 
       setDebrief(data as RoleDebrief);
-      toast.success('Role Debrief 生成成功');
+      toast.success(t('roleDebriefPanel.generationSuccess'));
     } catch (err) {
       console.error('Error generating debrief:', err);
-      setError(err instanceof Error ? err.message : '生成失败，请重试');
-      toast.error('生成失败，请重试');
+      setError(err instanceof Error ? err.message : t('roleDebriefPanel.generationFailed'));
+      toast.error(t('roleDebriefPanel.generationFailed'));
     } finally {
       setIsGenerating(false);
     }
@@ -98,13 +103,13 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <TrendingUp className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold mb-2">Role Debrief 岗位复盘</h2>
+          <h2 className="text-lg font-semibold mb-2">{t('roleDebriefPanel.title')}</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            聚合分析所有面试轮次，生成面试官矩阵、能力热力图和录用可能性评估
+            {t('roleDebriefPanel.subtitle')}
           </p>
           
           <div className="mb-6 p-4 bg-muted/50 rounded-lg text-left">
-            <p className="text-sm font-medium mb-2">已分析的轮次 ({analyzedRounds.length}):</p>
+            <p className="text-sm font-medium mb-2">{t('roleDebriefPanel.analyzedRounds')} ({analyzedRounds.length}):</p>
             {analyzedRounds.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {analyzedRounds.map(s => (
@@ -114,7 +119,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">暂无已分析的轮次</p>
+              <p className="text-sm text-muted-foreground">{t('roleDebriefPanel.noAnalyzedRounds')}</p>
             )}
           </div>
 
@@ -130,19 +135,19 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                正在生成...
+                {t('roleDebriefPanel.generating')}
               </>
             ) : (
               <>
                 <TrendingUp className="w-4 h-4" />
-                生成 Role Debrief
+                {t('roleDebriefPanel.generateDebrief')}
               </>
             )}
           </Button>
 
           {!canGenerate && (
             <p className="text-xs text-muted-foreground mt-3">
-              请先完成至少1轮面试的 AI 分析
+              {t('roleDebriefPanel.requireMinRounds')}
             </p>
           )}
         </div>
@@ -156,7 +161,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">正在聚合分析 {analyzedRounds.length} 轮面试数据...</p>
+          <p className="text-sm text-muted-foreground">{t('roleDebriefPanel.aggregatingAnalysis', { count: analyzedRounds.length })}</p>
         </div>
       </div>
     );
@@ -172,14 +177,14 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
             <h2 className="text-lg font-semibold">{job.companyName} · {job.roleTitle}</h2>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Clock className="w-3 h-3" />
-              生成于 {debrief ? format(new Date(debrief.generatedAt), 'yyyy/MM/dd HH:mm') : '-'}
+              {t('roleDebriefPanel.generatedAt')} {debrief ? format(new Date(debrief.generatedAt), 'yyyy/MM/dd HH:mm') : '-'}
               <span className="text-muted-foreground">·</span>
-              基于 {debrief?.roundCount || 0} 轮分析
+              {t('roleDebriefPanel.basedOnRounds', { count: debrief?.roundCount || 0 })}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
             <RefreshCw className={cn("w-4 h-4 mr-2", isGenerating && "animate-spin")} />
-            重新生成
+            {t('roleDebriefPanel.regenerate')}
           </Button>
         </div>
 
@@ -195,11 +200,11 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">{HIRING_LIKELIHOOD_CONFIG[debrief.hiringLikelihood.level].emoji}</span>
                     <h3 className="text-xl font-bold">
-                      录用可能性: {debrief.hiringLikelihood.level === 'High' ? '高' : debrief.hiringLikelihood.level === 'Medium' ? '中' : '低'}
+                      {t('roleDebriefPanel.hiringLikelihood')}: {debrief.hiringLikelihood.level === 'High' ? t('roleDebrief.high') : debrief.hiringLikelihood.level === 'Medium' ? t('roleDebrief.medium') : t('roleDebrief.low')}
                     </h3>
                   </div>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-sm text-muted-foreground">置信度:</span>
+                    <span className="text-sm text-muted-foreground">{t('roleDebriefPanel.confidence')}:</span>
                     <Progress value={debrief.hiringLikelihood.confidence * 100} className="w-24 h-2" />
                     <span className="text-sm font-medium">{Math.round(debrief.hiringLikelihood.confidence * 100)}%</span>
                   </div>
@@ -228,7 +233,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
-                面试官关注点矩阵
+                {t('roleDebriefPanel.interviewerMatrix')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -236,11 +241,11 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 px-3 font-medium">轮次</th>
-                      <th className="text-left py-2 px-3 font-medium">面试官背景</th>
-                      <th className="text-left py-2 px-3 font-medium">关注维度</th>
-                      <th className="text-left py-2 px-3 font-medium">高光点</th>
-                      <th className="text-left py-2 px-3 font-medium">风险点</th>
+                      <th className="text-left py-2 px-3 font-medium">{t('roleDebriefPanel.round')}</th>
+                      <th className="text-left py-2 px-3 font-medium">{t('roleDebriefPanel.interviewerBackground')}</th>
+                      <th className="text-left py-2 px-3 font-medium">{t('roleDebriefPanel.focusDimensions')}</th>
+                      <th className="text-left py-2 px-3 font-medium">{t('roleDebriefPanel.highlights')}</th>
+                      <th className="text-left py-2 px-3 font-medium">{t('roleDebriefPanel.risks')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -282,7 +287,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Target className="w-4 h-4 text-primary" />
-                能力热力图
+                {t('roleDebriefPanel.competencyHeatmap')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -296,11 +301,13 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
                     : score >= 3 ? 'text-amber-600 bg-amber-50'
                     : 'text-red-600 bg-red-50';
 
+                  const competencyLabel = language === 'zh' ? config.labelZh : config.label;
+
                   return (
                     <div key={key} className="p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-lg">{config.icon}</span>
-                        <span className="text-xs font-medium truncate">{config.labelZh}</span>
+                        <span className="text-xs font-medium truncate">{competencyLabel}</span>
                       </div>
                       <div className={cn("text-2xl font-bold rounded px-2 py-1 w-fit", scoreColor)}>
                         {score}/5
@@ -325,7 +332,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
                   <Target className="w-4 h-4" />
-                  公司最看重
+                  {t('roleDebriefPanel.whatTheyCareMost')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -344,7 +351,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
                   <CheckCircle2 className="w-4 h-4" />
-                  你的优势
+                  {t('roleDebriefPanel.yourStrengths')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -363,7 +370,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
                   <AlertTriangle className="w-4 h-4" />
-                  待改进风险
+                  {t('roleDebriefPanel.improvementRisks')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -386,7 +393,7 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                下一步行动建议
+                {t('roleDebriefPanel.nextActions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -405,12 +412,12 @@ export function RoleDebriefPanel({ job }: RoleDebriefPanelProps) {
                       <p className="text-sm font-medium">{action.action}</p>
                       {action.targetGap && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          针对: {action.targetGap}
+                          {t('roleDebriefPanel.targetingGap')}: {action.targetGap}
                         </p>
                       )}
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
-                      {action.priority === 'high' ? '高优先' : action.priority === 'medium' ? '中优先' : '低优先'}
+                      {action.priority === 'high' ? t('roleDebriefPanel.highPriority') : action.priority === 'medium' ? t('roleDebriefPanel.mediumPriority') : t('roleDebriefPanel.lowPriority')}
                     </Badge>
                   </div>
                 ))}
