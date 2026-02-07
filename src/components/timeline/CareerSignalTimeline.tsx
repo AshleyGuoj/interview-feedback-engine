@@ -158,8 +158,8 @@ export function CareerSignalTimeline() {
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state or no data
+  if (error || !signalData || !signalData.momentumStatus) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
@@ -177,7 +177,7 @@ export function CareerSignalTimeline() {
     );
   }
 
-  const timeline = signalData!;
+  const timeline = signalData;
 
   return (
     <div className="space-y-6">
