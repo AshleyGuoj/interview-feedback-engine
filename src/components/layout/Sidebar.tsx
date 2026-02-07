@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import offermindLogo from '@/assets/offermind-logo-clean.png';
+import offermindIcon from '@/assets/offermind-icon.png';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -53,15 +53,18 @@ export function Sidebar() {
       {/* Logo & Collapse Toggle */}
       <div className={cn(
         'h-16 flex items-center border-b border-border',
-        collapsed ? 'justify-center px-2' : 'justify-between px-4'
+        collapsed ? 'justify-center px-2' : 'justify-between px-3'
       )}>
-        {!collapsed && (
+        <div className={cn('flex items-center', collapsed ? '' : 'gap-2')}>
           <img 
-            src={offermindLogo} 
+            src={offermindIcon} 
             alt="OfferMind" 
-            className="h-9 object-contain"
+            className="h-9 w-9 object-contain shrink-0"
           />
-        )}
+          {!collapsed && (
+            <span className="font-bold text-lg text-foreground">OfferMind</span>
+          )}
+        </div>
         
         {/* Collapse Toggle Button */}
         {collapsed ? (
