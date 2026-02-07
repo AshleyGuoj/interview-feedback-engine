@@ -70,14 +70,24 @@ export default {
   // Jobs
   jobs: {
     title: 'Job Board',
+    subtitle: 'Track your applications across {{count}} positions',
+    searchPlaceholder: 'Search jobs...',
     addJob: 'Add Job',
+    addNewJob: 'Add New Job Application',
     importJobs: 'Import Jobs',
+    importLocalData: 'Import Local Data',
+    importFromLocal: 'Import Jobs from Local Storage',
     company: 'Company',
+    companyName: 'Company Name',
     role: 'Role',
+    roleTitle: 'Role Title',
     location: 'Location',
     status: 'Status',
     interestLevel: 'Interest Level',
     source: 'Source',
+    jobLink: 'Job Link',
+    careerFitNotes: 'Career Fit Notes',
+    careerFitPlaceholder: 'Why does this role interest you? How does it fit your career goals?',
     applied: 'Applied',
     screening: 'Screening',
     interviewing: 'Interviewing',
@@ -86,6 +96,94 @@ export default {
     nextAction: 'Next Action',
     stages: 'Stages',
     noJobs: 'No jobs yet. Start tracking your applications!',
+    noJobsInColumn: 'No jobs yet',
+    dropHere: 'Drop here',
+    
+    // Location options
+    locationUS: 'US',
+    locationChina: 'China',
+    locationRemote: 'Remote',
+    locationOther: 'Other',
+    
+    // Source options
+    sourceLinkedIn: 'LinkedIn',
+    sourceBoss: 'BOSS Zhipin',
+    sourceReferral: 'Referral',
+    sourceWebsite: 'Company Website',
+    sourceOther: 'Other',
+    
+    // Import dialog
+    importComplete: 'Import Complete!',
+    jobsImported: '{{count}} jobs have been imported to your account.',
+    importFailed: 'Import Failed',
+    importFailedMessage: 'There was an error importing your jobs. Please try again.',
+    retryImport: 'Retry Import',
+    noLocalJobs: 'No jobs found in local storage.',
+    foundLocalJobs: 'Found {{count}} jobs in local storage:',
+    importWarning: 'This will import all jobs to your account and clear the local storage data.',
+    importing: 'Importing...',
+    importCount: 'Import {{count}} Jobs',
+    
+    // Pipeline status
+    next: 'Next',
+    endedAt: 'Ended at {{stage}}',
+    frozenAt: 'Frozen at {{stage}}',
+    offerReceived: 'Offer Received',
+    withdrawn: 'Withdrawn',
+    rescheduled: 'Rescheduled',
+    completedStages: 'Completed {{completed}} / {{total}} stages',
+    
+    // Stage status
+    stageStatusPending: 'Pending',
+    stageStatusScheduled: 'Scheduled',
+    stageStatusRescheduled: 'Rescheduled',
+    stageStatusCompleted: 'Completed',
+    stageStatusFeedbackPending: 'Feedback Pending',
+    stageStatusSkipped: 'Skipped',
+    stageStatusWithdrawn: 'Withdrawn',
+    
+    // Stage results
+    stageResultPassed: 'Passed',
+    stageResultRejected: 'Rejected',
+    stageResultOnHold: 'On Hold',
+    stageResultMixedFeedback: 'Mixed Feedback',
+    
+    // Sub-statuses
+    subStatusScheduled: 'Scheduled',
+    subStatusFeedbackPending: 'Feedback Pending',
+    subStatusApprovalPending: 'Approval Pending',
+    subStatusHrFollowup: 'HR Follow-up',
+    subStatusPreparing: 'Preparing',
+    subStatusDiscussing: 'Discussing',
+    subStatusOfferPending: 'Offer Pending',
+    subStatusOfferReceived: 'Offer Received',
+    subStatusNegotiating: 'Negotiating',
+    
+    // Risk tags
+    riskHcRisk: 'HC Risk',
+    riskLongSilence: 'Long Silence',
+    riskExtraRound: 'Extra Round',
+    riskCompetingOffer: 'Competing Offer',
+    riskDelayed: 'Delayed',
+    riskSalaryGap: 'Salary Gap',
+    riskLowball: 'Lowball',
+    
+    // Closed reasons
+    closedRejected: 'Rejected',
+    closedResumeRejected: 'Resume Rejected',
+    closedNoResponse: 'No Response',
+    closedWithdrawn: 'Withdrawn',
+    closedHcFrozen: 'HC Frozen',
+    closedCancelled: 'Cancelled',
+    closedDeclinedOffer: 'Declined Offer',
+    
+    // Question categories
+    categoryBehavioral: 'Behavioral',
+    categoryTechnical: 'Technical',
+    categorySituational: 'Situational',
+    categoryCase: 'Case Study',
+    categoryMotivation: 'Motivation',
+    categoryOther: 'Other',
   },
 
   // Timeline

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KanbanBoard } from '@/components/jobs/KanbanBoard';
 import { AddJobDialog } from '@/components/jobs/AddJobDialog';
@@ -11,6 +12,7 @@ import { useJobs } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
 
 export default function JobBoard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { jobs, addJob, updateJob, refetch, getJob } = useJobs();
   const { addActivity } = useActivities();
@@ -68,9 +70,9 @@ export default function JobBoard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Job Board</h1>
+            <h1 className="text-2xl font-semibold text-foreground">{t('jobs.title')}</h1>
             <p className="text-muted-foreground mt-1">
-              Track your applications across {jobs.length} positions
+              {t('jobs.subtitle', { count: jobs.length })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -84,7 +86,7 @@ export default function JobBoard() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search jobs..."
+            placeholder={t('jobs.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"

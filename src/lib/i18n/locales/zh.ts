@@ -70,14 +70,24 @@ export default {
   // Jobs
   jobs: {
     title: '职位看板',
+    subtitle: '跟踪您 {{count}} 个职位申请的进展',
+    searchPlaceholder: '搜索职位...',
     addJob: '添加职位',
+    addNewJob: '添加新职位申请',
     importJobs: '导入职位',
+    importLocalData: '导入本地数据',
+    importFromLocal: '从本地存储导入职位',
     company: '公司',
+    companyName: '公司名称',
     role: '职位',
+    roleTitle: '职位名称',
     location: '地点',
     status: '状态',
     interestLevel: '兴趣程度',
     source: '来源',
+    jobLink: '职位链接',
+    careerFitNotes: '职业契合度备注',
+    careerFitPlaceholder: '这个职位为什么吸引你？它如何符合你的职业目标？',
     applied: '已申请',
     screening: '简历筛选',
     interviewing: '面试中',
@@ -86,6 +96,94 @@ export default {
     nextAction: '下一步行动',
     stages: '阶段',
     noJobs: '暂无职位，开始跟踪您的求职申请吧！',
+    noJobsInColumn: '暂无职位',
+    dropHere: '拖放到这里',
+    
+    // Location options
+    locationUS: '美国',
+    locationChina: '中国',
+    locationRemote: '远程',
+    locationOther: '其他',
+    
+    // Source options
+    sourceLinkedIn: 'LinkedIn',
+    sourceBoss: 'BOSS直聘',
+    sourceReferral: '内推',
+    sourceWebsite: '公司官网',
+    sourceOther: '其他',
+    
+    // Import dialog
+    importComplete: '导入完成！',
+    jobsImported: '已成功导入 {{count}} 个职位到您的账户。',
+    importFailed: '导入失败',
+    importFailedMessage: '导入职位时出现错误，请重试。',
+    retryImport: '重试导入',
+    noLocalJobs: '本地存储中没有找到职位。',
+    foundLocalJobs: '在本地存储中找到 {{count}} 个职位：',
+    importWarning: '这将导入所有职位到您的账户并清除本地存储数据。',
+    importing: '正在导入...',
+    importCount: '导入 {{count}} 个职位',
+    
+    // Pipeline status
+    next: '下一步',
+    endedAt: '结束于{{stage}}',
+    frozenAt: '冻结于{{stage}}',
+    offerReceived: '已收到 Offer',
+    withdrawn: '已撤回',
+    rescheduled: '已改期',
+    completedStages: '已完成 {{completed}} / {{total}} 个阶段',
+    
+    // Stage status
+    stageStatusPending: '待进行',
+    stageStatusScheduled: '已安排',
+    stageStatusRescheduled: '已改期',
+    stageStatusCompleted: '已完成',
+    stageStatusFeedbackPending: '等反馈',
+    stageStatusSkipped: '已跳过',
+    stageStatusWithdrawn: '已撤回',
+    
+    // Stage results
+    stageResultPassed: '通过',
+    stageResultRejected: '未通过',
+    stageResultOnHold: 'HC冻结',
+    stageResultMixedFeedback: '意见不一',
+    
+    // Sub-statuses
+    subStatusScheduled: '已安排',
+    subStatusFeedbackPending: '等反馈',
+    subStatusApprovalPending: '等审批',
+    subStatusHrFollowup: 'HR跟进中',
+    subStatusPreparing: '准备中',
+    subStatusDiscussing: '谈薪中',
+    subStatusOfferPending: '等Offer',
+    subStatusOfferReceived: '已收到Offer',
+    subStatusNegotiating: '谈判中',
+    
+    // Risk tags
+    riskHcRisk: 'HC风险',
+    riskLongSilence: '长时间无回复',
+    riskExtraRound: '加面',
+    riskCompetingOffer: '有竞争Offer',
+    riskDelayed: '时间线延迟',
+    riskSalaryGap: '薪资差距',
+    riskLowball: '低于预期',
+    
+    // Closed reasons
+    closedRejected: '面试被拒',
+    closedResumeRejected: '简历被拒',
+    closedNoResponse: '无回复',
+    closedWithdrawn: '主动放弃',
+    closedHcFrozen: 'HC冻结',
+    closedCancelled: '岗位取消',
+    closedDeclinedOffer: '拒绝Offer',
+    
+    // Question categories
+    categoryBehavioral: '行为面试',
+    categoryTechnical: '技术问题',
+    categorySituational: '情景问题',
+    categoryCase: '案例分析',
+    categoryMotivation: '动机问题',
+    categoryOther: '其他',
   },
 
   // Timeline

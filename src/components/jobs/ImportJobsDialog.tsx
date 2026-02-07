@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
@@ -14,6 +15,7 @@ interface ImportJobsDialogProps {
 }
 
 export function ImportJobsDialog({ onImportComplete }: ImportJobsDialogProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -71,7 +73,7 @@ export function ImportJobsDialog({ onImportComplete }: ImportJobsDialogProps) {
       if (error) {
         console.error('Import error:', error);
         setImportStatus('error');
-        toast.error('Failed to import jobs: ' + error.message);
+        toast.error(t('jobs.importFailed') + ': ' + error.message);
         return;
       }
 
@@ -80,7 +82,7 @@ export function ImportJobsDialog({ onImportComplete }: ImportJobsDialogProps) {
       localStorage.removeItem('career-pilot-jobs-version');
       
       setImportStatus('success');
-      toast.success(`Successfully imported ${localJobs.length} jobs!`);
+      toast.success(t('jobs.jobsImported', { count: localJobs.length }));
       onImportComplete();
       
       // Close dialog after a delay
@@ -90,7 +92,7 @@ export function ImportJobsDialog({ onImportComplete }: ImportJobsDialogProps) {
     } catch (e) {
       console.error('Import error:', e);
       setImportStatus('error');
-      toast.error('Failed to import jobs');
+      toast.error(t('jobs.importFailed'));
     } finally {
       setImporting(false);
     }
@@ -101,44 +103,44 @@ export function ImportJobsDialog({ onImportComplete }: ImportJobsDialogProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Upload className="w-4 h-4" />
-          Import Local Data
+          {t('jobs.importLocalData')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>Import Jobs from Local Storage</DialogTitle>
+          <DialogTitle>{t('jobs.importFromLocal')}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
           {importStatus === 'success' ? (
             <div className="flex flex-col items-center py-8 text-center">
               <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
-              <p className="text-lg font-medium">Import Complete!</p>
+              <p className="text-lg font-medium">{t('jobs.importComplete')}</p>
               <p className="text-sm text-muted-foreground">
-                {localJobs.length} jobs have been imported to your account.
+                {t('jobs.jobsImported', { count: localJobs.length })}
               </p>
             </div>
           ) : importStatus === 'error' ? (
             <div className="flex flex-col items-center py-8 text-center">
               <AlertCircle className="w-12 h-12 text-destructive mb-4" />
-              <p className="text-lg font-medium">Import Failed</p>
+              <p className="text-lg font-medium">{t('jobs.importFailed')}</p>
               <p className="text-sm text-muted-foreground">
-                There was an error importing your jobs. Please try again.
+                {t('jobs.importFailedMessage')}
               </p>
               <Button onClick={handleImport} className="mt-4" disabled={importing}>
-                Retry Import
+                {t('jobs.retryImport')}
               </Button>
             </div>
           ) : localJobs.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                No jobs found in local storage.
+                {t('jobs.noLocalJobs')}
               </p>
             </div>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Found <span className="font-semibold text-foreground">{localJobs.length}</span> jobs in local storage:
+                {t('jobs.foundLocalJobs', { count: localJobs.length })}
               </p>
               
               <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded-lg p-3">
@@ -154,23 +156,23 @@ export function ImportJobsDialog({ onImportComplete }: ImportJobsDialogProps) {
               </div>
 
               <p className="text-sm text-amber-600 dark:text-amber-400">
-                ⚠️ This will import all jobs to your account and clear the local storage data.
+                ⚠️ {t('jobs.importWarning')}
               </p>
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button onClick={handleImport} disabled={importing}>
                   {importing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Importing...
+                      {t('jobs.importing')}
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      Import {localJobs.length} Jobs
+                      {t('jobs.importCount', { count: localJobs.length })}
                     </>
                   )}
                 </Button>
