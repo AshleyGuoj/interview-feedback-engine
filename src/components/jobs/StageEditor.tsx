@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InterviewStage } from '@/types/job';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,19 +11,19 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-// Recommended stage suggestions
+// Recommended stage suggestions with i18n keys
 const STAGE_SUGGESTIONS = [
-  { name: 'Phone Screen', nameZh: '电话面试' },
-  { name: 'Technical Round', nameZh: '技术面' },
-  { name: 'Behavioral Round', nameZh: '行为面' },
-  { name: 'System Design', nameZh: '系统设计' },
-  { name: 'Coding Interview', nameZh: '代码面试' },
-  { name: 'Case Study', nameZh: '案例分析' },
-  { name: 'Manager Round', nameZh: 'Manager面' },
-  { name: 'HR Round', nameZh: 'HR面' },
-  { name: 'Team Fit', nameZh: '团队匹配' },
-  { name: 'Final Round', nameZh: '终面' },
-  { name: 'Offer Discussion', nameZh: 'Offer谈判' },
+  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen' },
+  { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round' },
+  { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round' },
+  { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design' },
+  { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview' },
+  { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study' },
+  { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round' },
+  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round' },
+  { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit' },
+  { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round' },
+  { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion' },
 ];
 
 interface StageEditorProps {
@@ -37,6 +38,7 @@ interface SortableStageItemProps {
 }
 
 function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(stage.name);
   
@@ -59,6 +61,12 @@ function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) 
       onEdit(stage.id, editName.trim());
       setIsEditing(false);
     }
+  };
+
+  // Get localized status label
+  const getStatusLabel = (status: string) => {
+    const statusKey = `jobs.stageStatus${status.charAt(0).toUpperCase() + status.slice(1).replace('_', '')}` as const;
+    return t(statusKey, status);
   };
 
   return (
@@ -101,7 +109,7 @@ function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) 
             stage.status === 'feedback_pending' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
             ['skipped', 'withdrawn'].includes(stage.status) && "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
           )}>
-            {stage.status}
+            {getStatusLabel(stage.status)}
           </span>
           <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
             <Pencil className="w-3 h-3" />
@@ -116,6 +124,7 @@ function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) 
 }
 
 export function StageEditor({ stages, onSave }: StageEditorProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [localStages, setLocalStages] = useState<InterviewStage[]>(stages);
   const [newStageName, setNewStageName] = useState('');
@@ -181,11 +190,18 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     setOpen(isOpen);
   };
 
+  // Get translated stage names for suggestions
+  const getTranslatedSuggestions = () => {
+    return STAGE_SUGGESTIONS.map(s => ({
+      name: t(s.nameKey, s.fallback),
+      key: s.nameKey,
+    }));
+  };
+
   // Filter out suggestions that are already added
-  const availableSuggestions = STAGE_SUGGESTIONS.filter(
+  const availableSuggestions = getTranslatedSuggestions().filter(
     suggestion => !localStages.some(
-      s => s.name.toLowerCase() === suggestion.name.toLowerCase() || 
-           s.name.toLowerCase() === suggestion.nameZh.toLowerCase()
+      s => s.name.toLowerCase() === suggestion.name.toLowerCase()
     )
   );
 
@@ -194,17 +210,17 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Settings className="w-4 h-4" />
-          Customize Stages
+          {t('jobs.customizeStages')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Customize Interview Stages</DialogTitle>
+          <DialogTitle>{t('jobs.customizeStagesTitle')}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
           <p className="text-sm text-muted-foreground">
-            拖拽排序，点击编辑重命名，或添加新阶段
+            {t('jobs.customizeStagesHint')}
           </p>
           
           <DndContext
@@ -234,18 +250,18 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Sparkles className="w-3 h-3" />
-                <span>快速添加常用阶段</span>
+                <span>{t('jobs.quickAddStages')}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {availableSuggestions.map((suggestion) => (
                   <Badge
-                    key={suggestion.name}
+                    key={suggestion.key}
                     variant="outline"
                     className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-2 py-1"
                     onClick={() => handleAddStage(suggestion.name)}
                   >
                     <Plus className="w-3 h-3 mr-1" />
-                    {suggestion.nameZh}
+                    {suggestion.name}
                   </Badge>
                 ))}
               </div>
@@ -254,7 +270,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
 
           <div className="flex gap-2">
             <Input
-              placeholder="输入自定义阶段名称..."
+              placeholder={t('jobs.customStagePlaceholder')}
               value={newStageName}
               onChange={(e) => setNewStageName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddStage()}
@@ -266,9 +282,9 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
 
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={() => setOpen(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
-            <Button onClick={handleSave}>保存</Button>
+            <Button onClick={handleSave}>{t('common.save')}</Button>
           </div>
         </div>
       </DialogContent>

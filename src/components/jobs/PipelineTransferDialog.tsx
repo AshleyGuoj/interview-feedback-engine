@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { GitBranch, Snowflake, Users, Building2, ArrowRight } from 'lucide-react';
 import { Pipeline, DEFAULT_STAGES } from '@/types/job';
@@ -19,13 +19,6 @@ interface PipelineTransferDialogProps {
 
 type TransferReason = 'hc_freeze' | 'better_fit' | 'team_change' | 'reorg';
 
-const TRANSFER_REASONS: { value: TransferReason; label: string; labelZh: string; icon: React.ReactNode }[] = [
-  { value: 'hc_freeze', label: 'HC Freeze', labelZh: 'HC 冻结', icon: <Snowflake className="w-4 h-4" /> },
-  { value: 'better_fit', label: 'Better Fit', labelZh: '更匹配其他岗位', icon: <Users className="w-4 h-4" /> },
-  { value: 'team_change', label: 'Team Change', labelZh: '团队调整', icon: <Building2 className="w-4 h-4" /> },
-  { value: 'reorg', label: 'Reorg', labelZh: '组织架构调整', icon: <GitBranch className="w-4 h-4" /> },
-];
-
 export function PipelineTransferDialog({
   open,
   onOpenChange,
@@ -33,8 +26,16 @@ export function PipelineTransferDialog({
   companyName,
   onCreateBranch,
 }: PipelineTransferDialogProps) {
+  const { t } = useTranslation();
   const [newRole, setNewRole] = useState('');
   const [reason, setReason] = useState<TransferReason>('hc_freeze');
+
+  const TRANSFER_REASONS: { value: TransferReason; labelKey: string; icon: React.ReactNode }[] = [
+    { value: 'hc_freeze', labelKey: 'jobs.hcFreeze', icon: <Snowflake className="w-4 h-4" /> },
+    { value: 'better_fit', labelKey: 'jobs.betterFit', icon: <Users className="w-4 h-4" /> },
+    { value: 'team_change', labelKey: 'jobs.teamChange', icon: <Building2 className="w-4 h-4" /> },
+    { value: 'reorg', labelKey: 'jobs.reorg', icon: <GitBranch className="w-4 h-4" /> },
+  ];
 
   const handleCreate = () => {
     if (!newRole.trim()) return;
@@ -67,9 +68,9 @@ export function PipelineTransferDialog({
               <GitBranch className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <DialogTitle>Transfer Pipeline</DialogTitle>
+              <DialogTitle>{t('jobs.transferPipeline')}</DialogTitle>
               <DialogDescription className="mt-1">
-                Create a new pipeline branch for {companyName}
+                {t('jobs.createBranchFor', { company: companyName })}
               </DialogDescription>
             </div>
           </div>
@@ -79,10 +80,10 @@ export function PipelineTransferDialog({
           {/* Current pipeline info */}
           {currentPipeline && (
             <div className="p-3 rounded-lg bg-muted/50 border border-border">
-              <div className="text-xs text-muted-foreground mb-1">From Pipeline</div>
+              <div className="text-xs text-muted-foreground mb-1">{t('jobs.fromPipeline')}</div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {currentPipeline.type === 'primary' ? 'Primary' : 'Transfer'}
+                  {currentPipeline.type === 'primary' ? t('jobs.primary') : t('jobs.transfer')}
                 </Badge>
                 <span className="font-medium">{currentPipeline.targetRole}</span>
               </div>
@@ -91,7 +92,7 @@ export function PipelineTransferDialog({
 
           {/* Transfer reason */}
           <div className="space-y-2">
-            <Label>Reason for Transfer</Label>
+            <Label>{t('jobs.reasonForTransfer')}</Label>
             <div className="grid grid-cols-2 gap-2">
               {TRANSFER_REASONS.map((r) => (
                 <button
@@ -111,10 +112,7 @@ export function PipelineTransferDialog({
                   )}>
                     {r.icon}
                   </div>
-                  <div>
-                    <div className="text-sm font-medium">{r.label}</div>
-                    <div className="text-xs text-muted-foreground">{r.labelZh}</div>
-                  </div>
+                  <div className="text-sm font-medium">{t(r.labelKey)}</div>
                 </button>
               ))}
             </div>
@@ -122,30 +120,30 @@ export function PipelineTransferDialog({
 
           {/* New role */}
           <div className="space-y-2">
-            <Label htmlFor="newRole">New Role Title *</Label>
+            <Label htmlFor="newRole">{t('jobs.newRoleTitle')} *</Label>
             <Input
               id="newRole"
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              placeholder="e.g., Growth PM, Senior Engineer"
+              placeholder={t('jobs.newRolePlaceholder')}
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
-              The role you're being transferred to at {companyName}
+              {t('jobs.newRoleHint', { company: companyName })}
             </p>
           </div>
 
           {/* Visual representation */}
           <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-gradient-to-r from-muted/50 via-transparent to-muted/50">
             <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">Original</div>
+              <div className="text-xs text-muted-foreground mb-1">{t('jobs.original')}</div>
               <Badge variant="outline" className="text-xs">
-                {currentPipeline?.targetRole || 'Primary'}
+                {currentPipeline?.targetRole || t('jobs.primary')}
               </Badge>
             </div>
             <ArrowRight className="w-5 h-5 text-muted-foreground" />
             <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">New</div>
+              <div className="text-xs text-muted-foreground mb-1">{t('common.next')}</div>
               <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
                 {newRole || '...'}
               </Badge>
@@ -155,11 +153,11 @@ export function PipelineTransferDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleCreate} disabled={!newRole.trim()}>
             <GitBranch className="w-4 h-4 mr-2" />
-            Create Branch
+            {t('jobs.createBranch')}
           </Button>
         </DialogFooter>
       </DialogContent>

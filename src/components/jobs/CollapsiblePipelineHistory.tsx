@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, GitBranch } from 'lucide-react';
 import { Pipeline, InterviewStage } from '@/types/job';
 import { EnhancedInterviewTimeline } from './EnhancedInterviewTimeline';
@@ -32,6 +33,7 @@ export function CollapsiblePipelineHistory({
   jobContext,
   defaultExpanded = false,
 }: CollapsiblePipelineHistoryProps) {
+  const { t, i18n } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   
   // Get only meaningful stages for display
@@ -43,6 +45,16 @@ export function CollapsiblePipelineHistory({
   if (displayStages.length === 0) {
     return null;
   }
+
+  // Format date based on language
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+    });
+  };
+
+  const lastStageName = pipeline.stages[displayStages.length - 1]?.name || '';
 
   return (
     <div className="relative">
@@ -84,20 +96,17 @@ export function CollapsiblePipelineHistory({
               variant="secondary" 
               className="text-xs bg-muted-foreground/10"
             >
-              历史记录
+              {t('jobs.historyRecord')}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground/70 mt-0.5">
-            {summary} · 结束于 {pipeline.stages[displayStages.length - 1]?.name}
+            {t('jobs.historyEndedAt', { summary, stage: lastStageName })}
           </p>
         </div>
         
         {/* Date */}
         <span className="text-xs text-muted-foreground/60">
-          {new Date(pipeline.createdAt).toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: 'short',
-          })}
+          {formatDate(pipeline.createdAt)}
         </span>
       </button>
 

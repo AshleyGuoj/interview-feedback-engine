@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Job, Pipeline, InterviewStage, getActivePipeline } from '@/types/job';
 import { EnhancedInterviewTimeline } from './EnhancedInterviewTimeline';
 import { CollapsiblePipelineHistory } from './CollapsiblePipelineHistory';
@@ -47,6 +48,8 @@ export function UnifiedInterviewTimeline({
   onSelectPipeline,
   jobContext,
 }: UnifiedInterviewTimelineProps) {
+  const { t } = useTranslation();
+  
   const activePipeline = useMemo(() => {
     if (activePipelineId && job.pipelines?.length > 0) {
       return job.pipelines.find(p => p.id === activePipelineId) || getActivePipeline(job);
@@ -115,7 +118,7 @@ export function UnifiedInterviewTimeline({
       {/* Header with pipeline selector and actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">面试记录</h2>
+          <h2 className="text-lg font-semibold">{t('jobs.interviewRecord')}</h2>
           {activePipeline && (
             <Badge 
               variant="outline" 
@@ -125,7 +128,7 @@ export function UnifiedInterviewTimeline({
               )}
             >
               {activePipeline.targetRole}
-              {activePipeline.type === 'transfer' && ' (Transfer)'}
+              {activePipeline.type === 'transfer' && ` (${t('jobs.transfer')})`}
             </Badge>
           )}
         </div>
@@ -145,7 +148,7 @@ export function UnifiedInterviewTimeline({
           {/* Transfer button - always visible */}
           <Button variant="outline" size="sm" onClick={onOpenTransfer}>
             <GitBranch className="w-4 h-4 mr-1.5" />
-            Transfer
+            {t('jobs.transfer')}
           </Button>
           
           {/* Stage Editor */}
