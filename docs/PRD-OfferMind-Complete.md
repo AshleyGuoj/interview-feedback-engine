@@ -649,10 +649,22 @@ interface InterviewPrepAnalysis {
 | `analyze-transcript` | `/functions/v1/analyze-transcript` | Layer 1: 单轮 Transcript 分析 | transcript, language | questions[], reflection |
 | `generate-role-debrief` | `/functions/v1/generate-role-debrief` | Layer 2: 单岗位多轮汇总 | roundsData[], language | heatmap, likelihood, actions |
 | `analyze-career-growth` | `/functions/v1/analyze-career-growth` | Layer 3: 跨岗位成长追踪 | allRoundsData[], language | trends, priorities, coach |
+| `analyze-career-signals` | `/functions/v1/analyze-career-signals` | Timeline 信号提取 | events[], language | signals[], patterns |
 | `interview-prep-agent` | `/functions/v1/interview-prep-agent` | 面试准备 + 模拟面试 | resume, jd, notes, language | analysis, questions |
 | `analyze-interview` | `/functions/v1/analyze-interview` | 快速分析入口 | transcript, language | questions[], reflection |
-| `analyze-career-signals` | `/functions/v1/analyze-career-signals` | Timeline 信号提取 | events[], language | signals[], patterns |
 | `parse-document` | `/functions/v1/parse-document` | PDF/Word 文档解析 | file | text content |
+
+**Edge Functions 目录结构**:
+```
+supabase/functions/
+├── analyze-career-growth/     # Layer 3: 跨岗位成长分析
+├── analyze-career-signals/    # Timeline 信号智能提取
+├── analyze-interview/         # 快速分析入口
+├── analyze-transcript/        # Layer 1: Transcript 分析
+├── generate-role-debrief/     # Layer 2: Role Debrief 生成
+├── interview-prep-agent/      # 面试准备 Agent
+└── parse-document/            # 文档解析 (PDF/Word)
+```
 
 ### Prompt Engineering 策略
 
@@ -799,6 +811,18 @@ type StageStatus =
   | 'withdrawn';        // 候选人退出
 ```
 
+**`feedback_pending` 状态的重要性** ⭐：
+
+这是一个以用户为中心的关键功能，解决了求职者的核心焦虑点：面试完成后等待结果的不确定期。
+
+| 方面 | 说明 |
+|------|------|
+| **用户痛点** | 面试结束后不知道何时能收到反馈，情绪焦虑 |
+| **触发条件** | 面试已完成 (`completed`) 但尚未设置结果 (`result = null`) |
+| **UI 表现** | 显示 "Awaiting Decision" 状态，琥珀色高亮 |
+| **中国招聘特色** | 中国企业反馈周期较长，此状态帮助用户追踪等待进度 |
+| **Pipeline Resolver** | 检测到此状态时返回 `awaiting_decision` 类型 |
+
 **Stage Result 枚举**：
 ```typescript
 type StageResult = 
@@ -811,21 +835,29 @@ type StageResult =
 
 ### JSONB stages 结构
 
-stages 字段使用 JSONB 存储复杂嵌套数据：
+stages 字段使用 JSONB 存储复杂嵌套数据，支持向后兼容：
 
 ```typescript
-// 存储结构
+// 存储结构 (带 metadata)
 {
-  list: InterviewStage[],         // Legacy 单管道
+  list: InterviewStage[],         // 阶段列表
   _metadata: {
-    pipelines: Pipeline[],        // 多管道
-    subStatus: string,            // 子状态
+    pipelines: Pipeline[],        // 多管道数据
+    subStatus: string,            // 子状态 (interviewing/offer)
     closedReason: string,         // 关闭原因
     riskTags: string[],           // 风险标签
     lastContactDate: string,      // 最后联系日期
   }
 }
+
+// Legacy 存储结构 (无 metadata，自动迁移)
+InterviewStage[]                  // 直接存储阶段数组
 ```
+
+**数据迁移逻辑** (`JobsContext.tsx` 中的 `dbToJob`):
+- 检测 stages 是否有 `_metadata` 字段
+- 无 metadata 时，自动创建 `legacy-primary` pipeline
+- 保持向后兼容，无需数据库迁移
 
 ### 枚举类型完整定义
 
@@ -1495,20 +1527,38 @@ src/
 
 ### C. Pipeline Resolver 状态映射
 
-| 状态类型 | 条件 | 显示文本 |
-|----------|------|----------|
-| `next_interview` | 有 scheduled stage | "Next: {stage.name}" |
-| `feedback_pending` | 有 feedback_pending stage | "Awaiting feedback" |
-| `offer` | offer stage completed | "Offer received" |
-| `rejected` | 有 rejected result | "Ended at {stage.name}" |
-| `applied` | 默认状态 | "Applied" |
+Pipeline Resolver (`src/lib/pipeline-resolver.ts`) 是确定 Job 全局状态和 "Next Action" 显示的权威系统。
+
+**状态类型 (ResolvedPipelineState)**:
+
+| 状态类型 | 条件 | 显示文本 | 颜色 |
+|----------|------|----------|------|
+| `next_interview` | 有 pending/scheduled/rescheduled stage | "{stage.name}" | Primary |
+| `awaiting_decision` | completed 但无 result，或 feedback_pending | "Awaiting Decision · {stage.name}" | Amber |
+| `rejected` | 有 rejected result | "Rejected at {stage.name}" | Red |
+| `on_hold` | 有 on_hold result (非 closed pipeline) | "Hiring Freeze — Pipeline Paused" | Cyan |
+| `offer` | offer stage completed + passed | "Offer Received" | Amber |
+| `withdrawn` | 有 withdrawn status | "Withdrawn" | Gray |
+| `transferred` | 已转岗到新 pipeline | "Transferred to {role}" | Blue |
+| `applied` | 默认状态 | "Applied" | Gray |
+
+**状态优先级 (从高到低)**:
+1. `withdrawn` - 候选人主动退出
+2. `rejected` - 被拒绝
+3. `on_hold` - HC 冻结 (触发 Terminal Decision Modal)
+4. `offer` - 已收到 Offer
+5. `awaiting_decision` - 等待反馈
+6. `next_interview` - 有即将进行的面试
+7. `applied` - 默认状态
+
+**Auto-Close 逻辑**:
+- 当所有 Pipelines 都是 terminal 状态时 (`shouldAutoClose = true`)
+- 自动设置 `job.status = 'closed'` 和对应的 `closedReason`
 
 ### D. 快捷键
 
 | 快捷键 | 功能 | 页面 |
 |--------|------|------|
-| `⌘ + K` | 全局搜索 | 所有页面 |
-| `⌘ + N` | 新建 Job | Job Board |
 | `Esc` | 关闭对话框 | 所有对话框 |
 
 ---
