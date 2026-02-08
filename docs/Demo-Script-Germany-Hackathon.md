@@ -60,7 +60,7 @@ Today, I'll show you how we turn messy interview transcripts into structured car
 
 "Let me show you what real interview data looks like.
 
-This is a transcript from an actual product manager interview — mixed Chinese and English, speaker labels missing, informal notes, incomplete sentences, even some crossed-out thoughts.
+This is a transcript from an actual new grad PM interview — raw notes with no structure, emotional annotations in parentheses, incomplete sentences, self-reflections, even some uncertainty about how the interviewer reacted.
 
 *[Paste messy transcript]*
 
