@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
@@ -31,7 +32,7 @@ import {
   ExtractedQuestion, 
   ExtractedReflection 
 } from '@/types/transcript-analysis';
-import { InterviewQuestion, InterviewReflection, QUESTION_CATEGORIES, InterviewStage } from '@/types/job';
+import { InterviewQuestion, InterviewReflection, InterviewStage } from '@/types/job';
 import {
   Collapsible,
   CollapsibleContent,
@@ -372,7 +373,7 @@ function QuestionCard({
   isExpanded: boolean;
   onToggle: () => void;
 }) {
-  const categoryConfig = QUESTION_CATEGORIES[question.category];
+  const { t } = useTranslation();
   const qualityConfig = QUALITY_CONFIG[question.responseQuality];
   const QualityIcon = qualityConfig.icon;
 
@@ -388,7 +389,7 @@ function QuestionCard({
               <p className="text-sm font-medium line-clamp-2">{question.question}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge variant="outline" className="text-xs">
-                  {categoryConfig?.label || question.category}
+                  {t(`questionCategory.${question.category}`)}
                 </Badge>
                 <Badge 
                   variant="outline" 

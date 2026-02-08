@@ -221,7 +221,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                         <p className="text-sm font-medium">{q.question}</p>
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <Badge variant="outline" className="text-xs">
-                            {QUESTION_CATEGORIES[q.category]?.label || q.category}
+                            {t(`questionCategory.${q.category}`)}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {t('analysisDetail.difficulty')} {q.difficulty}/5
@@ -520,7 +520,7 @@ function QuestionCard({
               <p className="text-sm font-medium line-clamp-2">{question.question}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge variant="outline" className="text-xs">
-                  {categoryConfig?.label || question.category}
+                  {t(`questionCategory.${question.category}`)}
                 </Badge>
                 <Badge variant="outline" className={cn('text-xs', qualityConfig.color)}>
                   <QualityIcon className="w-3 h-3 mr-1" />
