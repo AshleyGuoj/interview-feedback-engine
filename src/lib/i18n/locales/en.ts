@@ -186,6 +186,8 @@ export default {
     withdrawn: 'Withdrawn',
     rescheduled: 'Rescheduled',
     completedStages: 'Completed {{completed}} / {{total}} stages',
+    statusWithStage: '{{status}}: {{stage}}',
+    ended: 'Ended',
     
     // Stage status
     stageStatusPending: 'Pending',

@@ -26,31 +26,53 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
     ? formatScheduledTime(state.stage.scheduledTime, state.stage.scheduledTimezone)
     : null;
 
-  // Get status text based on state type
+  // Get status text based on state type - using "Status: Stage" format
   const getStatusText = () => {
     switch (state.type) {
       case 'next_interview':
-        if (state.stage.status === 'scheduled' && scheduledTime) {
-          return `${state.stage.name} · ${scheduledTime}`;
+        if (state.stage.status === 'scheduled') {
+          // "Scheduled: Round Name"
+          return t('jobs.statusWithStage', { 
+            status: t('jobs.stageStatusScheduled'), 
+            stage: state.stage.name 
+          });
         }
         if (state.stage.status === 'rescheduled') {
-          return `${state.stage.name} · ${t('jobs.rescheduled')}`;
+          // "Rescheduled: Round Name"
+          return t('jobs.statusWithStage', { 
+            status: t('jobs.stageStatusRescheduled'), 
+            stage: state.stage.name 
+          });
         }
-        return `${t('jobs.next')}: ${state.stage.name}`;
+        // "Pending: Round Name"
+        return t('jobs.statusWithStage', { 
+          status: t('jobs.stageStatusPending'), 
+          stage: state.stage.name 
+        });
       
       case 'awaiting_decision':
-        return t('jobs.subStatusFeedbackPending');
+        // "Feedback Pending: Round Name"
+        return t('jobs.statusWithStage', { 
+          status: t('jobs.stageStatusFeedbackPending'), 
+          stage: state.lastStage.name 
+        });
       
       case 'rejected':
-        // Softer tone: "Ended at [Stage]"
-        return t('jobs.endedAt', { stage: state.atStage.name });
+        // "Rejected: Round Name"
+        return t('jobs.statusWithStage', { 
+          status: t('jobs.stageResultRejected'), 
+          stage: state.atStage.name 
+        });
       
       case 'on_hold':
-        // If it's a closed on_hold (HC freeze that was closed), show "Ended at"
-        // Otherwise show the default label
-        return state.label.startsWith('Ended') 
-          ? t('jobs.endedAt', { stage: state.atStage.name })
-          : t('jobs.frozenAt', { stage: state.atStage.name });
+        // "On Hold: Round Name" or "Ended: Round Name" for closed on_hold
+        const onHoldStatus = state.label.startsWith('Ended') 
+          ? t('jobs.ended')
+          : t('jobs.stageResultOnHold');
+        return t('jobs.statusWithStage', { 
+          status: onHoldStatus, 
+          stage: state.atStage.name 
+        });
       
       case 'offer':
         return t('jobs.offerReceived');
@@ -126,8 +148,8 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
         </span>
       </div>
 
-      {/* Secondary: scheduled time for next interview */}
-      {state.type === 'next_interview' && state.stage.scheduledTime && state.stage.status !== 'scheduled' && (
+      {/* Secondary: scheduled time for scheduled/rescheduled interviews */}
+      {state.type === 'next_interview' && scheduledTime && (
         <div className="flex items-center gap-1.5 pl-5.5 text-xs text-muted-foreground">
           <Calendar className="w-3 h-3 shrink-0" />
           <span>{scheduledTime}</span>
