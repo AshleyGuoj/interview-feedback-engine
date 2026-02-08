@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useJobs } from '@/contexts/JobsContext';
-import { Job, InterviewStage, QUESTION_CATEGORIES, REFLECTION_FEELINGS } from '@/types/job';
+import { Job, InterviewStage, REFLECTION_FEELINGS } from '@/types/job';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ interface InterviewRecord {
 }
 
 export function GlobalInterviewTimeline() {
+  const { t } = useTranslation();
   const { jobs } = useJobs();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -288,7 +290,7 @@ export function GlobalInterviewTimeline() {
                                   {stage.questions.slice(0, 3).map(q => (
                                     <div key={q.id} className="flex items-start gap-2 text-sm p-2 bg-muted/50 rounded">
                                       <Badge variant="outline" className="text-xs shrink-0">
-                                        {QUESTION_CATEGORIES[q.category]?.label}
+                                        {t(`questionCategory.${q.category}`)}
                                       </Badge>
                                       <span className="flex-1">{q.question}</span>
                                       {q.answeredWell === true && <ThumbsUp className="w-4 h-4 text-emerald-500 shrink-0" />}
