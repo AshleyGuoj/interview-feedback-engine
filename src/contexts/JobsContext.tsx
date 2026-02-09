@@ -144,6 +144,31 @@ export function JobsProvider({ children }: { children: ReactNode }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const seedDemoData = useCallback(async () => {
+    // Don't re-seed if user previously dismissed demo data
+    if (localStorage.getItem('offermind_demo_seeded')) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('seed-demo-data');
+      if (error) {
+        console.error('Error seeding demo data:', error);
+        return;
+      }
+      if (data?.seeded) {
+        localStorage.setItem('offermind_demo_seeded', 'true');
+        toast.success("We've set up a sample workspace for you! 🎉");
+        // Refetch to show seeded data
+        const { data: jobsData } = await supabase
+          .from('jobs')
+          .select('*')
+          .order('created_at', { ascending: false });
+        setJobs(jobsData?.map(dbToJob) || []);
+      }
+    } catch (e) {
+      console.error('Error seeding demo data:', e);
+    }
+  }, []);
+
   const fetchJobs = useCallback(async () => {
     if (!user) {
       setJobs([]);
@@ -163,14 +188,20 @@ export function JobsProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setJobs(data?.map(dbToJob) || []);
+      const fetchedJobs = data?.map(dbToJob) || [];
+      setJobs(fetchedJobs);
+      
+      // Auto-seed demo data for new users with 0 jobs
+      if (fetchedJobs.length === 0) {
+        await seedDemoData();
+      }
     } catch (e) {
       console.error('Error fetching jobs:', e);
       toast.error('Failed to load jobs');
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, seedDemoData]);
 
   useEffect(() => {
     fetchJobs();
