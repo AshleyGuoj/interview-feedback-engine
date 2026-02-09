@@ -2,27 +2,25 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { lovable } from '@/integrations/lovable/index';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Loader2, Play } from 'lucide-react';
+import { Loader2, Play, Ticket } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import offermindIcon from '@/assets/offermind-icon.png';
 
 export default function Auth() {
   const { t } = useTranslation();
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signUpData, setSignUpData] = useState({ email: '', password: '', confirmPassword: '' });
+  const [signUpData, setSignUpData] = useState({ email: '', password: '', confirmPassword: '', inviteCode: '' });
 
   if (loading) {
     return (
@@ -48,8 +46,12 @@ export default function Auth() {
     setIsSubmitting(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleInviteSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signUpData.inviteCode.trim()) {
+      toast.error('Invitation code is required');
+      return;
+    }
     if (signUpData.password !== signUpData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -59,39 +61,45 @@ export default function Auth() {
       return;
     }
     setIsSubmitting(true);
-    const { error } = await signUp(signUpData.email, signUpData.password);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(t('auth.signUpSuccess'));
-    }
-    setIsSubmitting(false);
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { data, error } = await supabase.functions.invoke('validate-invite-code', {
+        body: {
+          code: signUpData.inviteCode.trim(),
+          email: signUpData.email.trim(),
+          password: signUpData.password,
+        },
       });
+
       if (error) {
-        toast.error(error.message || 'Google sign-in failed');
+        toast.error('Sign up failed. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Account created, now sign in
+      const { error: signInError } = await signIn(signUpData.email.trim(), signUpData.password);
+      if (signInError) {
+        toast.error('Account created but login failed. Please sign in manually.');
+      } else {
+        toast.success('Welcome to OfferMind! 🎉');
       }
     } catch (err) {
-      toast.error('Google sign-in failed');
-    } finally {
-      setIsGoogleLoading(false);
+      toast.error('Sign up failed');
     }
+    setIsSubmitting(false);
   };
 
   const handleDemoLogin = async () => {
     setIsDemoLoading(true);
     try {
-      // Clear demo seed flag so JobsContext will re-seed for the demo account
       localStorage.removeItem('offermind_demo_seeded');
-      // Ensure demo user exists
       await supabase.functions.invoke('create-demo-user');
-      // Sign in as demo user
       const { error } = await signIn('demo@offermind.app', 'demo123456');
       if (error) {
         toast.error('Demo login failed. Please try again.');
@@ -107,7 +115,6 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      {/* Language switcher in top right */}
       <div className="absolute top-4 right-4">
         <LanguageSwitcher />
       </div>
@@ -115,17 +122,13 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img 
-              src={offermindIcon} 
-              alt="OfferMind" 
-              className="w-16 h-16 object-contain"
-            />
+            <img src={offermindIcon} alt="OfferMind" className="w-16 h-16 object-contain" />
           </div>
           <CardTitle className="text-2xl">OfferMind</CardTitle>
           <CardDescription>AI-Powered Interview Intelligence Platform</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Try Demo Button - Hero CTA */}
+          {/* Try Demo Button */}
           <Button
             className="w-full mb-4 h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
             onClick={handleDemoLogin}
@@ -145,38 +148,115 @@ export default function Auth() {
           <div className="relative mb-4">
             <Separator />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-              or sign in with your account
+              or
             </span>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="login-email">{t('auth.email')}</Label>
-              <Input
-                id="login-email"
-                type="email"
-                placeholder="you@example.com"
-                value={loginData.email}
-                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="login-password">{t('auth.password')}</Label>
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="••••••••"
-                value={loginData.password}
-                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          {/* Tab switcher */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={activeTab === 'login' ? 'default' : 'outline'}
+              className="flex-1"
+              type="button"
+              onClick={() => setActiveTab('login')}
+            >
               {t('auth.login')}
             </Button>
-          </form>
+            <Button
+              variant={activeTab === 'signup' ? 'default' : 'outline'}
+              className="flex-1"
+              type="button"
+              onClick={() => setActiveTab('signup')}
+            >
+              Sign Up with Invite
+            </Button>
+          </div>
+
+          {activeTab === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">{t('auth.email')}</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">{t('auth.password')}</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {t('auth.login')}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleInviteSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-code" className="flex items-center gap-1.5">
+                  <Ticket className="w-3.5 h-3.5" />
+                  Invitation Code
+                </Label>
+                <Input
+                  id="invite-code"
+                  type="text"
+                  placeholder="Enter your invite code"
+                  value={signUpData.inviteCode}
+                  onChange={(e) => setSignUpData({ ...signUpData, inviteCode: e.target.value.toUpperCase() })}
+                  className="uppercase tracking-widest font-mono"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">{t('auth.email')}</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={signUpData.email}
+                  onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">{t('auth.password')}</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={signUpData.password}
+                  onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-confirm">Confirm Password</Label>
+                <Input
+                  id="signup-confirm"
+                  type="password"
+                  placeholder="••••••••"
+                  value={signUpData.confirmPassword}
+                  onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Create Account
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
