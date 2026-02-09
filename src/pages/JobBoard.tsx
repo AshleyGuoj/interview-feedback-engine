@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KanbanBoard } from '@/components/jobs/KanbanBoard';
 import { AddJobDialog } from '@/components/jobs/AddJobDialog';
-import { ImportJobsDialog } from '@/components/jobs/ImportJobsDialog';
 import { Job, JobStatus } from '@/types/job';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -75,10 +74,7 @@ export default function JobBoard() {
               {t('jobs.subtitle', { count: jobs.length })}
             </p>
           </div>
-          <div className="flex gap-2">
-            <ImportJobsDialog onImportComplete={refetch} />
-            <AddJobDialog onAdd={handleAddJob} />
-          </div>
+          <AddJobDialog onAdd={handleAddJob} />
         </div>
 
         {/* Search */}
