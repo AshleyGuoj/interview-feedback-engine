@@ -75,6 +75,17 @@ Across companies and roles, OfferMind tracks:
 
 The result is not just feedback — it is **trajectory awareness**.
 
+### Career Signal Timeline — Narrative Intelligence
+
+Raw activity logs are noisy. The Career Signal Timeline uses AI to filter and interpret events, surfacing only the moments that actually shaped your trajectory:
+
+- Turning points that shifted your competency scores
+- Pattern detection across roles and time periods
+- Signal-based filtering that prioritizes impact over recency
+- Narrative interpretation — not just what happened, but why it mattered
+
+This layer turns a chronological list of events into a **strategic career narrative**.
+
 ---
 
 ## How OfferMind Uses Google Gemini
