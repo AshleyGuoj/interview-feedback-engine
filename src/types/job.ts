@@ -286,12 +286,14 @@ export const DEFAULT_STAGES: Omit<InterviewStage, 'id'>[] = [
 ];
 
 // Question categories for display
-export const QUESTION_CATEGORIES = {
+export const QUESTION_CATEGORIES: Record<string, { label: string; labelEn: string; color: string }> = {
   behavioral: { label: '行为面试', labelEn: 'Behavioral', color: 'blue' },
   technical: { label: '技术问题', labelEn: 'Technical', color: 'purple' },
   situational: { label: '情景问题', labelEn: 'Situational', color: 'green' },
   case: { label: '案例分析', labelEn: 'Case Study', color: 'orange' },
   motivation: { label: '动机问题', labelEn: 'Motivation', color: 'pink' },
+  product: { label: '产品问题', labelEn: 'Product', color: 'blue' },
+  experience: { label: '经验问题', labelEn: 'Experience', color: 'green' },
   other: { label: '其他', labelEn: 'Other', color: 'gray' },
 } as const;
 
