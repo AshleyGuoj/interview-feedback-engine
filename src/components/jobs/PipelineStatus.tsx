@@ -170,7 +170,7 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
           <Progress 
             value={progressInfo.percentage} 
             className="h-1.5 bg-muted"
-            indicatorClassName="bg-foreground"
+            indicatorClassName="bg-foreground/25"
           />
           <p className="text-[10px] text-muted-foreground">
             {isTerminal
