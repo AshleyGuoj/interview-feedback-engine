@@ -83,7 +83,7 @@ export default {
     timeline: 'Timeline',
     analytics: 'Analytics',
     archive: 'Archive',
-    interviewPrep: 'Interview Prep',
+    
     signOut: 'Sign Out',
     expandSidebar: 'Expand sidebar',
     collapseSidebar: 'Collapse sidebar',
@@ -490,18 +490,6 @@ export default {
     leadership: 'Leadership',
     stress_resilience: 'Stress Resilience',
   },
-
-  // Interview Prep
-  interviewPrep: {
-    title: 'Interview Prep',
-    subtitle: 'AI-powered interview preparation assistant',
-    uploadResume: 'Upload Resume',
-    pasteJD: 'Paste Job Description',
-    startPrep: 'Start Preparation',
-    mockInterview: 'Mock Interview',
-    analyzing: 'Analyzing...',
-  },
-
   // Archive
   archive: {
     title: 'Archive',

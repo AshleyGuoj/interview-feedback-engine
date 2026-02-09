@@ -83,7 +83,7 @@ export default {
     timeline: '时间线',
     analytics: '分析洞察',
     archive: '归档',
-    interviewPrep: '面试准备',
+    
     signOut: '退出登录',
     expandSidebar: '展开侧边栏',
     collapseSidebar: '折叠侧边栏',
@@ -490,18 +490,6 @@ export default {
     leadership: '领导力',
     stress_resilience: '抗压能力',
   },
-
-  // Interview Prep
-  interviewPrep: {
-    title: '面试准备',
-    subtitle: 'AI 驱动的面试准备助手',
-    uploadResume: '上传简历',
-    pasteJD: '粘贴职位描述',
-    startPrep: '开始准备',
-    mockInterview: '模拟面试',
-    analyzing: '分析中...',
-  },
-
   // Archive
   archive: {
     title: '归档',
