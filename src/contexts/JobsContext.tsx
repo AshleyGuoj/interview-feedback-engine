@@ -139,6 +139,9 @@ interface JobsContextType {
 
 const JobsContext = createContext<JobsContextType | undefined>(undefined);
 
+// Module-level lock to prevent concurrent seed calls (React StrictMode / double-render)
+let seedingInProgress = false;
+
 export function JobsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -147,11 +150,15 @@ export function JobsProvider({ children }: { children: ReactNode }) {
   const seedDemoData = useCallback(async () => {
     // Don't re-seed if user previously dismissed demo data
     if (localStorage.getItem('offermind_demo_seeded')) return;
+    // Prevent concurrent calls
+    if (seedingInProgress) return;
+    seedingInProgress = true;
     
     try {
       const { data, error } = await supabase.functions.invoke('seed-demo-data');
       if (error) {
         console.error('Error seeding demo data:', error);
+        seedingInProgress = false;
         return;
       }
       if (data?.seeded) {
@@ -163,9 +170,14 @@ export function JobsProvider({ children }: { children: ReactNode }) {
           .select('*')
           .order('created_at', { ascending: false });
         setJobs(jobsData?.map(dbToJob) || []);
+      } else {
+        // Server said not seeded (already has data) — mark as done
+        localStorage.setItem('offermind_demo_seeded', 'true');
       }
     } catch (e) {
       console.error('Error seeding demo data:', e);
+    } finally {
+      seedingInProgress = false;
     }
   }, []);
 
