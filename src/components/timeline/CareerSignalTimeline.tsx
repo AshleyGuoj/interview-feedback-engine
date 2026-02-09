@@ -11,7 +11,7 @@ import { PatternsList } from './PatternsList';
 import { CoachNote } from './CoachNote';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TimelineLoadingState } from './TimelineLoadingState';
 import { RefreshCw, Sparkles, Activity, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -147,19 +147,7 @@ export function CareerSignalTimeline() {
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-            <span className="text-sm text-muted-foreground">{t('timeline.analyzing')}</span>
-          </div>
-        </div>
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
+    return <TimelineLoadingState />;
   }
 
   // Error state or no data
