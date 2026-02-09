@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Loader2, Play, Ticket } from 'lucide-react';
+import { Loader2, Play, Ticket, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import offermindIcon from '@/assets/offermind-icon.png';
 
@@ -19,8 +19,13 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+
+  // Signup step: 'code' = enter invite code, 'details' = enter email/password
+  const [signUpStep, setSignUpStep] = useState<'code' | 'details'>('code');
+  const [inviteCode, setInviteCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signUpData, setSignUpData] = useState({ email: '', password: '', confirmPassword: '', inviteCode: '' });
+  const [signUpData, setSignUpData] = useState({ email: '', password: '', confirmPassword: '' });
 
   if (loading) {
     return (
@@ -46,12 +51,33 @@ export default function Auth() {
     setIsSubmitting(false);
   };
 
-  const handleInviteSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!signUpData.inviteCode.trim()) {
-      toast.error('Invitation code is required');
+  const handleVerifyCode = async () => {
+    if (!inviteCode.trim()) {
+      toast.error('Please enter an invitation code');
       return;
     }
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-invite-code', {
+        body: { code: inviteCode.trim() },
+      });
+
+      if (error || !data?.valid) {
+        toast.error(data?.error || 'Invalid invitation code');
+        setIsVerifying(false);
+        return;
+      }
+
+      toast.success('Invitation code verified!');
+      setSignUpStep('details');
+    } catch {
+      toast.error('Verification failed');
+    }
+    setIsVerifying(false);
+  };
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (signUpData.password !== signUpData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -64,32 +90,26 @@ export default function Auth() {
     try {
       const { data, error } = await supabase.functions.invoke('validate-invite-code', {
         body: {
-          code: signUpData.inviteCode.trim(),
+          code: inviteCode.trim(),
           email: signUpData.email.trim(),
           password: signUpData.password,
         },
       });
 
-      if (error) {
-        toast.error('Sign up failed. Please try again.');
+      if (error || data?.error) {
+        toast.error(data?.error || 'Sign up failed');
         setIsSubmitting(false);
         return;
       }
 
-      if (data?.error) {
-        toast.error(data.error);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Account created, now sign in
       const { error: signInError } = await signIn(signUpData.email.trim(), signUpData.password);
       if (signInError) {
         toast.error('Account created but login failed. Please sign in manually.');
+        setActiveTab('login');
       } else {
         toast.success('Welcome to OfferMind! 🎉');
       }
-    } catch (err) {
+    } catch {
       toast.error('Sign up failed');
     }
     setIsSubmitting(false);
@@ -106,10 +126,19 @@ export default function Auth() {
       } else {
         toast.success('Welcome to OfferMind! Explore the demo workspace.');
       }
-    } catch (err) {
+    } catch {
       toast.error('Demo login failed');
     } finally {
       setIsDemoLoading(false);
+    }
+  };
+
+  const handleTabSwitch = (tab: 'login' | 'signup') => {
+    setActiveTab(tab);
+    if (tab === 'signup') {
+      setSignUpStep('code');
+      setInviteCode('');
+      setSignUpData({ email: '', password: '', confirmPassword: '' });
     }
   };
 
@@ -158,7 +187,7 @@ export default function Auth() {
               variant={activeTab === 'login' ? 'default' : 'outline'}
               className="flex-1"
               type="button"
-              onClick={() => setActiveTab('login')}
+              onClick={() => handleTabSwitch('login')}
             >
               {t('auth.login')}
             </Button>
@@ -166,7 +195,7 @@ export default function Auth() {
               variant={activeTab === 'signup' ? 'default' : 'outline'}
               className="flex-1"
               type="button"
-              onClick={() => setActiveTab('signup')}
+              onClick={() => handleTabSwitch('signup')}
             >
               Sign Up with Invite
             </Button>
@@ -201,8 +230,9 @@ export default function Auth() {
                 {t('auth.login')}
               </Button>
             </form>
-          ) : (
-            <form onSubmit={handleInviteSignUp} className="space-y-4">
+          ) : signUpStep === 'code' ? (
+            /* Step 1: Verify Invitation Code */
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="invite-code" className="flex items-center gap-1.5">
                   <Ticket className="w-3.5 h-3.5" />
@@ -211,51 +241,84 @@ export default function Auth() {
                 <Input
                   id="invite-code"
                   type="text"
-                  placeholder="Enter your invite code"
-                  value={signUpData.inviteCode}
-                  onChange={(e) => setSignUpData({ ...signUpData, inviteCode: e.target.value.toUpperCase() })}
-                  className="uppercase tracking-widest font-mono"
-                  required
+                  placeholder="ENTER YOUR INVITE CODE"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  className="uppercase tracking-widest font-mono text-center"
+                  onKeyDown={(e) => e.key === 'Enter' && handleVerifyCode()}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">{t('auth.email')}</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={signUpData.email}
-                  onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">{t('auth.password')}</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={signUpData.password}
-                  onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-confirm">Confirm Password</Label>
-                <Input
-                  id="signup-confirm"
-                  type="password"
-                  placeholder="••••••••"
-                  value={signUpData.confirmPassword}
-                  onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Create Account
+              <Button
+                className="w-full"
+                onClick={handleVerifyCode}
+                disabled={isVerifying || !inviteCode.trim()}
+              >
+                {isVerifying ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Verify Code
               </Button>
-            </form>
+              <p className="text-xs text-center text-muted-foreground">
+                Don't have a code? Try the demo above to explore OfferMind.
+              </p>
+            </div>
+          ) : (
+            /* Step 2: Create Account */
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">
+                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-sm font-medium">
+                  Code <span className="font-mono tracking-wider">{inviteCode}</span> verified
+                </span>
+                <button
+                  type="button"
+                  className="ml-auto text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  onClick={() => setSignUpStep('code')}
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  Change
+                </button>
+              </div>
+              <form onSubmit={handleCreateAccount} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">{t('auth.email')}</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={signUpData.email}
+                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">{t('auth.password')}</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={signUpData.password}
+                    onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm">Confirm Password</Label>
+                  <Input
+                    id="signup-confirm"
+                    type="password"
+                    placeholder="••••••••"
+                    value={signUpData.confirmPassword}
+                    onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Create Account
+                </Button>
+              </form>
+            </div>
           )}
         </CardContent>
       </Card>
