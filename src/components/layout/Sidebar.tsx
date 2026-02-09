@@ -8,7 +8,6 @@ import {
   BarChart3, 
   Archive,
   LogOut,
-  Brain,
   PanelLeftClose,
   PanelLeft
 } from 'lucide-react';
@@ -37,7 +36,7 @@ export function Sidebar() {
     { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
     { to: '/analytics', icon: BarChart3, labelKey: 'nav.analytics' },
     { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
-    { to: '/interview-prep', icon: Brain, labelKey: 'nav.interviewPrep' },
+    
   ];
 
   // Persist collapse state
