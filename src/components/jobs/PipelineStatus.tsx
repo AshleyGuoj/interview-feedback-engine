@@ -130,20 +130,6 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
     return { current, total, percentage };
   };
 
-  // Map state type to progress bar color (inline style for reliable override)
-  const getIndicatorColor = (): string => {
-    switch (state.type) {
-      case 'next_interview': return 'hsl(252 100% 65%)';
-      case 'awaiting_decision': return 'hsl(38 92% 50%)';
-      case 'rejected': return 'hsl(0 84% 60%)';
-      case 'on_hold': return 'hsl(187 92% 50%)';
-      case 'offer': return 'hsl(160 84% 39%)';
-      case 'withdrawn': return 'hsl(220 9% 60%)';
-      case 'applied':
-      default: return 'hsl(var(--muted-foreground) / 0.3)';
-    }
-  };
-
   const progressInfo = getProgressInfo();
   const isTerminal = ['rejected', 'withdrawn', 'on_hold'].includes(state.type) || job.status === 'closed';
 
@@ -184,7 +170,7 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
           <Progress 
             value={progressInfo.percentage} 
             className="h-1.5 bg-muted"
-            indicatorColor={getIndicatorColor()}
+            indicatorClassName="bg-foreground"
           />
           <p className="text-[10px] text-muted-foreground">
             {isTerminal
