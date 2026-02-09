@@ -87,6 +87,8 @@ export default function Auth() {
   const handleDemoLogin = async () => {
     setIsDemoLoading(true);
     try {
+      // Clear demo seed flag so JobsContext will re-seed for the demo account
+      localStorage.removeItem('offermind_demo_seeded');
       // Ensure demo user exists
       await supabase.functions.invoke('create-demo-user');
       // Sign in as demo user
