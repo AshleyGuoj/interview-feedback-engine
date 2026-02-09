@@ -207,6 +207,16 @@ Future work includes:
 
 ---
 
+## Created By
+
+Solo builder. Full-stack. Vibe-coded from zero.
+
+I built OfferMind end-to-end — frontend, backend, AI agents, and product design — as a solo developer using vibe coding. My background is in **AI Product Management**, and this project reflects how I think about building AI-first products: start from a real user pain point, design layered intelligence systems, and ship fast with tight feedback loops.
+
+Every line of code, every AI prompt, every product decision — one person, one vision.
+
+---
+
 # OfferMind
 
 ### Think like candidates who get offers.
