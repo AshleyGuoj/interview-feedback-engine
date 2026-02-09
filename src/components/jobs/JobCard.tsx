@@ -80,28 +80,9 @@ export function JobCard({ job, onClick }: JobCardProps) {
             >
               {job.location}
             </Badge>
-            {/* Sub-status badge - only for non-closed jobs */}
-            {job.subStatus && job.status !== 'closed' && !isTerminal && (
-              <SubStatusBadge subStatus={job.subStatus} size="sm" />
-            )}
-            {/* Closed reason badge */}
-            {(job.status === 'closed' || isTerminal) && job.closedReason && (
-              <ClosedReasonBadge reason={job.closedReason} size="sm" />
-            )}
           </div>
         </div>
 
-        {/* Risk signals - hide for terminal jobs */}
-        {!isTerminal && allRiskTags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {allRiskTags.slice(0, 3).map((tag) => (
-              <RiskTagBadge key={tag} tag={tag} size="sm" />
-            ))}
-            {allRiskTags.length > 3 && (
-              <span className="text-[10px] text-muted-foreground">+{allRiskTags.length - 3}</span>
-            )}
-          </div>
-        )}
 
         {/* Pipeline status - single momentum line using resolver */}
         <PipelineStatus job={job} />

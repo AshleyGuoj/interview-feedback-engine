@@ -94,30 +94,11 @@ export function DraggableJobCard({ job, onClick }: DraggableJobCardProps) {
                   >
                     {job.location}
                   </Badge>
-                  {/* Sub-status badge */}
-                  {job.subStatus && job.status !== 'closed' && (
-                    <SubStatusBadge subStatus={job.subStatus} size="sm" />
-                  )}
-                  {/* Closed reason badge */}
-                  {job.status === 'closed' && job.closedReason && (
-                    <ClosedReasonBadge reason={job.closedReason} size="sm" />
-                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Risk signals */}
-          {allRiskTags.length > 0 && (
-            <div className="flex flex-wrap gap-1" onClick={onClick}>
-              {allRiskTags.slice(0, 3).map((tag) => (
-                <RiskTagBadge key={tag} tag={tag} size="sm" />
-              ))}
-              {allRiskTags.length > 3 && (
-                <span className="text-[10px] text-muted-foreground">+{allRiskTags.length - 3}</span>
-              )}
-            </div>
-          )}
 
           {/* Pipeline status - single momentum line using resolver */}
           <div onClick={onClick}>
