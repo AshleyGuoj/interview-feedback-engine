@@ -69,7 +69,7 @@ export function QuestionRecorder({ questions, onChange, readOnly = false }: Ques
   };
 
   const getCategoryConfig = (category: InterviewQuestion['category']) => {
-    return QUESTION_CATEGORIES[category];
+    return QUESTION_CATEGORIES[category] || QUESTION_CATEGORIES['other'];
   };
 
   const renderDifficultyStars = (difficulty: number, onChange?: (d: number) => void) => {
