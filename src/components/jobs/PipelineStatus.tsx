@@ -130,17 +130,17 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
     return { current, total, percentage };
   };
 
-  // Map state type to progress bar color
-  const getIndicatorColor = () => {
+  // Map state type to progress bar color (inline style for reliable override)
+  const getIndicatorColor = (): string => {
     switch (state.type) {
-      case 'next_interview': return 'bg-primary';
-      case 'awaiting_decision': return 'bg-amber-500';
-      case 'rejected': return 'bg-red-500';
-      case 'on_hold': return 'bg-cyan-500';
-      case 'offer': return 'bg-emerald-500';
-      case 'withdrawn': return 'bg-gray-400';
+      case 'next_interview': return 'hsl(252 100% 65%)';
+      case 'awaiting_decision': return 'hsl(38 92% 50%)';
+      case 'rejected': return 'hsl(0 84% 60%)';
+      case 'on_hold': return 'hsl(187 92% 50%)';
+      case 'offer': return 'hsl(160 84% 39%)';
+      case 'withdrawn': return 'hsl(220 9% 60%)';
       case 'applied':
-      default: return 'bg-muted-foreground/30';
+      default: return 'hsl(var(--muted-foreground) / 0.3)';
     }
   };
 
@@ -184,7 +184,7 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
           <Progress 
             value={progressInfo.percentage} 
             className="h-1.5 bg-muted"
-            indicatorClassName={getIndicatorColor()}
+            indicatorColor={getIndicatorColor()}
           />
           <p className="text-[10px] text-muted-foreground">
             {isTerminal
