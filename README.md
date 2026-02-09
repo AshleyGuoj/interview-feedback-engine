@@ -85,21 +85,22 @@ OfferMind's intelligence is powered by **Google Gemini** models across its entir
 
 2. **Structured output reliability** — OfferMind requires strict JSON schema compliance for its 10-dimensional competency framework, evidence-based scoring, and visualization-ready data. Gemini consistently produces well-structured outputs that conform to complex schemas, reducing post-processing failures.
 
-3. **Cost-effective multi-tier deployment** — The Gemini model family offers a natural performance/cost gradient that maps perfectly to OfferMind's three-layer architecture:
+3. **Unified on Gemini 3 Flash Preview** — OfferMind standardizes on `gemini-3-flash-preview` across all AI agents. This next-generation model delivers the ideal balance of reasoning depth, structured output reliability, and speed for every layer of the system:
 
-### AI Agent Architecture × Gemini Model Mapping
+### AI Agent Architecture × Gemini 3 API
 
-| Layer | Agent | Gemini Model | Why This Model |
-|-------|-------|-------------|----------------|
-| **Layer 1** | Transcript Analyzer | `gemini-2.5-flash` | Processes individual rounds — needs speed and structured extraction at scale. Flash delivers reliable question classification, difficulty scoring, and reflection generation without the latency or cost of Pro. |
-| **Layer 2** | Role Debrief Agent | `gemini-3-flash-preview` | Aggregates signals across 2–6 rounds per role — requires stronger reasoning to synthesize patterns, detect hiring signals, and generate role-level risk assessments. Flash Preview balances deeper reasoning with acceptable latency. |
-| **Layer 3** | Career Growth Intelligence | `gemini-2.5-flash` | Performs chronological cross-job analysis — turning point detection, stability assessment, and frequency-impact prioritization. Uses Flash for its ability to handle large structured inputs efficiently. |
-| **Utility** | Career Signal Timeline | `gemini-2.5-flash` | Filters raw activity events into high-impact career signals. Lightweight classification task ideal for Flash's speed. |
-| **Utility** | Transcript Parser | `gemini-2.5-flash` | Extracts text from uploaded documents (PDF, images, DOCX). Multimodal capability with fast turnaround. |
+| Layer | Agent | Function | What It Does |
+|-------|-------|----------|-------------|
+| **Layer 1** | Transcript Analyzer | `analyze-transcript` | Processes individual rounds — extracts questions, classifies types/difficulty, evaluates response quality, generates structured reflections. |
+| **Layer 2** | Role Debrief Agent | `generate-role-debrief` | Aggregates signals across 2–6 rounds per role — synthesizes patterns, detects hiring signals, generates competency heatmaps and role-level risk assessments. |
+| **Layer 3** | Career Growth Intelligence | `analyze-career-growth` | Performs chronological cross-job analysis — turning point detection, stability assessment, frequency-impact prioritization, and counterfactual insights. |
+| **Utility** | Career Signal Timeline | `analyze-career-signals` | Filters raw activity events into high-impact career signals with pattern detection. |
+| **Utility** | Transcript Parser | `parse-document` | Extracts text from uploaded documents (PDF, images, DOCX) using Gemini's multimodal capabilities. |
+| **Utility** | Interview Analyzer | `analyze-interview` | Quick single-interview analysis for the standalone analysis tool. |
 
-### Why Not a Single Model?
+### Why Gemini 3 Flash Preview?
 
-Using one model for everything would either be **too slow and expensive** (Pro for simple extraction) or **too shallow** (Flash for complex multi-round synthesis). The tiered approach ensures each agent operates at the optimal intelligence-cost balance for its specific task.
+Gemini 3 Flash Preview was chosen as the unified model because it excels at all three demands of OfferMind's architecture: **long-context reasoning** (processing entire multi-round interview histories), **strict structured output** (complex JSON schemas with 10-dimensional scoring), and **multimodal input** (parsing PDFs and images). Its next-generation reasoning capabilities handle both lightweight classification tasks and complex cross-job synthesis without the latency trade-offs of larger models.
 
 ### Evidence-Based Scoring
 
