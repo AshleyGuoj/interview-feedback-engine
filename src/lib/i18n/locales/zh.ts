@@ -186,6 +186,7 @@ export default {
     withdrawn: '已撤回',
     rescheduled: '已改期',
     completedStages: '已完成 {{completed}} / {{total}} 个阶段',
+    stageProgress: '第 {{current}} / {{total}} 轮',
     statusWithStage: '{{status}}: {{stage}}',
     ended: '已结束',
     

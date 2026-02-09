@@ -86,18 +86,66 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
     }
   };
 
-  // Calculate progress for rejected state
+  // Calculate progress for all state types
   const getProgressInfo = () => {
-    if (state.type === 'rejected') {
-      const completed = state.stageIndex + 1; // Stages completed including rejection stage
-      const total = state.totalStages;
-      const percentage = Math.round((completed / total) * 100);
-      return { completed, total, percentage };
+    const stages = resolution.activePipeline?.stages || job.stages || [];
+    const total = stages.length;
+    if (total === 0) return null;
+
+    let current = 0;
+    switch (state.type) {
+      case 'applied':
+        current = 0;
+        break;
+      case 'next_interview': {
+        const idx = stages.findIndex(s => s.id === state.stage.id);
+        current = idx >= 0 ? idx : 0;
+        break;
+      }
+      case 'awaiting_decision': {
+        const idx = stages.findIndex(s => s.id === state.lastStage.id);
+        current = idx >= 0 ? idx + 1 : resolution.completedStages.length;
+        break;
+      }
+      case 'rejected': {
+        current = state.stageIndex + 1;
+        break;
+      }
+      case 'on_hold': {
+        const idx = stages.findIndex(s => s.id === state.atStage.id);
+        current = idx >= 0 ? idx + 1 : resolution.completedStages.length;
+        break;
+      }
+      case 'offer':
+        current = total;
+        break;
+      case 'withdrawn': {
+        current = resolution.completedStages.length;
+        break;
+      }
+      default:
+        current = 0;
     }
-    return null;
+    const percentage = Math.round((current / total) * 100);
+    return { current, total, percentage };
+  };
+
+  // Map state type to progress bar color
+  const getIndicatorColor = () => {
+    switch (state.type) {
+      case 'next_interview': return 'bg-primary';
+      case 'awaiting_decision': return 'bg-amber-500';
+      case 'rejected': return 'bg-red-500';
+      case 'on_hold': return 'bg-cyan-500';
+      case 'offer': return 'bg-emerald-500';
+      case 'withdrawn': return 'bg-gray-400';
+      case 'applied':
+      default: return 'bg-muted-foreground/30';
+    }
   };
 
   const progressInfo = getProgressInfo();
+  const isTerminal = ['rejected', 'withdrawn', 'on_hold'].includes(state.type) || job.status === 'closed';
 
   if (compact) {
     return (
@@ -112,34 +160,8 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
     );
   }
 
-  // Rejected state with progress visualization
-  if (state.type === 'rejected' && progressInfo) {
-    return (
-      <div className="space-y-2 animate-fade-in">
-        {/* Primary status line */}
-        <div className="flex items-center gap-1.5">
-          <StatusIcon iconName={displayConfig.icon} color={displayConfig.color} size="md" />
-          <span className={cn('text-sm truncate font-medium', displayConfig.textColor)}>
-            {getStatusText()}
-          </span>
-        </div>
-        
-        {/* Progress indicator - reframes failure as progress */}
-        <div className="space-y-1">
-          <Progress 
-            value={progressInfo.percentage} 
-            className="h-1.5 bg-muted"
-          />
-          <p className="text-[10px] text-muted-foreground">
-            {t('jobs.completedStages', { completed: progressInfo.completed, total: progressInfo.total })}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-1 animate-fade-in">
+    <div className="space-y-2 animate-fade-in">
       {/* Primary status line */}
       <div className="flex items-center gap-1.5">
         <StatusIcon iconName={displayConfig.icon} color={displayConfig.color} size="md" />
@@ -153,6 +175,23 @@ export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
         <div className="flex items-center gap-1.5 pl-5.5 text-xs text-muted-foreground">
           <Calendar className="w-3 h-3 shrink-0" />
           <span>{scheduledTime}</span>
+        </div>
+      )}
+
+      {/* Progress bar for all states */}
+      {progressInfo && progressInfo.total > 0 && (
+        <div className="space-y-1">
+          <Progress 
+            value={progressInfo.percentage} 
+            className="h-1.5 bg-muted"
+            indicatorClassName={getIndicatorColor()}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            {isTerminal
+              ? t('jobs.completedStages', { completed: progressInfo.current, total: progressInfo.total })
+              : t('jobs.stageProgress', { current: progressInfo.current, total: progressInfo.total })
+            }
+          </p>
         </div>
       )}
     </div>
