@@ -47,9 +47,9 @@ function BrandPanel() {
               style={{ animationDelay: `${200 + i * 100}ms` }}
             >
               <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.08]">
-                <vp.icon className="w-4 h-4 text-white/75" />
+                <vp.icon className="w-4 h-4 text-white" />
               </div>
-              <p className="text-[13px] leading-relaxed text-white/70">{vp.text}</p>
+              <p className="text-[13px] leading-relaxed text-white">{vp.text}</p>
             </div>
           ))}
         </div>
