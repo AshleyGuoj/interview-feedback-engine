@@ -103,9 +103,9 @@ export function CareerSignalTimeline() {
   // Empty state
   if (events.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card py-16 text-center">
-        <h3 className="text-[14px] font-medium text-foreground mb-1.5">{t('timeline.noSignals')}</h3>
-        <p className="text-[13px] text-muted-foreground max-w-sm mx-auto">
+      <div className="py-20 text-center max-w-[560px] mx-auto">
+        <h3 className="text-[18px] font-semibold text-foreground mb-2">{t('timeline.noSignals')}</h3>
+        <p className="text-[14px] text-muted-foreground leading-relaxed">
           {t('timeline.noSignalsHelper')}
         </p>
       </div>
@@ -116,9 +116,9 @@ export function CareerSignalTimeline() {
 
   if (error || !signalData || !signalData.momentumStatus) {
     return (
-      <div className="rounded-xl border border-border bg-card py-12 text-center">
-        <AlertCircle className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-        <h3 className="text-[14px] font-medium text-foreground mb-1">{t('ai.errorOccurred')}</h3>
+      <div className="py-16 text-center">
+        <AlertCircle className="w-8 h-8 mx-auto mb-3 text-muted-foreground/40" />
+        <h3 className="text-[15px] font-medium text-foreground mb-1">{t('ai.errorOccurred')}</h3>
         <p className="text-[13px] text-muted-foreground mb-4">{t('ai.tryAgain')}</p>
         <Button variant="outline" size="sm" onClick={handleRefresh}>
           <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
@@ -130,11 +130,40 @@ export function CareerSignalTimeline() {
 
   const timeline = signalData;
 
+  // Extract the hero signal — the first turning_point or strong_signal
+  const heroItem = timeline.timelineItems.find(
+    i => i.type === 'turning_point' || i.type === 'strong_signal'
+  );
+  const remainingItems = timeline.timelineItems.filter(i => i !== heroItem);
+
   return (
-    <div className="space-y-6 max-w-[900px]">
-      {/* Header */}
+    <div className="space-y-10 max-w-[900px]">
+      {/* Hero Signal Card — the focal point */}
+      {heroItem && (
+        <div className="py-8 px-1">
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">
+            {heroItem.type === 'turning_point' ? t('timeline.turningPoint') : t('timeline.strongSignal')}
+          </p>
+          <h2 className="text-[28px] sm:text-[34px] font-semibold text-foreground leading-[1.2] tracking-[-0.02em] mb-4">
+            {heroItem.title}
+          </h2>
+          <p className="text-[16px] text-foreground/80 leading-[1.7] max-w-[640px] mb-3">
+            {heroItem.signalSummary}
+          </p>
+          <p className="text-[14px] text-muted-foreground leading-[1.6] max-w-[600px]">
+            {heroItem.whyItMatters}
+          </p>
+          {(heroItem.context.company || heroItem.context.role) && (
+            <p className="text-[12px] text-muted-foreground/60 mt-4">
+              {heroItem.context.company}{heroItem.context.role && ` · ${heroItem.context.role}`}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Refresh control — quiet, pushed right */}
       <div className="flex items-center justify-between">
-        <span className="text-[13px] text-muted-foreground">
+        <span className="text-[12px] text-muted-foreground/60">
           {t('timeline.basedOnEvents', { count: events.length })}
         </span>
         <Button
@@ -142,39 +171,41 @@ export function CareerSignalTimeline() {
           size="sm"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="text-[13px] text-muted-foreground hover:text-foreground"
+          className="text-[12px] text-muted-foreground hover:text-foreground h-7"
         >
-          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3 h-3 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           {t('timeline.refresh')}
         </Button>
       </div>
 
-      {/* Momentum + Advisory */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <MomentumIndicator momentum={timeline.momentumStatus} />
-        <CoachNote note={timeline.coachNote} />
+      {/* Momentum + Strategic Advisory — side by side, different visual weight */}
+      <div className="grid gap-6 md:grid-cols-5">
+        <div className="md:col-span-2">
+          <MomentumIndicator momentum={timeline.momentumStatus} />
+        </div>
+        <div className="md:col-span-3">
+          <CoachNote note={timeline.coachNote} />
+        </div>
       </div>
 
-      {/* Patterns */}
+      {/* Patterns — borderless, memo-style */}
       {timeline.recentPatterns.length > 0 && (
         <PatternsList patterns={timeline.recentPatterns} />
       )}
 
-      {/* Signal Timeline */}
+      {/* Signal Timeline — remaining items */}
       <div className="space-y-3">
-        <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide">
+        <h2 className="text-[12px] font-medium text-muted-foreground/60 uppercase tracking-[0.06em]">
           {t('timeline.signalTimeline')}
         </h2>
 
-        {timeline.timelineItems.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card py-8 text-center">
-            <p className="text-[13px] text-muted-foreground">
-              {t('timeline.noSignificantSignals')}
-            </p>
-          </div>
+        {remainingItems.length === 0 ? (
+          <p className="text-[13px] text-muted-foreground py-6">
+            {t('timeline.noSignificantSignals')}
+          </p>
         ) : (
           <div className="relative space-y-3 pb-4">
-            {timeline.timelineItems.map((item, index) => (
+            {remainingItems.map((item, index) => (
               <SignalTimelineItem
                 key={`${item.date}-${index}`}
                 item={item}
