@@ -112,8 +112,8 @@ const STATUS_CONFIG: Record<StatusType, {
   completed: {
     icon: Check,
     label: (name) => `Completed: ${name}`,
-    iconClass: 'text-chart-2',
-    textClass: 'text-chart-2 font-medium',
+    iconClass: 'text-primary',
+    textClass: 'text-primary font-medium',
   },
   rejected: {
     icon: X,
@@ -124,8 +124,8 @@ const STATUS_CONFIG: Record<StatusType, {
   offer: {
     icon: Star,
     label: () => 'Offer Received',
-    iconClass: 'text-amber-500',
-    textClass: 'text-amber-600 dark:text-amber-400 font-semibold',
+    iconClass: 'text-primary',
+    textClass: 'text-primary font-semibold',
   },
   skipped: {
     icon: SkipForward,
@@ -136,7 +136,7 @@ const STATUS_CONFIG: Record<StatusType, {
   waiting: {
     icon: Clock,
     label: (name) => `Awaiting feedback · ${name}`,
-    iconClass: 'text-amber-500',
+    iconClass: 'text-muted-foreground',
     textClass: 'text-foreground font-medium',
   },
   applied: {

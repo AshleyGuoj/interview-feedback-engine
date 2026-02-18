@@ -104,10 +104,10 @@ function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) 
           <span className="flex-1 text-sm">{stage.name}</span>
           <span className={cn(
             "text-xs px-2 py-0.5 rounded-full",
-            stage.status === 'completed' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-            ['pending', 'scheduled', 'rescheduled'].includes(stage.status) && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-            stage.status === 'feedback_pending' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-            ['skipped', 'withdrawn'].includes(stage.status) && "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+            stage.status === 'completed' && "bg-primary/10 text-primary",
+            ['pending', 'scheduled', 'rescheduled'].includes(stage.status) && "bg-muted text-muted-foreground",
+            stage.status === 'feedback_pending' && "bg-muted text-muted-foreground",
+            ['skipped', 'withdrawn'].includes(stage.status) && "bg-muted/50 text-muted-foreground/70"
           )}>
             {getStatusLabel(stage.status)}
           </span>

@@ -50,10 +50,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const locationColors: Record<string, string> = {
-  CN: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-  US: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  Remote: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  Other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+  CN: 'bg-muted text-muted-foreground',
+  US: 'bg-muted text-muted-foreground',
+  Remote: 'bg-muted text-muted-foreground',
+  Other: 'bg-muted text-muted-foreground',
 };
 
 export default function JobDetail() {
@@ -612,7 +612,7 @@ export default function JobDetail() {
                 ) : (
                   <>
                     <div className="flex items-center gap-3">
-                      <CardTitle className="text-2xl">{job.companyName}</CardTitle>
+                      <CardTitle className="text-[28px] sm:text-[32px]">{job.companyName}</CardTitle>
                       <Badge 
                         variant="secondary" 
                         className={cn('text-xs font-medium', locationColors[job.location])}
@@ -748,7 +748,7 @@ export default function JobDetail() {
                           className={cn(
                             'w-4 h-4',
                             level <= job.interestLevel
-                              ? 'fill-amber-400 text-amber-400'
+                              ? 'fill-primary text-primary'
                               : 'text-muted'
                           )}
                         />
@@ -786,50 +786,46 @@ export default function JobDetail() {
         </Card>
 
         {/* File Attachments */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Attachments
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {attachments.map((file, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-sm"
+        <div className="border-l-2 border-l-primary/30 pl-5 space-y-3">
+          <h3 className="text-base font-semibold flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Attachments
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {attachments.map((file, index) => (
+              <div 
+                key={index} 
+                className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-sm"
+              >
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <span className="max-w-[150px] truncate">{file.name}</span>
+                <button 
+                  onClick={() => removeAttachment(index)}
+                  className="text-muted-foreground hover:text-destructive"
                 >
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                  <span className="max-w-[150px] truncate">{file.name}</span>
-                  <button 
-                    onClick={() => removeAttachment(index)}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg"
-                />
-                <div className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors">
-                  <Upload className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Upload files (Resume, JD, Notes...)
-                  </span>
-                </div>
-              </label>
-            </div>
-          </CardContent>
-        </Card>
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg"
+              />
+              <div className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors">
+                <Upload className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Upload files (Resume, JD, Notes...)
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
 
         {/* On Hold Prompt */}
         {showOnHoldPrompt && onHoldStage && (
