@@ -27,6 +27,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   Sparkles,
+  Minus,
+  TrendingDown,
+  AlertTriangle,
+  Check,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -44,17 +49,33 @@ import { TranscriptInput } from '@/components/interview/TranscriptInput';
 import { useLanguage } from '@/hooks/useLanguage';
 
 const getQualityConfig = (t: (key: string) => string) => ({
-  high: { label: t('analysisDetail.qualityHigh'), color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
-  medium: { label: t('analysisDetail.qualityMedium'), color: 'text-amber-600 bg-amber-50 border-amber-200', icon: AlertCircle },
-  low: { label: t('analysisDetail.qualityLow'), color: 'text-red-600 bg-red-50 border-red-200', icon: AlertCircle },
+  high: { label: t('analysisDetail.qualityHigh'), color: 'text-primary bg-primary/5 border-primary/20', icon: CheckCircle2 },
+  medium: { label: t('analysisDetail.qualityMedium'), color: 'text-muted-foreground bg-muted/50 border-border', icon: AlertCircle },
+  low: { label: t('analysisDetail.qualityLow'), color: 'text-muted-foreground/70 bg-muted/30 border-border', icon: AlertCircle },
 });
 
+const FEELING_ICON_MAP = {
+  great: Sparkles,
+  good: ThumbsUp,
+  neutral: Minus,
+  poor: TrendingDown,
+  bad: AlertTriangle,
+} as const;
+
+const FEELING_COLOR_MAP = {
+  great: 'text-primary',
+  good: 'text-primary/70',
+  neutral: 'text-muted-foreground',
+  poor: 'text-muted-foreground',
+  bad: 'text-muted-foreground',
+} as const;
+
 const getFeelingConfig = (t: (key: string) => string) => ({
-  great: { label: t('analysisDetail.feelingGreat'), emoji: '🎉', color: 'text-emerald-600' },
-  good: { label: t('analysisDetail.feelingGood'), emoji: '😊', color: 'text-green-600' },
-  neutral: { label: t('analysisDetail.feelingNeutral'), emoji: '😐', color: 'text-gray-600' },
-  poor: { label: t('analysisDetail.feelingPoor'), emoji: '😔', color: 'text-orange-600' },
-  bad: { label: t('analysisDetail.feelingBad'), emoji: '😢', color: 'text-red-600' },
+  great: { label: t('analysisDetail.feelingGreat'), color: 'text-primary' },
+  good: { label: t('analysisDetail.feelingGood'), color: 'text-primary/70' },
+  neutral: { label: t('analysisDetail.feelingNeutral'), color: 'text-muted-foreground' },
+  poor: { label: t('analysisDetail.feelingPoor'), color: 'text-muted-foreground' },
+  bad: { label: t('analysisDetail.feelingBad'), color: 'text-muted-foreground' },
 });
 
 interface AnalysisDetailPanelProps {
@@ -186,7 +207,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                   {format(new Date(stage.scheduledTime), 'yyyy/MM/dd HH:mm')}
                 </Badge>
               )}
-              <Badge className="bg-emerald-100 text-emerald-700">
+              <Badge className="bg-primary/10 text-primary">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 {t('analysisDetail.analyzed')}
               </Badge>
@@ -227,10 +248,10 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                             {t('analysisDetail.difficulty')} {q.difficulty}/5
                           </span>
                           {q.answeredWell === true && (
-                            <ThumbsUp className="w-3.5 h-3.5 text-emerald-500" />
+                            <ThumbsUp className="w-3.5 h-3.5 text-primary" />
                           )}
                           {q.answeredWell === false && (
-                            <ThumbsDown className="w-3.5 h-3.5 text-red-500" />
+                            <ThumbsDown className="w-3.5 h-3.5 text-muted-foreground" />
                           )}
                         </div>
                         {q.myAnswer && (
@@ -250,100 +271,84 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
           {stage.reflection && (
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                  <Lightbulb className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Lightbulb className="w-4 h-4 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{t('analysisDetail.interviewDebrief')}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {FEELING_CONFIG[stage.reflection.overallFeeling]?.emoji} {FEELING_CONFIG[stage.reflection.overallFeeling]?.label}
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    {(() => {
+                      const FeelingIcon = FEELING_ICON_MAP[stage.reflection.overallFeeling];
+                      return FeelingIcon ? <FeelingIcon className={cn("w-3.5 h-3.5", FEELING_COLOR_MAP[stage.reflection.overallFeeling])} /> : null;
+                    })()}
+                    {FEELING_CONFIG[stage.reflection.overallFeeling]?.label}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 {stage.reflection.whatWentWell?.length > 0 && (
-                  <Card className="border-emerald-200 bg-emerald-50/30">
-                    <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold text-emerald-700 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4" />
-                        {t('analysisDetail.whatWentWell')}
-                      </h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <ul className="space-y-1.5">
-                        {stage.reflection.whatWentWell.map((item, i) => (
-                          <li key={i} className="text-sm flex gap-2">
-                            <span className="text-emerald-500">✓</span>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                  <div className="border-l-2 border-l-primary/40 pl-4 space-y-1.5">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary/60" />
+                      {t('analysisDetail.whatWentWell')}
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {stage.reflection.whatWentWell.map((item, i) => (
+                        <li key={i} className="text-sm flex items-start gap-2">
+                          <Check className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {stage.reflection.whatCouldImprove?.length > 0 && (
-                  <Card className="border-amber-200 bg-amber-50/30">
-                    <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold text-amber-700 flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        {t('analysisDetail.whatCouldImprove')}
-                      </h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <ul className="space-y-1.5">
-                        {stage.reflection.whatCouldImprove.map((item, i) => (
-                          <li key={i} className="text-sm flex gap-2">
-                            <span className="text-amber-500">→</span>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                  <div className="border-l-2 border-l-muted-foreground/30 pl-4 space-y-1.5">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-muted-foreground/60" />
+                      {t('analysisDetail.whatCouldImprove')}
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {stage.reflection.whatCouldImprove.map((item, i) => (
+                        <li key={i} className="text-sm flex items-start gap-2">
+                          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0 mt-0.5" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {stage.reflection.keyTakeaways?.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4 text-amber-500" />
-                        {t('analysisDetail.keyTakeaways')}
-                      </h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex flex-wrap gap-2">
-                        {stage.reflection.keyTakeaways.map((item, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {item}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="rounded-xl bg-muted/20 p-4 space-y-1.5">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-primary/60" />
+                      {t('analysisDetail.keyTakeaways')}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {stage.reflection.keyTakeaways.map((item, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
                 {stage.reflection.interviewerVibe && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold">{t('analysisDetail.interviewerStyle')}</h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">{stage.reflection.interviewerVibe}</p>
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-1.5">
+                    <h3 className="text-sm font-semibold">{t('analysisDetail.interviewerStyle')}</h3>
+                    <p className="text-sm text-muted-foreground">{stage.reflection.interviewerVibe}</p>
+                  </div>
                 )}
 
                 {stage.reflection.companyInsights && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <h3 className="text-sm font-semibold">{t('analysisDetail.companyInsights')}</h3>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">{stage.reflection.companyInsights}</p>
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-1.5">
+                    <h3 className="text-sm font-semibold">{t('analysisDetail.companyInsights')}</h3>
+                    <p className="text-sm text-muted-foreground">{stage.reflection.companyInsights}</p>
+                  </div>
                 )}
               </div>
             </section>
@@ -460,8 +465,8 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
             {/* Detailed Reflection */}
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                  <Lightbulb className="w-4 h-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Lightbulb className="w-4 h-4 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{t('analysisDetail.interviewDebrief')}</h2>
@@ -575,7 +580,7 @@ function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection;
       <Card>
         <CardHeader className="pb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">1</span>
+            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">1</span>
             {t('interview.overview')}
           </h3>
         </CardHeader>
@@ -585,92 +590,72 @@ function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection;
       </Card>
 
       {/* What went well */}
-      <Card className="border-emerald-200 bg-emerald-50/30">
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-emerald-700">
-            <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs">2</span>
-            <CheckCircle2 className="w-4 h-4" />
-            {t('analysisDetail.whatWentWell')}
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ul className="space-y-2">
-            {reflection.whatWentWell.map((item, i) => (
-              <li key={i} className="text-sm flex gap-2">
-                <span className="text-emerald-500 shrink-0">✓</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="border-l-2 border-l-primary/40 pl-4 space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">2</span>
+          <CheckCircle2 className="w-4 h-4 text-primary/60" />
+          {t('analysisDetail.whatWentWell')}
+        </h3>
+        <ul className="space-y-1.5">
+          {reflection.whatWentWell.map((item, i) => (
+            <li key={i} className="text-sm flex items-start gap-2">
+              <Check className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* What could improve */}
-      <Card className="border-amber-200 bg-amber-50/30">
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-amber-700">
-            <span className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-xs">3</span>
-            <AlertCircle className="w-4 h-4" />
-            {t('analysisDetail.whatCouldImprove')}
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ul className="space-y-2">
-            {reflection.whatCouldImprove.map((item, i) => (
-              <li key={i} className="text-sm flex gap-2">
-                <span className="text-amber-500 shrink-0">→</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="border-l-2 border-l-muted-foreground/30 pl-4 space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">3</span>
+          <AlertCircle className="w-4 h-4 text-muted-foreground/60" />
+          {t('analysisDetail.whatCouldImprove')}
+        </h3>
+        <ul className="space-y-1.5">
+          {reflection.whatCouldImprove.map((item, i) => (
+            <li key={i} className="text-sm flex items-start gap-2">
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0 mt-0.5" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Key takeaways */}
-      <Card>
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">4</span>
-            <Lightbulb className="w-4 h-4 text-amber-500" />
-            {t('analysisDetail.keyTakeaways')}
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex flex-wrap gap-2">
-            {reflection.keyTakeaways.map((item, i) => (
-              <Badge key={i} variant="secondary">
-                {item}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-muted/20 p-4 space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">4</span>
+          <Lightbulb className="w-4 h-4 text-primary/60" />
+          {t('analysisDetail.keyTakeaways')}
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {reflection.keyTakeaways.map((item, i) => (
+            <Badge key={i} variant="secondary">
+              {item}
+            </Badge>
+          ))}
+        </div>
+      </div>
 
       {/* Interviewer vibe */}
-      <Card>
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">5</span>
-            {t('analysisDetail.interviewerStyle')}
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground leading-relaxed">{reflection.interviewerVibe}</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-1.5">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">5</span>
+          {t('analysisDetail.interviewerStyle')}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">{reflection.interviewerVibe}</p>
+      </div>
 
       {/* Company insights */}
-      <Card>
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">6</span>
-            {t('analysisDetail.companyInsights')}
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground leading-relaxed">{reflection.companyInsights}</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-1.5">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">6</span>
+          {t('analysisDetail.companyInsights')}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">{reflection.companyInsights}</p>
+      </div>
     </div>
   );
 }
