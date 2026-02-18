@@ -1,39 +1,65 @@
 
-# Role Debrief 功能引导提示
+
+# Career Growth 加载状态优化 — 卡片式步骤动画
 
 ## 目标
 
-当用户选中的 Job 已有 2+ 轮分析完成时，在 Interview Analysis 面板底部或顶部显示一个醒目但不干扰的引导横幅，提示用户可以切换到 Role Debrief 标签查看聚合分析。
+替换当前简单的旋转图标加载状态，改为一个更新颖的「卡片式步骤」动画，与 Timeline 的纵向列表式加载做出视觉区分。
 
-## 设计方案
+## 设计理念
 
-在 `activeTab === 'rounds'` 且 `isDebriefUnlocked === true` 时，在 AnalysisDetailPanel 上方插入一个引导卡片：
-
-- 使用 `bg-primary/5 border border-primary/20` 的柔和品牌色背景
-- 左侧显示 `TrendingUp` 图标
-- 文案：提示已有 N 轮分析，可以使用 Role Debrief 查看聚合洞察
-- 右侧显示一个按钮，点击后切换到 debrief 标签
+Timeline 用的是**纵向文字列表逐行高亮**。Career Growth 改用**横向 4 格卡片依次激活**的布局，每个卡片包含图标 + 标签，当前激活卡片有品牌色发光效果和缩放动画，整体更具「仪表盘分析」的感觉。
 
 ```text
-+----------------------------------------------------------+
-| [TrendingUp]  2 rounds analyzed -- Role Debrief    [View] |
-|               is ready for aggregate insights             |
-+----------------------------------------------------------+
+Timeline（已有）:            Career Growth（新方案）:
+  · Scanning history           ┌────┐ ┌────┐ ┌────┐ ┌────┐
+  · Detecting signals          │ 📄 │ │ 🧠 │ │ 📈 │ │ ✨ │
+  · Mapping momentum           │收集│ │趋势│ │轨迹│ │洞察│
+  · Composing insights         └────┘ └────┘ └────┘ └────┘
+                                 ▲ active (glow + scale)
 ```
 
 ## 改动
 
-### 文件：`src/pages/Analytics.tsx`
+### 1. `src/components/analytics/CareerGrowthPanel.tsx`（lines 261-272）
 
-1. 在 `activeTab === 'rounds'` 分支内、`AnalysisDetailPanel` 或空状态之前，增加条件渲染：当 `isDebriefUnlocked` 为 true 时显示引导横幅
-2. 横幅包含一个按钮，`onClick` 设置 `setActiveTab('debrief')`
-3. 导入 `TrendingUp`（已在文件中导入）
+替换 loading 状态为新的多步骤动画：
 
-### 文件：`src/lib/i18n/locales/en.ts` 和 `src/lib/i18n/locales/zh.ts`
+- 外层保持 `h-full flex items-center justify-center p-6`，确保垂直居中
+- 内层使用 `rounded-xl border bg-card py-16 w-full max-w-lg` 的卡片容器
+- 顶部：品牌色图标 + 标题文字
+- 中间：4 个步骤格子横向排列（`grid grid-cols-4 gap-3`），每个格子显示图标和标签
+  - 当前激活步骤：`bg-primary/10 border-primary/30 text-primary scale-105` + 图标 `animate-bounce`
+  - 已完成步骤：`bg-muted/50 text-muted-foreground` + 小对勾标记
+  - 未到达步骤：`bg-muted/20 text-muted-foreground/40`
+- 底部：连续进度条 + 提示文字
+- 使用 `useState` + `useEffect` + `setInterval`（2.5s）轮换步骤
+- 所有过渡使用 `transition-all duration-500` 实现平滑切换
 
-添加翻译键：
-- `analytics.debriefReady`: 引导文案标题
-- `analytics.debriefReadyDesc`: 引导文案描述
-- `analytics.viewDebrief`: 按钮文字
+### 2. `src/lib/i18n/locales/en.ts`
+
+在 `careerGrowth` 下添加：
+
+| Key | Value |
+|---|---|
+| `loadingTitle` | Analyzing Your Career Growth |
+| `loading_collectData` | Collecting Data |
+| `loading_analyzeTrends` | Analyzing Trends |
+| `loading_mapGrowth` | Mapping Growth |
+| `loading_composeInsights` | Composing Insights |
+| `loadingHint` | This usually takes 15-30 seconds |
+
+### 3. `src/lib/i18n/locales/zh.ts`
+
+在 `careerGrowth` 下添加：
+
+| Key | Value |
+|---|---|
+| `loadingTitle` | 正在分析你的职业成长 |
+| `loading_collectData` | 收集数据 |
+| `loading_analyzeTrends` | 分析趋势 |
+| `loading_mapGrowth` | 计算轨迹 |
+| `loading_composeInsights` | 生成洞察 |
+| `loadingHint` | 通常需要 15-30 秒 |
 
 不涉及其他文件变更。
