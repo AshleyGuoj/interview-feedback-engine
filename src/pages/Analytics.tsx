@@ -209,8 +209,30 @@ export default function Analytics() {
                     {/* Tab Content */}
                     <div className="flex-1 min-h-0 overflow-auto">
                       <div className="max-w-4xl mx-auto">
-                        {activeTab === 'rounds' ? (
-                          selectedStage ? (
+                      {activeTab === 'rounds' ? (
+                          <>
+                            {isDebriefUnlocked && (
+                              <div className="mx-6 mt-6 mb-2 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <TrendingUp className="w-5 h-5 text-primary shrink-0" />
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">
+                                      {t('analytics.debriefReady', { count: analyzedRoundsCount })}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {t('analytics.debriefReadyDesc')}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setActiveTab('debrief')}
+                                  className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                                >
+                                  {t('analytics.viewDebrief')}
+                                </button>
+                              </div>
+                            )}
+                            {selectedStage ? (
                             <AnalysisDetailPanel
                               job={selectedJob}
                               stage={selectedStage}
@@ -225,7 +247,8 @@ export default function Analytics() {
                                 </p>
                               </div>
                             </div>
-                          )
+                           )}
+                          </>
                         ) : (
                           <RoleDebriefPanel job={selectedJob} />
                         )}

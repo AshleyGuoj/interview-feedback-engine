@@ -394,6 +394,9 @@ export default {
     filterActive: '进行中',
     filterWithRecords: '有记录',
     filterClosed: '已结束',
+    debriefReady: '已完成 {{count}} 轮分析 — 职位复盘已就绪',
+    debriefReadyDesc: '查看该职位所有面试轮次的聚合洞察分析。',
+    viewDebrief: '查看复盘',
   },
 
   // Interview Analysis
