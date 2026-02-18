@@ -493,6 +493,12 @@ export default {
     mediumImpact: 'Medium Impact',
     lowImpact: 'Low Impact',
     keepingStrong: 'Keep Strong',
+    loadingTitle: 'Analyzing Your Career Growth',
+    loading_collectData: 'Collecting Data',
+    loading_analyzeTrends: 'Analyzing Trends',
+    loading_mapGrowth: 'Mapping Growth',
+    loading_composeInsights: 'Composing Insights',
+    loadingHint: 'This usually takes 15-30 seconds',
   },
 
   // Competencies

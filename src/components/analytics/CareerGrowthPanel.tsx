@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Job } from '@/types/job';
@@ -23,6 +23,8 @@ import {
   Sparkles,
   ArrowUpRight,
   ArrowDownRight,
+  FileSearch,
+  Brain,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -187,6 +189,25 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
     }
   };
 
+  // Loading steps for card animation
+  const loadingSteps = useMemo(() => [
+    { icon: FileSearch, key: 'loading_collectData' },
+    { icon: Brain, key: 'loading_analyzeTrends' },
+    { icon: TrendingUp, key: 'loading_mapGrowth' },
+    { icon: Sparkles, key: 'loading_composeInsights' },
+  ], []);
+
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  useEffect(() => {
+    if (!isGenerating) return;
+    setLoadingStep(0);
+    const interval = setInterval(() => {
+      setLoadingStep(prev => (prev + 1) % loadingSteps.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isGenerating, loadingSteps.length]);
+
   // Empty state
   if (!analysis && !isGenerating) {
     return (
@@ -261,12 +282,65 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
   // Loading state
   if (isGenerating) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">
-            {t('careerGrowth.analyzingProgress', { count: allAnalyzedRounds.length })}
-          </p>
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="w-full max-w-lg rounded-xl border border-border bg-card py-16 px-8">
+          <div className="flex flex-col items-center gap-8">
+            {/* Header */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <LineChartIcon className="w-5 h-5 text-primary animate-pulse" />
+              </div>
+              <h3 className="text-[15px] font-semibold text-foreground">
+                {t('careerGrowth.loadingTitle')}
+              </h3>
+            </div>
+
+            {/* Step Cards */}
+            <div className="grid grid-cols-4 gap-3 w-full">
+              {loadingSteps.map((step, index) => {
+                const Icon = step.icon;
+                const isActive = index === loadingStep;
+                const isComplete = index < loadingStep;
+
+                return (
+                  <div
+                    key={step.key}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all duration-500",
+                      isActive
+                        ? "bg-primary/10 border-primary/30 text-primary scale-105 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                        : isComplete
+                        ? "bg-muted/50 border-border text-muted-foreground"
+                        : "bg-muted/20 border-transparent text-muted-foreground/40"
+                    )}
+                  >
+                    <div className="relative">
+                      <Icon className={cn("w-5 h-5", isActive && "animate-bounce")} />
+                      {isComplete && (
+                        <CheckCircle2 className="w-3 h-3 text-primary absolute -top-1 -right-1" />
+                      )}
+                    </div>
+                    <span className="text-[11px] font-medium text-center leading-tight">
+                      {t(`careerGrowth.${step.key}`)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full space-y-3">
+              <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary/40 rounded-full transition-all duration-500"
+                  style={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
+                />
+              </div>
+              <p className="text-[12px] text-muted-foreground/60 text-center">
+                {t('careerGrowth.loadingHint')}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
