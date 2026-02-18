@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { CalendarDays, Clock, AlertCircle, Activity, ArrowRight, Inbox, Briefcase, MessageSquare, Gift, TrendingUp } from 'lucide-react';
+import { CalendarDays, Clock, AlertCircle, Activity, ArrowRight, Inbox, Briefcase, UserRound, PartyPopper, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useJobs } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
@@ -56,8 +56,8 @@ function CareerHealthBar({ jobs }: { jobs: any[] }) {
       </div>
       <div className="grid grid-cols-4 gap-6">
         <MetricCell icon={<Briefcase className="w-4 h-4" />} value={metrics.active} label={t('dashboard.activeApplications')} hint="Pipeline depth" />
-        <MetricCell icon={<MessageSquare className="w-4 h-4" />} value={metrics.interviewing} label={t('dashboard.interviewing')} hint="In progress" />
-        <MetricCell icon={<Gift className="w-4 h-4" />} value={metrics.offers} label={t('dashboard.offersReceived')} hint="Decisions pending" />
+        <MetricCell icon={<UserRound className="w-4 h-4" />} value={metrics.interviewing} label={t('dashboard.interviewing')} hint="In progress" />
+        <MetricCell icon={<PartyPopper className="w-4 h-4" />} value={metrics.offers} label={t('dashboard.offersReceived')} hint="Decisions pending" />
         <MetricCell icon={<TrendingUp className="w-4 h-4" />} value={`${metrics.responseRate}%`} label={t('dashboard.responseRate')} hint={metrics.responseRate >= 30 ? 'Healthy rate' : 'Keep applying'} />
       </div>
     </div>
