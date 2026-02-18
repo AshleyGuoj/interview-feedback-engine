@@ -95,7 +95,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5">
+      <nav className="flex-1 py-3 px-2 space-y-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || 
             (item.to !== '/' && location.pathname.startsWith(item.to));
@@ -106,16 +106,16 @@ export function Sidebar() {
               key={item.to}
               to={item.to}
               className={cn(
-                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors',
+                'flex items-center gap-2.5 px-3 py-3 rounded-lg transition-all',
                 isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60',
+                  ? 'bg-primary/10 text-primary text-[14px] font-semibold'
+                  : 'text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60 text-[13px] font-medium',
                 collapsed && 'justify-center px-2'
               )}
             >
               <item.icon className={cn(
-                'w-[18px] h-[18px] shrink-0',
-                isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
+                'w-5 h-5 shrink-0',
+                isActive ? 'text-primary' : 'text-sidebar-foreground'
               )} />
               {!collapsed && <span>{label}</span>}
             </NavLink>
