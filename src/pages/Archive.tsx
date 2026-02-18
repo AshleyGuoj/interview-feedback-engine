@@ -43,9 +43,19 @@ export default function Archive() {
 
   // Check total analyzed rounds across all jobs for career growth unlock
   const totalAnalyzedRounds = jobs.reduce((count, job) => {
-    return count + job.stages.filter(
-      s => s.status === 'completed' && (s.questions?.length || s.reflection)
-    ).length;
+    const seenIds = new Set<string>();
+    let jobCount = 0;
+    const countStages = (stages: typeof job.stages) => {
+      stages.forEach(s => {
+        if (!seenIds.has(s.id) && (s.questions?.length || s.reflection)) {
+          seenIds.add(s.id);
+          jobCount++;
+        }
+      });
+    };
+    if (job.stages) countStages(job.stages);
+    if (job.pipelines) job.pipelines.forEach(p => { if (p.stages) countStages(p.stages); });
+    return count + jobCount;
   }, 0);
   const isGrowthUnlocked = totalAnalyzedRounds >= 2;
 
