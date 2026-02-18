@@ -49,8 +49,8 @@ export function StrengthsGapsChart({ data }: StrengthsGapsChartProps) {
 
   const getBarColor = (type: 'strength' | 'gap') => {
     return type === 'strength' 
-      ? 'hsl(142, 71%, 45%)' // emerald
-      : 'hsl(47, 96%, 53%)'; // amber
+      ? 'hsl(var(--primary))'
+      : 'hsl(var(--muted-foreground))';
   };
 
   return (
@@ -58,11 +58,11 @@ export function StrengthsGapsChart({ data }: StrengthsGapsChartProps) {
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+          <div className="w-3 h-3 rounded-sm bg-primary" />
           <span className="text-muted-foreground">优势</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-amber-500" />
+          <div className="w-3 h-3 rounded-sm bg-muted-foreground" />
           <span className="text-muted-foreground">短板</span>
         </div>
       </div>
