@@ -158,9 +158,9 @@ export function CareerSignalTimeline() {
     : [];
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-8">
       {/* Meta row — event count + refresh */}
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center justify-between">
         <span className="text-[13px] text-muted-foreground">
           {t('timeline.basedOnEvents', { count: events.length })}
         </span>
@@ -178,7 +178,7 @@ export function CareerSignalTimeline() {
 
       {/* ═══ HERO SIGNAL CARD ═══ */}
       {heroItem && (
-        <div className="rounded-2xl surface-insight border border-primary/[0.08] p-7 sm:p-8 mb-7" style={{ boxShadow: 'var(--shadow-md)' }}>
+        <div className="rounded-2xl surface-insight border border-primary/[0.08] p-7 sm:p-8" style={{ boxShadow: 'var(--shadow-md)' }}>
           {/* Top meta row */}
           <div className="flex items-center justify-between mb-5">
             <span className="text-[11px] font-semibold text-primary uppercase tracking-[0.1em]">
@@ -214,16 +214,14 @@ export function CareerSignalTimeline() {
       )}
 
       {/* ═══ SUPPORTING INSIGHT ROW ═══ */}
-      <div className="grid gap-5 md:grid-cols-2 mb-7">
+      <div className="grid gap-6 md:grid-cols-2">
         <MomentumIndicator momentum={timeline.momentumStatus} />
         <CoachNote bullets={coachBullets} fallback={timeline.coachNote} />
       </div>
 
       {/* ═══ PATTERNS DISCOVERED ═══ */}
       {timeline.recentPatterns.length > 0 && (
-        <div className="mb-8">
-          <PatternsList patterns={timeline.recentPatterns} />
-        </div>
+        <PatternsList patterns={timeline.recentPatterns} />
       )}
 
       {/* ═══ SIGNAL TIMELINE ═══ */}
