@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Clock, Trophy, TrendingUp, Calendar, AlertCircle, Activity, ArrowRight } from 'lucide-react';
+import { CalendarDays, Clock, AlertCircle, Activity, ArrowRight, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useJobs } from '@/contexts/JobsContext';
 import { useActivities } from '@/hooks/useActivities';
@@ -9,8 +8,14 @@ import { useMemo } from 'react';
 import { formatDistanceToNow, isAfter, parseISO } from 'date-fns';
 import { formatDualTimezone } from '@/lib/timezone';
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 function CareerHealthBar({ jobs }: { jobs: any[] }) {
-  const { t } = useTranslation();
   const metrics = useMemo(() => {
     const active = jobs.filter(j => j.status !== 'closed').length;
     const interviewing = jobs.filter(j => j.status === 'interviewing').length;
@@ -20,7 +25,6 @@ function CareerHealthBar({ jobs }: { jobs: any[] }) {
       ? Math.round(((interviewing + offers + closed) / jobs.length) * 100)
       : 0;
 
-    // Simple health score
     let healthLabel = 'Building';
     let healthColor = 'text-muted-foreground';
     if (active >= 3 && responseRate >= 30) {
@@ -34,13 +38,15 @@ function CareerHealthBar({ jobs }: { jobs: any[] }) {
     return { active, interviewing, offers, responseRate, healthLabel, healthColor };
   }, [jobs]);
 
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-xl border-l-3 border-l-primary/30 surface-insight p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-muted-foreground" />
           <h2 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide">
-            {t('dashboard.title', 'Career Health')}
+            Career Health
           </h2>
         </div>
         <span className={`text-[13px] font-semibold ${metrics.healthColor}`}>
@@ -73,7 +79,6 @@ export default function Dashboard() {
   const { jobs } = useJobs();
   const { activities, loading: activitiesLoading } = useActivities();
 
-  // Upcoming interviews
   const upcomingInterviews = useMemo(() => {
     const now = new Date();
     return jobs
@@ -102,7 +107,6 @@ export default function Dashboard() {
       .slice(0, 4);
   }, [jobs]);
 
-  // Recent activity
   const recentActivity = useMemo(() => {
     const jobMap = new Map(jobs.map(j => [j.id, j]));
     return activities.slice(0, 5).map(activity => {
@@ -119,17 +123,16 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-10 max-w-[1100px] space-y-8">
-        {/* Header */}
+        {/* Header — upgraded title + greeting */}
         <div className="space-y-1">
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+          <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] text-foreground">
             {t('dashboard.title')}
           </h1>
           <p className="text-[14px] text-muted-foreground">
-            {t('dashboard.welcome')}
+            {getGreeting()}
           </p>
         </div>
 
-        {/* Career Health — top-level intelligence module */}
         <CareerHealthBar jobs={jobs} />
 
         {/* Intelligence Modules */}
@@ -143,56 +146,74 @@ export default function Dashboard() {
             </div>
             <div className="px-5 pb-5 space-y-2.5">
               {upcomingInterviews.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground py-6 text-center">
-                  {t('dashboard.noScheduledInterviews')}
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <CalendarDays className="w-8 h-8 text-muted-foreground/30" />
+                  <p className="text-[13px] text-muted-foreground text-center">
+                    {t('dashboard.noScheduledInterviews')}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/60 text-center">
+                    Upcoming interviews will appear here
+                  </p>
+                </div>
               ) : (
                 upcomingInterviews.map((interview, index) => (
                   <div
                     key={`${interview.id}-${index}`}
-                    className="flex flex-col p-3 rounded-lg bg-muted/40 hover:bg-muted/70 cursor-pointer transition-colors gap-1.5"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted/70 cursor-pointer transition-colors"
                     onClick={() => navigate(`/jobs/${interview.id}`)}
                   >
-                    <div>
-                      <p className="text-[13px] font-medium text-foreground">{interview.company}</p>
-                      <p className="text-[12px] text-muted-foreground">
-                        {interview.role} · {interview.stage}
-                      </p>
+                    {/* Company initial avatar */}
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[13px] font-semibold text-primary">
+                        {interview.company.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    {interview.scheduledTime && interview.scheduledTimezone && (
-                      <div className="flex items-center gap-1 text-[11px] text-primary px-2 py-0.5 rounded-md bg-primary/8 w-fit">
-                        <Calendar className="w-3 h-3" />
-                        {formatDualTimezone(interview.scheduledTime, interview.scheduledTimezone)}
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div>
+                        <p className="text-[13px] font-medium text-foreground">{interview.company}</p>
+                        <p className="text-[12px] text-muted-foreground">
+                          {interview.role} · {interview.stage}
+                        </p>
                       </div>
-                    )}
-                    {interview.deadline && interview.deadlineTimezone && (
-                      <div className="flex items-center gap-1 text-[11px] text-warning px-2 py-0.5 rounded-md bg-warning/8 w-fit">
-                        <AlertCircle className="w-3 h-3" />
-                        {t('dashboard.deadline')}: {formatDualTimezone(interview.deadline, interview.deadlineTimezone)}
-                      </div>
-                    )}
+                      {interview.scheduledTime && interview.scheduledTimezone && (
+                        <div className="flex items-center gap-1 text-[11px] text-primary px-2 py-0.5 rounded-md bg-primary/8 w-fit">
+                          <CalendarDays className="w-3 h-3" />
+                          {formatDualTimezone(interview.scheduledTime, interview.scheduledTimezone)}
+                        </div>
+                      )}
+                      {interview.deadline && interview.deadlineTimezone && (
+                        <div className="flex items-center gap-1 text-[11px] text-warning px-2 py-0.5 rounded-md bg-warning/8 w-fit">
+                          <AlertCircle className="w-3 h-3" />
+                          {t('dashboard.deadline')}: {formatDualTimezone(interview.deadline, interview.deadlineTimezone)}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Signal Feed */}
-          <div className="rounded-xl border border-border bg-card">
-            <div className="px-5 pt-5 pb-3">
-              <h3 className="text-[14px] font-semibold text-foreground">
-                {t('dashboard.recentActivity')}
-              </h3>
-            </div>
-            <div className="px-5 pb-5 space-y-1">
+          {/* Signal Feed — open section, no card */}
+          <div className="border-l-2 border-l-primary/30 pl-5 space-y-4">
+            <h3 className="text-[14px] font-semibold text-foreground pt-1">
+              {t('dashboard.recentActivity')}
+            </h3>
+            <div className="space-y-1">
               {activitiesLoading ? (
                 <p className="text-[13px] text-muted-foreground py-6 text-center">
                   {t('dashboard.loadingActivities')}
                 </p>
               ) : recentActivity.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground py-6 text-center">
-                  {t('dashboard.noRecentActivity')}
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <Inbox className="w-8 h-8 text-muted-foreground/30" />
+                  <p className="text-[13px] text-muted-foreground text-center">
+                    {t('dashboard.noRecentActivity')}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/60 text-center">
+                    Activity from your job board will show up here
+                  </p>
+                </div>
               ) : (
                 recentActivity.map((activity) => (
                   <div
@@ -217,7 +238,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Action — understated */}
+        {/* Quick Action */}
         <div
           className="group rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.03] to-primary/[0.07] p-5 flex items-center justify-between cursor-pointer hover:from-primary/[0.05] hover:to-primary/[0.12] transition-all"
           onClick={() => navigate('/analyze')}
