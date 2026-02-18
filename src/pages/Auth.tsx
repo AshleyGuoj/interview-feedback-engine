@@ -260,14 +260,13 @@ export default function Auth() {
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Interested in early access?{' '}
-                <a
-                  href="https://www.linkedin.com/in/jiaqi-guo-02ba0329b/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
+                <button
+                  type="button"
+                  onClick={() => window.open('https://www.linkedin.com/in/jiaqi-guo-02ba0329b/', '_blank', 'noopener,noreferrer')}
+                  className="text-primary hover:underline font-medium cursor-pointer bg-transparent border-none p-0 inline"
                 >
                   Connect on LinkedIn
-                </a>{' '}
+                </button>{' '}
                 to request an invitation.
               </p>
             </div>
