@@ -206,7 +206,7 @@ export function CareerSignalTimeline() {
 
           {/* Context */}
           {(heroItem.context.company || heroItem.context.role) && (
-            <p className="text-[12px] text-muted-foreground/50 mt-5">
+            <p className="text-[12px] text-muted-foreground mt-5">
               {heroItem.context.company}{heroItem.context.role && ` · ${heroItem.context.role}`}
             </p>
           )}
