@@ -150,8 +150,8 @@ export default function Auth() {
       
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-0">
-            <img src={offermindIcon} alt="OfferMind" className="w-24 h-24 object-contain" />
+          <div className="flex justify-center mb-0 overflow-hidden" style={{ width: 80, height: 80 }}>
+            <img src={offermindIcon} alt="OfferMind" className="w-[140%] h-[140%] object-contain -m-[20%]" />
           </div>
           <CardTitle className="text-2xl -mt-2">OfferMind</CardTitle>
           <CardDescription>AI-Powered Interview Intelligence Platform</CardDescription>
