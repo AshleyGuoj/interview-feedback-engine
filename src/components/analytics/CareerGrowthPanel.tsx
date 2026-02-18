@@ -283,44 +283,55 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
   if (isGenerating) {
     return (
       <div className="h-full flex items-center justify-center p-6">
-        <div className="w-full max-w-lg rounded-xl border border-border bg-card py-16 px-8">
+        <div className="w-full max-w-sm rounded-xl border border-border bg-card py-14 px-8">
           <div className="flex flex-col items-center gap-8">
-            {/* Header */}
+            {/* Pulsing icon */}
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <LineChartIcon className="w-5 h-5 text-primary animate-pulse" />
+              <div className="relative flex items-center justify-center">
+                <div className="absolute w-14 h-14 rounded-full bg-primary/20 animate-ping" />
+                <div className="relative w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LineChartIcon className="w-7 h-7 text-primary" />
+                </div>
               </div>
-              <h3 className="text-[15px] font-semibold text-foreground">
+              <h3 className="text-[15px] font-semibold text-foreground mt-2">
                 {t('careerGrowth.loadingTitle')}
               </h3>
             </div>
 
-            {/* Step Cards */}
-            <div className="grid grid-cols-4 gap-3 w-full">
+            {/* Vertical step list */}
+            <div className="w-full space-y-3">
               {loadingSteps.map((step, index) => {
-                const Icon = step.icon;
-                const isActive = index === loadingStep;
                 const isComplete = index < loadingStep;
+                const isActive = index === loadingStep;
 
                 return (
-                  <div
-                    key={step.key}
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all duration-500",
-                      isActive
-                        ? "bg-primary/10 border-primary/30 text-primary scale-105 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                        : isComplete
-                        ? "bg-muted/50 border-border text-muted-foreground"
-                        : "bg-muted/20 border-transparent text-muted-foreground/40"
-                    )}
-                  >
-                    <div className="relative">
-                      <Icon className={cn("w-5 h-5", isActive && "animate-bounce")} />
-                      {isComplete && (
-                        <CheckCircle2 className="w-3 h-3 text-primary absolute -top-1 -right-1" />
+                  <div key={step.key} className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all duration-500",
+                        isComplete
+                          ? "bg-primary text-primary-foreground"
+                          : isActive
+                          ? "border-2 border-primary text-primary animate-pulse"
+                          : "border border-border text-muted-foreground/40"
+                      )}
+                    >
+                      {isComplete ? (
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      ) : (
+                        index + 1
                       )}
                     </div>
-                    <span className="text-[11px] font-medium text-center leading-tight">
+                    <span
+                      className={cn(
+                        "text-sm transition-colors duration-500",
+                        isComplete
+                          ? "text-muted-foreground"
+                          : isActive
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground/40"
+                      )}
+                    >
                       {t(`careerGrowth.${step.key}`)}
                     </span>
                   </div>
@@ -330,9 +341,9 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
 
             {/* Progress bar */}
             <div className="w-full space-y-3">
-              <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary/40 rounded-full transition-all duration-500"
+                  className="h-full bg-primary/40 rounded-full transition-all duration-700 ease-out"
                   style={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
                 />
               </div>
