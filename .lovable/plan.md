@@ -1,62 +1,70 @@
 
 
-# Role Debrief UI/UX 优化方案
+# Interview Analysis UI/UX 优化方案
 
 ## 问题诊断
 
-1. **AI 感过重**：大量使用荧光色 emoji（🎯⚡🤖💪👑等）、鲜艳的语义色（emerald/amber/red 背景卡片）、百分比进度条，给人"AI 生成报告"的感觉
-2. **容器形式单一**：所有区块都用 Card + border，视觉节奏重复
-3. **配色刺眼**：Key Insights 三列使用蓝/绿/黄三色底色卡片，色彩过于分散，缺乏品牌一致性
+两个文件存在相同问题：`AnalysisDetailPanel.tsx`（Analytics 页内嵌面板）和 `InterviewAnalysis.tsx`（独立页面）。
+
+1. **语义色泛滥**：What Went Well 用 `emerald` 绿底/绿字，What Could Improve 用 `amber` 黄底/黄字，Key Takeaways 用 `blue` 蓝底/蓝字，三色并排非常"AI 报告"
+2. **Emoji 残留**：`FEELING_CONFIG` 中使用 emoji（🎉😊😐😔😢），reflection header 显示 emoji
+3. **Quality Badge 用彩色底色**：`high = emerald`, `medium = amber`, `low = red`，荧光感强
+4. **全部 Card**：6 个复盘区块全用 Card 包裹，视觉节奏单一
+5. **Analyzed Badge**：`bg-emerald-100 text-emerald-700` 荧光绿
 
 ## 改造策略
 
-### 1. Emoji 替换为 Lucide 图标
+### 1. Quality 配置：去掉彩色底色
 
-将 `COMPETENCY_CONFIG` 和 `HIRING_LIKELIHOOD_CONFIG` 中的 emoji 全部替换为 Lucide 图标组件，保持 icon 的信息传达但去除"AI 玩具感"。
-
-| 能力项 | 当前 Emoji | 改为 Lucide 图标 |
-|--------|-----------|-----------------|
-| Product Sense | 🎯 | `Crosshair` |
-| Execution | ⚡ | `Zap` |
-| Analytics | 📊 | `BarChart3` |
-| Communication | 💬 | `MessageSquare` |
-| Technical Depth | 🔧 | `Wrench` |
-| AI Skills | 🤖 | `Brain` |
-| System Design | 🏗️ | `Blocks` |
-| Strategy | 📈 | `TrendingUp` |
-| Leadership | 👑 | `Crown` |
-| Resilience | 💪 | `Shield` |
-
-Hiring Likelihood 的 emoji（⚠️🤔🎉）也替换为对应 Lucide 图标。
-
-### 2. 配色统一：去掉语义色，回归品牌灰紫
-
-| 位置 | 当前 | 改为 |
+| 等级 | 当前 | 改为 |
 |------|------|------|
-| Hiring Likelihood 卡片 | `bg-emerald-50 / bg-amber-50 / bg-red-50` + 彩色边框 | 统一用 `surface-insight` 底色 + `border-l-3` 左侧品牌色线（强度用线的颜色深浅区分） |
-| Competency 分数色 | `text-emerald-600 / text-amber-600 / text-red-600` | 统一用 `text-primary` 显示分数，用进度条粗细/填充度表达高低 |
-| Key Insights 三列 | 蓝/绿/黄三色底色卡片 | 去掉彩色底色，改为无边框开放区块 + 左侧竖线（与 Timeline 页风格一致） |
-| 表格高亮/风险色 | `text-emerald-600 / text-amber-600` | 改为 `text-foreground` + `text-muted-foreground`，用 icon 区分而非颜色 |
+| high | `text-emerald-600 bg-emerald-50 border-emerald-200` | `text-primary bg-primary/5 border-primary/20` |
+| medium | `text-amber-600 bg-amber-50 border-amber-200` | `text-muted-foreground bg-muted/50 border-border` |
+| low | `text-red-600 bg-red-50 border-red-200` | `text-muted-foreground/70 bg-muted/30 border-border` |
 
-### 3. 容器混搭
+用 icon 区分质量（CheckCircle2 / AlertCircle），不再依赖颜色。
+
+### 2. Feeling 配置：emoji 替换为 Lucide 图标
+
+| 感受 | 当前 Emoji | 改为 |
+|------|-----------|------|
+| great | 🎉 | `Sparkles` icon + `text-primary` |
+| good | 😊 | `ThumbsUp` icon + `text-primary/70` |
+| neutral | 😐 | `Minus` icon + `text-muted-foreground` |
+| poor | 😔 | `TrendingDown` icon + `text-muted-foreground` |
+| bad | 😢 | `AlertTriangle` icon + `text-muted-foreground` |
+
+所有颜色统一用品牌色深浅区分，不用 emerald/orange/red。
+
+### 3. Reflection 区块容器混搭
 
 | 区块 | 当前 | 改为 |
 |------|------|------|
-| Hiring Likelihood | Card + border-2 彩色 | 保留为唯一大卡片，但去掉彩色边框，改为 `border-l-3 border-l-primary/40` + subtle bg |
-| Interviewer Matrix | Card | 保留 Card（表格需要容器） |
-| Competency Heatmap | Card 包裹的 grid | 去掉外层 Card，改为开放区块 + 标题分隔线 |
-| Key Insights 三列 | 三个彩色 Card | 去掉 Card，改为 `border-l-2` 竖线开放区块 |
-| Next Actions | Card | 改为浅底色无边框区块（`rounded-xl bg-muted/20`） |
+| 整体评估 (1) | Card | 保留 Card（作为唯一大卡片） |
+| 表现好的地方 (2) | Card + emerald 底色/边框 | 去掉 Card，改为 `border-l-2 border-l-primary/40 pl-4` 开放区块 |
+| 可以改进的地方 (3) | Card + amber 底色/边框 | 去掉 Card，改为 `border-l-2 border-l-muted-foreground/30 pl-4` 开放区块 |
+| 关键收获 (4) | Card + blue 底色/边框 | 去掉 Card，改为 `rounded-xl bg-muted/20 p-4` 背景块（无边框） |
+| 面试官印象 (5) | Card | 去掉 Card，改为纯文本段落 + 小标题（最轻量） |
+| 公司新认知 (6) | Card | 去掉 Card，改为纯文本段落 + 小标题 |
 
-### 4. 分数展示优化
+列表项的 `✓` 和 `→` 符号改为 Lucide `Check` 和 `ArrowRight` 小图标，颜色统一用 `text-primary/60` 和 `text-muted-foreground/60`。
 
-Competency Heatmap 的分数从鲜艳底色数字改为更精致的呈现：
-- 分数用 `text-primary font-semibold` 显示（不再用彩色底色块）
-- 添加一个 5 格小方块指示器（填充格数 = 分数），用 `bg-primary/20`（空）和 `bg-primary`（满）表示
-- 整体更像数据仪表盘而非 AI 生成结果
+### 4. 已分析状态 Badge
 
-### 涉及文件
+当前 `bg-emerald-100 text-emerald-700` 改为 `bg-primary/10 text-primary`，与品牌一致。
 
-- `src/types/role-debrief.ts` — 将 `icon: string` 改为 `icon: string`（Lucide 图标名），移除 emoji；调整 `HIRING_LIKELIHOOD_CONFIG` 颜色
-- `src/components/analytics/RoleDebriefPanel.tsx` — 重构容器样式、配色、图标渲染
+### 5. Debrief Section Header
+
+当前 Lightbulb 图标用 `bg-amber-100 text-amber-600`，改为 `bg-primary/10 text-primary`，与其他 section header 统一。
+
+### 6. 编号圆圈统一
+
+当前编号圆圈用了 `bg-primary/10`、`bg-emerald-100`、`bg-amber-100`、`bg-blue-100`、`bg-purple-100`、`bg-indigo-100` 六种颜色。统一改为 `bg-primary/10 text-primary`。
+
+## 涉及文件
+
+- `src/components/analytics/AnalysisDetailPanel.tsx` — QUALITY_CONFIG、FEELING_CONFIG、ReflectionDisplay、已分析状态 Badge、section header 配色
+- `src/pages/InterviewAnalysis.tsx` — QUALITY_CONFIG、ReflectionDisplay、section header 配色（独立页面的副本）
+
+两个文件的改动逻辑完全一致，保持同步。
 
