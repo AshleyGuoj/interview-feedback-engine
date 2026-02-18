@@ -64,8 +64,29 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
     }> = [];
 
     jobs.forEach(job => {
-      job.stages.forEach(stage => {
-        if (stage.status === 'completed' && (stage.questions?.length || stage.reflection)) {
+      // Collect all stages from both top-level and pipelines, deduplicate by id
+      const seenIds = new Set<string>();
+      const allStages: typeof job.stages = [];
+      
+      const addStages = (stages: typeof job.stages) => {
+        stages.forEach(stage => {
+          if (!seenIds.has(stage.id)) {
+            seenIds.add(stage.id);
+            allStages.push(stage);
+          }
+        });
+      };
+      
+      if (job.stages) addStages(job.stages);
+      if (job.pipelines) {
+        job.pipelines.forEach(p => {
+          if (p.stages) addStages(p.stages);
+        });
+      }
+      
+      allStages.forEach(stage => {
+        // Check for data presence instead of status
+        if (stage.questions?.length || stage.reflection) {
           const roundDate = stage.scheduledTime || stage.date || job.createdAt;
           
           rounds.push({
