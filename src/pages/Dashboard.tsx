@@ -239,20 +239,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
-        {/* Quick Action */}
-        <div
-          className="group rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.03] to-primary/[0.07] p-5 flex items-center justify-between cursor-pointer hover:from-primary/[0.05] hover:to-primary/[0.12] transition-all"
-          onClick={() => navigate('/analyze')}
-        >
-          <div>
-            <h3 className="text-[14px] font-semibold text-foreground">{t('dashboard.readyToPrepare')}</h3>
-            <p className="text-[13px] text-muted-foreground mt-0.5">
-              {t('dashboard.aiPoweredFeedback')}
-            </p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:translate-x-1 transition-transform" />
-        </div>
       </div>
     </DashboardLayout>
   );
