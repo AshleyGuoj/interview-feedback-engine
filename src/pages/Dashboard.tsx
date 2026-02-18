@@ -35,7 +35,7 @@ function CareerHealthBar({ jobs }: { jobs: any[] }) {
   }, [jobs]);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-xl border-l-3 border-l-primary/30 surface-insight p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-muted-foreground" />
@@ -60,8 +60,8 @@ function CareerHealthBar({ jobs }: { jobs: any[] }) {
 function MetricCell({ value, label, hint }: { value: string | number; label: string; hint: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
-      <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
+      <p className="text-2xl font-semibold tracking-tight text-primary">{value}</p>
+      <p className="text-[12px] font-medium text-primary/70">{label}</p>
       <p className="text-[11px] text-muted-foreground/60">{hint}</p>
     </div>
   );
@@ -219,7 +219,7 @@ export default function Dashboard() {
 
         {/* Quick Action — understated */}
         <div
-          className="rounded-xl border border-border bg-card p-5 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
+          className="group rounded-xl border border-primary/15 bg-gradient-to-r from-primary/[0.03] to-primary/[0.07] p-5 flex items-center justify-between cursor-pointer hover:from-primary/[0.05] hover:to-primary/[0.12] transition-all"
           onClick={() => navigate('/analyze')}
         >
           <div>
@@ -228,7 +228,7 @@ export default function Dashboard() {
               {t('dashboard.aiPoweredFeedback')}
             </p>
           </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
     </DashboardLayout>
