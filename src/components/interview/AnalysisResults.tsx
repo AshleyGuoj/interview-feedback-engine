@@ -127,8 +127,8 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
       <Card className="border-border/50 shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-success/10">
-              <TrendingUp className="h-5 w-5 text-success" />
+            <div className="p-2 rounded-lg bg-[hsl(var(--accent-sage))]/10">
+              <TrendingUp className="h-5 w-5 text-[hsl(var(--accent-sage))]" />
             </div>
             <CardTitle className="text-lg">Key Strengths</CardTitle>
           </div>
@@ -137,7 +137,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
           <ul className="space-y-3">
             {result.keyStrengths.map((strength, index) => (
               <li key={index} className="flex items-start gap-3 animate-slide-in" style={{ animationDelay: `${index * 50}ms` }}>
-                <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-[hsl(var(--accent-sage))] shrink-0 mt-0.5" />
                 <span>{strength}</span>
               </li>
             ))}
@@ -149,8 +149,8 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
       <Card className="border-border/50 shadow-lg">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-warning/10">
-              <AlertTriangle className="h-5 w-5 text-warning" />
+            <div className="p-2 rounded-lg bg-[hsl(var(--accent-rose))]/10">
+              <AlertTriangle className="h-5 w-5 text-[hsl(var(--accent-rose))]" />
             </div>
             <CardTitle className="text-lg">Key Risks & Gaps</CardTitle>
           </div>
@@ -159,7 +159,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
           <ul className="space-y-3">
             {result.keyRisksAndGaps.map((risk, index) => (
               <li key={index} className="flex items-start gap-3 animate-slide-in" style={{ animationDelay: `${index * 50}ms` }}>
-                <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-[hsl(var(--accent-rose))] shrink-0 mt-0.5" />
                 <span>{risk}</span>
               </li>
             ))}
@@ -183,7 +183,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
             <ul className="space-y-2">
               {result.alignmentNotes.whatWorked.map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-[hsl(var(--accent-sage))] shrink-0 mt-0.5" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -294,7 +294,7 @@ export function AnalysisResults({ result, onReset }: AnalysisResultsProps) {
             <ul className="space-y-2">
               {result.reusableInsights.lessonsForFuture.map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
-                  <Lightbulb className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                  <Lightbulb className="h-4 w-4 text-[hsl(var(--accent-warm))] shrink-0 mt-0.5" />
                   <span>{item}</span>
                 </li>
               ))}

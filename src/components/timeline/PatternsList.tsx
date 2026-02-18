@@ -20,9 +20,9 @@ export function PatternsList({ patterns }: PatternsListProps) {
 
   const getRiskPillStyle = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
-      case 'low': return 'text-success bg-success/8';
-      case 'medium': return 'text-warning bg-warning/8';
-      case 'high': return 'text-destructive bg-destructive/8';
+      case 'low': return 'text-[hsl(var(--accent-sage))] bg-[hsl(var(--accent-sage))]/8';
+      case 'medium': return 'text-[hsl(var(--accent-warm))] bg-[hsl(var(--accent-warm))]/8';
+      case 'high': return 'text-[hsl(var(--accent-rose))] bg-[hsl(var(--accent-rose))]/8';
     }
   };
 
@@ -46,9 +46,9 @@ export function PatternsList({ patterns }: PatternsListProps) {
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className={cn(
                 'w-1.5 h-1.5 rounded-full shrink-0 mt-[8px]',
-                pattern.riskLevel === 'high' && 'bg-destructive/50',
-                pattern.riskLevel === 'medium' && 'bg-warning/50',
-                pattern.riskLevel === 'low' && 'bg-success/50',
+                pattern.riskLevel === 'high' && 'bg-[hsl(var(--accent-rose))]/50',
+                pattern.riskLevel === 'medium' && 'bg-[hsl(var(--accent-warm))]/50',
+                pattern.riskLevel === 'low' && 'bg-[hsl(var(--accent-sage))]/50',
               )} />
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-medium text-foreground leading-snug">

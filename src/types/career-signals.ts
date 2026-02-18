@@ -53,14 +53,14 @@ export const SIGNAL_TYPE_CONFIG: Record<SignalType, {
     label: 'Turning Point', 
     labelZh: '转折点', 
     icon: 'star',
-    color: 'text-foreground',
+    color: 'text-[hsl(var(--accent-warm))]',
     bgColor: 'surface-insight',
   },
   strong_signal: { 
     label: 'Strong Signal', 
     labelZh: '强信号', 
     icon: 'zap',
-    color: 'text-primary',
+    color: 'text-[hsl(var(--accent-cool))]',
     bgColor: 'bg-primary/8',
   },
   medium_signal: { 
@@ -90,7 +90,7 @@ export const MOMENTUM_CONFIG: Record<MomentumState, {
     label: 'Improving', 
     labelZh: '上升中', 
     icon: 'trending-up',
-    color: 'text-success',
+    color: 'text-[hsl(var(--accent-sage))]',
   },
   flat: { 
     label: 'Flat', 
@@ -102,7 +102,7 @@ export const MOMENTUM_CONFIG: Record<MomentumState, {
     label: 'Declining', 
     labelZh: '下滑中', 
     icon: 'trending-down',
-    color: 'text-destructive',
+    color: 'text-[hsl(var(--accent-rose))]',
   },
 };
 

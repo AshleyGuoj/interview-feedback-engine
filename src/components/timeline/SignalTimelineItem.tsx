@@ -46,8 +46,8 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
       <div className="absolute left-0 top-[10px] w-3 h-3 flex items-center justify-center z-10">
         <div className={cn(
           'rounded-full shrink-0',
-          isTurningPoint && 'w-2.5 h-2.5 bg-primary',
-          isStrong && 'w-2 h-2 bg-primary/60',
+          isTurningPoint && 'w-2.5 h-2.5 bg-[hsl(var(--accent-warm))]',
+          isStrong && 'w-2 h-2 bg-[hsl(var(--accent-cool))]',
           item.type === 'medium_signal' && 'w-2 h-2 bg-foreground/30',
           item.type === 'weak_signal' && 'w-1.5 h-1.5 bg-foreground/15',
         )} />
@@ -56,7 +56,7 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
       <div className={cn(
         'rounded-xl p-4 transition-colors',
         isTurningPoint
-          ? 'surface-insight border border-primary/[0.1] border-l-2 border-l-primary/30'
+          ? 'surface-insight border border-[hsl(var(--accent-warm))]/[0.1] border-l-2 border-l-[hsl(var(--accent-warm))]/30'
           : isStrong
             ? 'bg-muted/30'
             : '',
@@ -65,7 +65,7 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
         <div className="flex items-center justify-between gap-3 mb-1.5">
           <span className={cn(
             'text-[11px] font-semibold uppercase tracking-[0.08em]',
-            isTurningPoint ? 'text-primary' : 'text-muted-foreground'
+            isTurningPoint ? 'text-[hsl(var(--accent-warm))]' : isStrong ? 'text-[hsl(var(--accent-cool))]' : 'text-muted-foreground'
           )}>
             {getSignalLabel()}
           </span>
