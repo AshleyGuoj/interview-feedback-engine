@@ -140,21 +140,21 @@ export function CareerSignalTimeline() {
     <div className="space-y-10 max-w-[900px]">
       {/* Hero Signal Card — the focal point */}
       {heroItem && (
-        <div className="py-8 px-1">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-4">
+        <div className="py-10 px-6 -mx-2 rounded-2xl surface-insight">
+          <p className="text-[11px] font-medium text-primary/70 uppercase tracking-[0.08em] mb-5">
             {heroItem.type === 'turning_point' ? t('timeline.turningPoint') : t('timeline.strongSignal')}
           </p>
-          <h2 className="text-[28px] sm:text-[34px] font-semibold text-foreground leading-[1.2] tracking-[-0.02em] mb-4">
+          <h2 className="text-[28px] sm:text-[34px] font-semibold text-foreground leading-[1.2] tracking-[-0.02em] mb-5">
             {heroItem.title}
           </h2>
-          <p className="text-[16px] text-foreground/80 leading-[1.7] max-w-[640px] mb-3">
+          <p className="text-[16px] text-foreground/75 leading-[1.75] max-w-[640px] mb-3">
             {heroItem.signalSummary}
           </p>
-          <p className="text-[14px] text-muted-foreground leading-[1.6] max-w-[600px]">
+          <p className="text-[14px] text-muted-foreground leading-[1.65] max-w-[600px]">
             {heroItem.whyItMatters}
           </p>
           {(heroItem.context.company || heroItem.context.role) && (
-            <p className="text-[12px] text-muted-foreground/60 mt-4">
+            <p className="text-[12px] text-muted-foreground/50 mt-5">
               {heroItem.context.company}{heroItem.context.role && ` · ${heroItem.context.role}`}
             </p>
           )}

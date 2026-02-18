@@ -29,21 +29,21 @@ export function MomentumIndicator({ momentum }: MomentumIndicatorProps) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+    <div className="rounded-xl border border-border bg-card p-5 h-full">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-lg surface-insight flex items-center justify-center shrink-0 mt-0.5">
           <Icon className={cn('w-4 h-4', config.color)} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wide">
               {t('timeline.momentumTrend')}
             </span>
             <span className={cn('text-[13px] font-semibold', config.color)}>
               {getMomentumLabel()}
             </span>
           </div>
-          <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed">
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
             {momentum.explanation}
           </p>
         </div>

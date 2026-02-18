@@ -41,7 +41,7 @@ export interface CareerSignalTimeline {
   coachNote: string;
 }
 
-// Signal type display config
+// Signal type display config — muted, restrained palette
 export const SIGNAL_TYPE_CONFIG: Record<SignalType, { 
   label: string; 
   labelZh: string; 
@@ -53,32 +53,33 @@ export const SIGNAL_TYPE_CONFIG: Record<SignalType, {
     label: 'Turning Point', 
     labelZh: '转折点', 
     icon: 'star',
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-foreground',
+    bgColor: 'surface-insight',
   },
   strong_signal: { 
     label: 'Strong Signal', 
     labelZh: '强信号', 
     icon: 'zap',
     color: 'text-primary',
-    bgColor: 'bg-primary/10',
+    bgColor: 'bg-primary/8',
   },
   medium_signal: { 
     label: 'Medium Signal', 
     labelZh: '中等信号', 
     icon: 'activity',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted/60',
   },
   weak_signal: { 
     label: 'Weak Signal', 
     labelZh: '弱信号', 
     icon: 'minus',
-    color: 'text-muted-foreground',
-    bgColor: 'bg-muted',
+    color: 'text-muted-foreground/60',
+    bgColor: 'bg-muted/40',
   },
 };
 
+// Momentum — sage/dusty tones, not traffic lights
 export const MOMENTUM_CONFIG: Record<MomentumState, {
   label: string;
   labelZh: string;
@@ -89,7 +90,7 @@ export const MOMENTUM_CONFIG: Record<MomentumState, {
     label: 'Improving', 
     labelZh: '上升中', 
     icon: 'trending-up',
-    color: 'text-emerald-600 dark:text-emerald-400',
+    color: 'text-success',
   },
   flat: { 
     label: 'Flat', 
@@ -101,7 +102,7 @@ export const MOMENTUM_CONFIG: Record<MomentumState, {
     label: 'Declining', 
     labelZh: '下滑中', 
     icon: 'trending-down',
-    color: 'text-red-600 dark:text-red-400',
+    color: 'text-destructive',
   },
 };
 
@@ -114,19 +115,19 @@ export const RISK_LEVEL_CONFIG: Record<RiskLevel, {
   low: { 
     label: 'Low', 
     labelZh: '低', 
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    color: 'text-success',
+    bgColor: 'bg-success/8',
   },
   medium: { 
     label: 'Medium', 
     labelZh: '中', 
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-warning',
+    bgColor: 'bg-warning/8',
   },
   high: { 
     label: 'High', 
     labelZh: '高', 
-    color: 'text-red-600',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/8',
   },
 };
