@@ -29,20 +29,27 @@ export function PatternsList({ patterns }: PatternsListProps) {
   if (patterns.length === 0) return null;
 
   return (
-    <div className="rounded-2xl surface-elevated border border-border p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
-      {/* Section header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[16px] font-semibold text-foreground">
+    <div>
+      {/* Section header — no card, just typography */}
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-[18px] font-semibold text-foreground tracking-[-0.01em]">
           {t('timeline.patternsDiscovered')}
         </h3>
-        <span className="text-[12px] text-muted-foreground/60">
+        <span className="text-[12px] text-muted-foreground/50">
           {patterns.length} {patterns.length === 1 ? 'insight' : 'insights'}
         </span>
       </div>
 
-      <div className="divide-y divide-border">
+      {/* Clean list — dividers only, no outer container */}
+      <div>
         {patterns.map((pattern, index) => (
-          <div key={index} className="flex items-start justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+          <div
+            key={index}
+            className={cn(
+              'flex items-start justify-between gap-4 py-4',
+              index < patterns.length - 1 && 'border-b border-border/50'
+            )}
+          >
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className={cn(
                 'w-1.5 h-1.5 rounded-full shrink-0 mt-[8px]',
@@ -51,16 +58,16 @@ export function PatternsList({ patterns }: PatternsListProps) {
                 pattern.riskLevel === 'low' && 'bg-success/50',
               )} />
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-medium text-foreground leading-snug">
+                <p className="text-[15px] font-medium text-foreground leading-snug">
                   {pattern.pattern}
                 </p>
-                <p className="text-[13px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-1">
+                <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed line-clamp-2">
                   {pattern.evidence}
                 </p>
               </div>
             </div>
             <span className={cn(
-              'text-[11px] font-medium px-2 py-0.5 rounded-md shrink-0',
+              'text-[11px] font-medium px-2 py-0.5 rounded-md shrink-0 mt-0.5',
               getRiskPillStyle(pattern.riskLevel)
             )}>
               {getRiskLabel(pattern.riskLevel)}

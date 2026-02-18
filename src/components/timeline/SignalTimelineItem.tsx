@@ -8,9 +8,10 @@ import { ChevronDown } from 'lucide-react';
 interface SignalTimelineItemProps {
   item: TimelineItem;
   isFirst?: boolean;
+  isLast?: boolean;
 }
 
-export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
+export function SignalTimelineItem({ item, isFirst, isLast }: SignalTimelineItemProps) {
   const { t, i18n } = useTranslation();
   const isTurningPoint = item.type === 'turning_point';
   const isStrong = item.type === 'strong_signal';
@@ -31,85 +32,148 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
     }
   };
 
-  // Truncate summary for collapsed state
   const shortSummary = item.signalSummary.length > 120
     ? item.signalSummary.slice(0, 120).trim() + '…'
     : item.signalSummary;
   const hasMore = item.signalSummary.length > 120 || item.whyItMatters.length > 0;
 
+  // ── TURNING POINT: Full card treatment ──
+  if (isTurningPoint) {
+    return (
+      <div className="relative pl-8">
+        {/* Spine */}
+        {!isLast && <div className="absolute left-[5px] top-5 w-px h-full bg-border/60" />}
+        {/* Dot — larger for turning points */}
+        <div className="absolute left-0 top-[10px] w-3 h-3 flex items-center justify-center z-10">
+          <div className="w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-primary/10" />
+        </div>
+
+        <div className="rounded-xl surface-insight border border-primary/[0.08] border-l-2 border-l-primary/25 p-5 transition-colors">
+          <div className="flex items-center justify-between gap-3 mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+              {getSignalLabel()}
+            </span>
+            <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+              {format(new Date(item.date), 'yyyy/MM/dd')}
+            </span>
+          </div>
+
+          <h3 className="text-[16px] font-semibold text-foreground mb-1">{item.title}</h3>
+
+          {(item.context.company || item.context.role) && (
+            <p className="text-[12px] text-muted-foreground/60 mb-2">
+              {item.context.company}{item.context.role && ` · ${item.context.role}`}
+            </p>
+          )}
+
+          <p className="text-[13px] font-medium text-foreground/85 leading-[1.6]">
+            {expanded ? item.signalSummary : shortSummary}
+          </p>
+
+          {expanded && item.whyItMatters && (
+            <p className="text-[12px] text-muted-foreground leading-[1.6] mt-2">{item.whyItMatters}</p>
+          )}
+
+          {hasMore && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-2 text-[12px] text-primary/70 hover:text-primary font-medium flex items-center gap-1 transition-colors"
+            >
+              {expanded ? t('common.collapse', 'Collapse') : t('common.viewDetails', 'View details')}
+              <ChevronDown className={cn('w-3 h-3 transition-transform', expanded && 'rotate-180')} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── STRONG SIGNAL: Light container ──
+  if (isStrong) {
+    return (
+      <div className="relative pl-8">
+        {!isLast && <div className="absolute left-[5px] top-5 w-px h-full bg-border/60" />}
+        <div className="absolute left-0 top-[10px] w-3 h-3 flex items-center justify-center z-10">
+          <div className="w-2 h-2 rounded-full bg-primary/50" />
+        </div>
+
+        <div className="rounded-lg border border-border/60 bg-card/50 px-4 py-3.5 transition-colors">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
+              {getSignalLabel()}
+            </span>
+            <span className="text-[11px] text-muted-foreground/50 tabular-nums">
+              {format(new Date(item.date), 'yyyy/MM/dd')}
+            </span>
+          </div>
+
+          <h3 className="text-[15px] font-semibold text-foreground mb-0.5">{item.title}</h3>
+
+          {(item.context.company || item.context.role) && (
+            <p className="text-[12px] text-muted-foreground/50 mb-1.5">
+              {item.context.company}{item.context.role && ` · ${item.context.role}`}
+            </p>
+          )}
+
+          <p className="text-[13px] text-foreground/75 leading-[1.6]">
+            {expanded ? item.signalSummary : shortSummary}
+          </p>
+
+          {expanded && item.whyItMatters && (
+            <p className="text-[12px] text-muted-foreground leading-[1.6] mt-1.5">{item.whyItMatters}</p>
+          )}
+
+          {hasMore && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-1.5 text-[12px] text-primary/60 hover:text-primary font-medium flex items-center gap-1 transition-colors"
+            >
+              {expanded ? t('common.collapse', 'Collapse') : t('common.viewDetails', 'View details')}
+              <ChevronDown className={cn('w-3 h-3 transition-transform', expanded && 'rotate-180')} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── MEDIUM / WEAK: Borderless text block on the spine ──
   return (
     <div className="relative pl-8">
-      {/* Timeline spine */}
-      <div className="absolute left-[5px] top-5 w-px h-full bg-border" />
-
-      {/* Signal dot */}
+      {!isLast && <div className="absolute left-[5px] top-5 w-px h-full bg-border/40" />}
       <div className="absolute left-0 top-[10px] w-3 h-3 flex items-center justify-center z-10">
         <div className={cn(
-          'rounded-full shrink-0',
-          isTurningPoint && 'w-2.5 h-2.5 bg-primary',
-          isStrong && 'w-2 h-2 bg-primary/60',
-          item.type === 'medium_signal' && 'w-2 h-2 bg-foreground/30',
-          item.type === 'weak_signal' && 'w-1.5 h-1.5 bg-foreground/15',
+          'rounded-full',
+          item.type === 'medium_signal' ? 'w-1.5 h-1.5 bg-foreground/25' : 'w-1.5 h-1.5 bg-foreground/12',
         )} />
       </div>
 
-      <div className={cn(
-        'rounded-xl border p-4 transition-colors',
-        isTurningPoint
-          ? 'surface-insight border-primary/[0.1] border-l-2 border-l-primary/30'
-          : isStrong
-            ? 'bg-card border-border'
-            : 'bg-card border-border/70',
-      )}>
-        {/* Header row */}
-        <div className="flex items-center justify-between gap-3 mb-1.5">
-          <span className={cn(
-            'text-[11px] font-semibold uppercase tracking-[0.08em]',
-            isTurningPoint ? 'text-primary' : 'text-muted-foreground'
-          )}>
-            {getSignalLabel()}
-          </span>
-          <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+      <div className="py-2.5">
+        <div className="flex items-center gap-3 mb-0.5">
+          <h3 className="text-[14px] font-medium text-foreground/80">{item.title}</h3>
+          <span className="text-[11px] text-muted-foreground/40 tabular-nums shrink-0">
             {format(new Date(item.date), 'yyyy/MM/dd')}
           </span>
         </div>
 
-        {/* Title — emphasis varies by level */}
-        <h3 className={cn(
-          'font-semibold text-foreground mb-1',
-          isTurningPoint ? 'text-[16px]' : isStrong ? 'text-[15px]' : 'text-[14px]',
-        )}>
-          {item.title}
-        </h3>
-
-        {/* Context */}
         {(item.context.company || item.context.role) && (
-          <p className="text-[12px] text-muted-foreground/60 mb-2">
-            {item.context.company}
-            {item.context.role && ` · ${item.context.role}`}
+          <p className="text-[12px] text-muted-foreground/45 mb-1">
+            {item.context.company}{item.context.role && ` · ${item.context.role}`}
           </p>
         )}
 
-        {/* Signal summary — collapsed by default */}
-        <p className={cn(
-          'text-[13px] leading-[1.6]',
-          isTurningPoint ? 'text-foreground/85 font-medium' : 'text-foreground/75',
-        )}>
+        <p className="text-[13px] text-foreground/60 leading-[1.55]">
           {expanded ? item.signalSummary : shortSummary}
         </p>
 
-        {/* Expanded: why it matters */}
         {expanded && item.whyItMatters && (
-          <p className="text-[12px] text-muted-foreground leading-[1.6] mt-2">
-            {item.whyItMatters}
-          </p>
+          <p className="text-[12px] text-muted-foreground/60 leading-[1.55] mt-1">{item.whyItMatters}</p>
         )}
 
-        {/* Expand/collapse */}
         {hasMore && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="mt-2 text-[12px] text-primary/70 hover:text-primary font-medium flex items-center gap-1 transition-colors"
+            className="mt-1 text-[12px] text-muted-foreground/50 hover:text-foreground font-medium flex items-center gap-1 transition-colors"
           >
             {expanded ? t('common.collapse', 'Collapse') : t('common.viewDetails', 'View details')}
             <ChevronDown className={cn('w-3 h-3 transition-transform', expanded && 'rotate-180')} />
