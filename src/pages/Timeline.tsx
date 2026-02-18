@@ -7,10 +7,13 @@ export default function Timeline() {
   
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">{t('timeline.title')}</h1>
-          <p className="text-muted-foreground mt-1">
+      <div className="p-6 lg:p-10 max-w-[960px]">
+        {/* Page Header — premium, restrained */}
+        <div className="mb-8">
+          <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.03em] leading-tight text-foreground">
+            {t('timeline.title')}
+          </h1>
+          <p className="text-[15px] text-muted-foreground mt-2 leading-relaxed">
             {t('timeline.subtitle')}
           </p>
         </div>

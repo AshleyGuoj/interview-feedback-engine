@@ -46,9 +46,11 @@
 
     --radius: 0.625rem;
 
-    /* Brand tint surfaces — barely noticeable cool violet wash */
-    --surface-insight: 235 25% 96%;
+    /* Brand tint surfaces */
+    --surface-insight: 235 28% 96.5%;
     --surface-elevated: 232 16% 98%;
+    --brand-tint-1: 235 30% 95.5%;
+    --brand-tint-2: 235 28% 93%;
 
     /* Shadows — warm-cool balanced */
     --shadow-sm: 0 1px 2px 0 hsl(232 18% 20% / 0.04);
@@ -104,6 +106,8 @@
 
     --surface-insight: 232 22% 10%;
     --surface-elevated: 232 18% 8%;
+    --brand-tint-1: 232 20% 11%;
+    --brand-tint-2: 232 18% 13%;
 
     --sidebar-background: 232 22% 5%;
     --sidebar-foreground: 230 10% 70%;

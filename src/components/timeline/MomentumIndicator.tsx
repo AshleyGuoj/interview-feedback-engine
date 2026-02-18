@@ -29,25 +29,26 @@ export function MomentumIndicator({ momentum }: MomentumIndicatorProps) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 h-full">
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg surface-insight flex items-center justify-center shrink-0 mt-0.5">
-          <Icon className={cn('w-4 h-4', config.color)} />
+    <div className="rounded-2xl bg-card border border-border p-5 sm:p-6 h-full" style={{ boxShadow: 'var(--shadow-sm)' }}>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-7 h-7 rounded-lg surface-insight flex items-center justify-center shrink-0">
+          <Icon className={cn('w-3.5 h-3.5', config.color)} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wide">
-              {t('timeline.momentumTrend')}
-            </span>
-            <span className={cn('text-[13px] font-semibold', config.color)}>
-              {getMomentumLabel()}
-            </span>
-          </div>
-          <p className="text-[13px] text-muted-foreground leading-relaxed">
-            {momentum.explanation}
-          </p>
-        </div>
+        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
+          {t('timeline.momentumTrend')}
+        </span>
       </div>
+
+      {/* Trajectory label — large, signal-like */}
+      <div className="mb-3">
+        <span className={cn('text-[20px] font-semibold tracking-[-0.01em]', config.color)}>
+          {getMomentumLabel()}
+        </span>
+      </div>
+
+      <p className="text-[13px] text-muted-foreground leading-[1.6]">
+        {momentum.explanation}
+      </p>
     </div>
   );
 }
