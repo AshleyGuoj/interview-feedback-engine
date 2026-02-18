@@ -49,9 +49,9 @@ import { TranscriptInput } from '@/components/interview/TranscriptInput';
 import { useLanguage } from '@/hooks/useLanguage';
 
 const getQualityConfig = (t: (key: string) => string) => ({
-  high: { label: t('analysisDetail.qualityHigh'), color: 'text-primary bg-primary/5 border-primary/20', icon: CheckCircle2 },
+  high: { label: t('analysisDetail.qualityHigh'), color: 'text-[hsl(var(--accent-sage))] bg-[hsl(var(--accent-sage))]/5 border-[hsl(var(--accent-sage))]/20', icon: CheckCircle2 },
   medium: { label: t('analysisDetail.qualityMedium'), color: 'text-muted-foreground bg-muted/50 border-border', icon: AlertCircle },
-  low: { label: t('analysisDetail.qualityLow'), color: 'text-muted-foreground/70 bg-muted/30 border-border', icon: AlertCircle },
+  low: { label: t('analysisDetail.qualityLow'), color: 'text-[hsl(var(--accent-rose))]/70 bg-[hsl(var(--accent-rose))]/5 border-[hsl(var(--accent-rose))]/20', icon: AlertCircle },
 });
 
 const FEELING_ICON_MAP = {
@@ -63,19 +63,19 @@ const FEELING_ICON_MAP = {
 } as const;
 
 const FEELING_COLOR_MAP = {
-  great: 'text-primary',
-  good: 'text-primary/70',
+  great: 'text-[hsl(var(--accent-sage))]',
+  good: 'text-[hsl(var(--accent-sage))]/70',
   neutral: 'text-muted-foreground',
-  poor: 'text-muted-foreground',
-  bad: 'text-muted-foreground',
+  poor: 'text-[hsl(var(--accent-rose))]/70',
+  bad: 'text-[hsl(var(--accent-rose))]',
 } as const;
 
 const getFeelingConfig = (t: (key: string) => string) => ({
-  great: { label: t('analysisDetail.feelingGreat'), color: 'text-primary' },
-  good: { label: t('analysisDetail.feelingGood'), color: 'text-primary/70' },
+  great: { label: t('analysisDetail.feelingGreat'), color: 'text-[hsl(var(--accent-sage))]' },
+  good: { label: t('analysisDetail.feelingGood'), color: 'text-[hsl(var(--accent-sage))]/70' },
   neutral: { label: t('analysisDetail.feelingNeutral'), color: 'text-muted-foreground' },
-  poor: { label: t('analysisDetail.feelingPoor'), color: 'text-muted-foreground' },
-  bad: { label: t('analysisDetail.feelingBad'), color: 'text-muted-foreground' },
+  poor: { label: t('analysisDetail.feelingPoor'), color: 'text-[hsl(var(--accent-rose))]/70' },
+  bad: { label: t('analysisDetail.feelingBad'), color: 'text-[hsl(var(--accent-rose))]' },
 });
 
 interface AnalysisDetailPanelProps {
@@ -271,8 +271,8 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
           {stage.reflection && (
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Lightbulb className="w-4 h-4 text-primary" />
+                <div className="w-8 h-8 rounded-full bg-[hsl(var(--accent-cool))]/10 flex items-center justify-center">
+                  <Lightbulb className="w-4 h-4 text-[hsl(var(--accent-cool))]" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{t('analysisDetail.interviewDebrief')}</h2>
@@ -288,15 +288,15 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
 
               <div className="space-y-4">
                 {stage.reflection.whatWentWell?.length > 0 && (
-                  <div className="border-l-2 border-l-primary/40 pl-4 space-y-1.5">
+                  <div className="border-l-2 border-l-[hsl(var(--accent-sage))]/40 pl-4 space-y-1.5">
                     <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary/60" />
+                      <CheckCircle2 className="w-4 h-4 text-[hsl(var(--accent-sage))]/60" />
                       {t('analysisDetail.whatWentWell')}
                     </h3>
                     <ul className="space-y-1.5">
                       {stage.reflection.whatWentWell.map((item, i) => (
                         <li key={i} className="text-sm flex items-start gap-2">
-                          <Check className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+                          <Check className="w-3.5 h-3.5 text-[hsl(var(--accent-sage))]/60 shrink-0 mt-0.5" />
                           {item}
                         </li>
                       ))}
@@ -305,15 +305,15 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                 )}
 
                 {stage.reflection.whatCouldImprove?.length > 0 && (
-                  <div className="border-l-2 border-l-muted-foreground/30 pl-4 space-y-1.5">
+                  <div className="border-l-2 border-l-[hsl(var(--accent-rose))]/40 pl-4 space-y-1.5">
                     <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-muted-foreground/60" />
+                      <AlertCircle className="w-4 h-4 text-[hsl(var(--accent-rose))]/60" />
                       {t('analysisDetail.whatCouldImprove')}
                     </h3>
                     <ul className="space-y-1.5">
                       {stage.reflection.whatCouldImprove.map((item, i) => (
                         <li key={i} className="text-sm flex items-start gap-2">
-                          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0 mt-0.5" />
+                          <ArrowRight className="w-3.5 h-3.5 text-[hsl(var(--accent-rose))]/60 shrink-0 mt-0.5" />
                           {item}
                         </li>
                       ))}
@@ -322,7 +322,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                 )}
 
                 {stage.reflection.keyTakeaways?.length > 0 && (
-                  <div className="rounded-xl bg-muted/20 p-4 space-y-1.5">
+                  <div className="rounded-xl bg-[hsl(var(--accent-cool))]/5 p-4 space-y-1.5">
                     <h3 className="text-sm font-semibold flex items-center gap-2">
                       <Lightbulb className="w-4 h-4 text-primary/60" />
                       {t('analysisDetail.keyTakeaways')}
@@ -465,8 +465,8 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
             {/* Detailed Reflection */}
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Lightbulb className="w-4 h-4 text-primary" />
+                <div className="w-8 h-8 rounded-full bg-[hsl(var(--accent-cool))]/10 flex items-center justify-center">
+                  <Lightbulb className="w-4 h-4 text-[hsl(var(--accent-cool))]" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{t('analysisDetail.interviewDebrief')}</h2>
@@ -590,16 +590,16 @@ function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection;
       </Card>
 
       {/* What went well */}
-      <div className="border-l-2 border-l-primary/40 pl-4 space-y-2">
+      <div className="border-l-2 border-l-[hsl(var(--accent-sage))]/40 pl-4 space-y-2">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">2</span>
-          <CheckCircle2 className="w-4 h-4 text-primary/60" />
+          <span className="w-6 h-6 rounded-full bg-[hsl(var(--accent-sage))]/10 flex items-center justify-center text-xs text-[hsl(var(--accent-sage))]">2</span>
+          <CheckCircle2 className="w-4 h-4 text-[hsl(var(--accent-sage))]/60" />
           {t('analysisDetail.whatWentWell')}
         </h3>
         <ul className="space-y-1.5">
           {reflection.whatWentWell.map((item, i) => (
             <li key={i} className="text-sm flex items-start gap-2">
-              <Check className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+              <Check className="w-3.5 h-3.5 text-[hsl(var(--accent-sage))]/60 shrink-0 mt-0.5" />
               {item}
             </li>
           ))}
@@ -607,16 +607,16 @@ function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection;
       </div>
 
       {/* What could improve */}
-      <div className="border-l-2 border-l-muted-foreground/30 pl-4 space-y-2">
+      <div className="border-l-2 border-l-[hsl(var(--accent-rose))]/40 pl-4 space-y-2">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">3</span>
-          <AlertCircle className="w-4 h-4 text-muted-foreground/60" />
+          <span className="w-6 h-6 rounded-full bg-[hsl(var(--accent-rose))]/10 flex items-center justify-center text-xs text-[hsl(var(--accent-rose))]">3</span>
+          <AlertCircle className="w-4 h-4 text-[hsl(var(--accent-rose))]/60" />
           {t('analysisDetail.whatCouldImprove')}
         </h3>
         <ul className="space-y-1.5">
           {reflection.whatCouldImprove.map((item, i) => (
             <li key={i} className="text-sm flex items-start gap-2">
-              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0 mt-0.5" />
+              <ArrowRight className="w-3.5 h-3.5 text-[hsl(var(--accent-rose))]/60 shrink-0 mt-0.5" />
               {item}
             </li>
           ))}
@@ -624,10 +624,10 @@ function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection;
       </div>
 
       {/* Key takeaways */}
-      <div className="rounded-xl bg-muted/20 p-4 space-y-2">
+      <div className="rounded-xl bg-[hsl(var(--accent-cool))]/5 p-4 space-y-2">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">4</span>
-          <Lightbulb className="w-4 h-4 text-primary/60" />
+          <span className="w-6 h-6 rounded-full bg-[hsl(var(--accent-cool))]/10 flex items-center justify-center text-xs text-[hsl(var(--accent-cool))]">4</span>
+          <Lightbulb className="w-4 h-4 text-[hsl(var(--accent-cool))]/60" />
           {t('analysisDetail.keyTakeaways')}
         </h3>
         <div className="flex flex-wrap gap-2">

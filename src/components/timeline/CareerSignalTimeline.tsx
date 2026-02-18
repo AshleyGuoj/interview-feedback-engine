@@ -178,10 +178,18 @@ export function CareerSignalTimeline() {
 
       {/* ═══ HERO SIGNAL CARD ═══ */}
       {heroItem && (
-        <div className="rounded-2xl surface-insight border border-primary/[0.08] p-7 sm:p-8" style={{ boxShadow: 'var(--shadow-md)' }}>
+        <div className={cn(
+          "rounded-2xl surface-insight border p-7 sm:p-8",
+          heroItem.type === 'turning_point' 
+            ? 'border-[hsl(var(--accent-warm))]/[0.15] border-l-[3px] border-l-[hsl(var(--accent-warm))]/40' 
+            : 'border-[hsl(var(--accent-cool))]/[0.15] border-l-[3px] border-l-[hsl(var(--accent-cool))]/40'
+        )} style={{ boxShadow: 'var(--shadow-md)' }}>
           {/* Top meta row */}
           <div className="flex items-center justify-between mb-5">
-            <span className="text-[11px] font-semibold text-primary uppercase tracking-[0.1em]">
+            <span className={cn(
+              "text-[11px] font-semibold uppercase tracking-[0.1em]",
+              heroItem.type === 'turning_point' ? 'text-[hsl(var(--accent-warm))]' : 'text-[hsl(var(--accent-cool))]'
+            )}>
               {heroItem.type === 'turning_point' ? t('timeline.turningPoint') : t('timeline.strongSignal')}
             </span>
             <span className="text-[12px] text-muted-foreground tabular-nums">

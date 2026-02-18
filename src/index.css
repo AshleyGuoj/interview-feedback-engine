@@ -52,6 +52,12 @@
     --brand-tint-1: 235 30% 95.5%;
     --brand-tint-2: 235 28% 93%;
 
+    /* Semantic accent palette — desaturated, warm-cool-sage-rose */
+    --accent-warm: 32 45% 46%;
+    --accent-cool: 210 30% 50%;
+    --accent-sage: 158 25% 42%;
+    --accent-rose: 350 30% 52%;
+
     /* Shadows — warm-cool balanced */
     --shadow-sm: 0 1px 2px 0 hsl(232 18% 20% / 0.04);
     --shadow-md: 0 2px 8px -2px hsl(232 18% 20% / 0.07), 0 1px 3px hsl(232 18% 20% / 0.03);
@@ -108,6 +114,11 @@
     --surface-elevated: 232 18% 8%;
     --brand-tint-1: 232 20% 11%;
     --brand-tint-2: 232 18% 13%;
+
+    --accent-warm: 32 40% 52%;
+    --accent-cool: 210 28% 56%;
+    --accent-sage: 158 22% 48%;
+    --accent-rose: 350 28% 56%;
 
     --sidebar-background: 232 22% 5%;
     --sidebar-foreground: 230 10% 70%;
