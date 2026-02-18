@@ -386,6 +386,10 @@ export default {
     noInterviewRecords: 'No interview records yet',
     addJobOnBoard: 'Add jobs on the Job Board and record interviews',
     selectRoundFromLeft: 'Select an interview round from the left to view analysis',
+    filterAll: 'All',
+    filterActive: 'Active',
+    filterWithRecords: 'Records',
+    filterClosed: 'Closed',
   },
 
   // Interview Analysis

@@ -386,6 +386,10 @@ export default {
     noInterviewRecords: '暂无面试记录',
     addJobOnBoard: '在职位看板添加职位并记录面试',
     selectRoundFromLeft: '从左侧选择一个面试轮次查看分析',
+    filterAll: '全部',
+    filterActive: '进行中',
+    filterWithRecords: '有记录',
+    filterClosed: '已结束',
   },
 
   // Interview Analysis
