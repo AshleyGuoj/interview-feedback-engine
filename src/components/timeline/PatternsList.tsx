@@ -29,7 +29,7 @@ export function PatternsList({ patterns }: PatternsListProps) {
   if (patterns.length === 0) return null;
 
   return (
-    <div className="rounded-2xl surface-elevated border border-border p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+    <div className="rounded-xl surface-elevated p-5 sm:p-6">
       {/* Section header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[16px] font-semibold text-foreground">

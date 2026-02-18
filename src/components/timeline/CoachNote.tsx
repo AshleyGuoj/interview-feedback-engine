@@ -9,11 +9,11 @@ export function CoachNote({ bullets, fallback }: CoachNoteProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 sm:p-6 h-full" style={{ boxShadow: 'var(--shadow-sm)' }}>
+    <div className="border-l border-border pl-5 py-1 h-full">
       <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
         {t('timeline.careerCoach', 'Strategic Guidance')}
       </span>
-      <div className="mt-3 border-t border-border pt-3">
+      <div className="mt-3 border-t border-border/50 pt-3">
         {bullets.length > 0 ? (
           <ul className="space-y-2.5">
             {bullets.map((bullet, i) => (

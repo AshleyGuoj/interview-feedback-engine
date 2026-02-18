@@ -214,7 +214,7 @@ export function CareerSignalTimeline() {
       )}
 
       {/* ═══ SUPPORTING INSIGHT ROW ═══ */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2">
         <MomentumIndicator momentum={timeline.momentumStatus} />
         <CoachNote bullets={coachBullets} fallback={timeline.coachNote} />
       </div>

@@ -54,12 +54,12 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
       </div>
 
       <div className={cn(
-        'rounded-xl border p-4 transition-colors',
+        'rounded-xl p-4 transition-colors',
         isTurningPoint
-          ? 'surface-insight border-primary/[0.1] border-l-2 border-l-primary/30'
+          ? 'surface-insight border border-primary/[0.1] border-l-2 border-l-primary/30'
           : isStrong
-            ? 'bg-card border-border'
-            : 'bg-card border-border/70',
+            ? 'bg-muted/30'
+            : '',
       )}>
         {/* Header row */}
         <div className="flex items-center justify-between gap-3 mb-1.5">

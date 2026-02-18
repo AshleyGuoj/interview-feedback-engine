@@ -29,11 +29,9 @@ export function MomentumIndicator({ momentum }: MomentumIndicatorProps) {
   };
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 sm:p-6 h-full" style={{ boxShadow: 'var(--shadow-sm)' }}>
+    <div className="border-l-2 border-l-primary/20 pl-5 py-1 h-full">
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-7 h-7 rounded-lg surface-insight flex items-center justify-center shrink-0">
-          <Icon className={cn('w-3.5 h-3.5', config.color)} />
-        </div>
+        <Icon className={cn('w-4 h-4', config.color)} />
         <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.08em]">
           {t('timeline.momentumTrend')}
         </span>
