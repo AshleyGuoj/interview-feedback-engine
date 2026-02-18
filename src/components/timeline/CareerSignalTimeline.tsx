@@ -254,13 +254,12 @@ export function CareerSignalTimeline() {
             {t('timeline.noSignificantSignals')}
           </p>
         ) : (
-          <div className="relative pb-4">
+          <div className="relative space-y-3 pb-4">
             {filteredItems.map((item, index) => (
               <SignalTimelineItem
                 key={`${item.date}-${index}`}
                 item={item}
                 isFirst={index === 0}
-                isLast={index === filteredItems.length - 1}
               />
             ))}
           </div>
