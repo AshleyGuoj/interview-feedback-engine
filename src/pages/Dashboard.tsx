@@ -8,11 +8,12 @@ import { useMemo } from 'react';
 import { formatDistanceToNow, isAfter, parseISO } from 'date-fns';
 import { formatDualTimezone } from '@/lib/timezone';
 
-function getGreeting(): string {
+function getGreeting(t: (key: string) => string): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 6) return t('dashboard.greetingNight');
+  if (hour < 12) return t('dashboard.greetingMorning');
+  if (hour < 18) return t('dashboard.greetingAfternoon');
+  return t('dashboard.greetingEvening');
 }
 
 function CareerHealthBar({ jobs }: { jobs: any[] }) {
@@ -129,7 +130,7 @@ export default function Dashboard() {
             {t('dashboard.title')}
           </h1>
           <p className="text-[14px] text-muted-foreground">
-            {getGreeting()}
+            {getGreeting(t)}
           </p>
         </div>
 

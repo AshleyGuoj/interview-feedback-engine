@@ -106,6 +106,10 @@ export default {
   dashboard: {
     title: 'Dashboard',
     welcome: 'Welcome back! Here\'s your job search overview.',
+    greetingMorning: 'Good morning — let\'s make today count.',
+    greetingAfternoon: 'Good afternoon — stay sharp, you\'re doing great.',
+    greetingEvening: 'Good evening — review your wins and plan ahead.',
+    greetingNight: 'Burning the midnight oil? Your next move awaits.',
     activeApplications: 'Active Applications',
     interviewing: 'Interviewing',
     offersReceived: 'Offers Received',

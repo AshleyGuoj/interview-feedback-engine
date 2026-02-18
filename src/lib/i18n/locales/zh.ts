@@ -106,6 +106,10 @@ export default {
   dashboard: {
     title: '仪表盘',
     welcome: '欢迎回来！这是您的求职概览。',
+    greetingMorning: '早上好 — 新的一天，新的机会。',
+    greetingAfternoon: '下午好 — 保持节奏，继续前进。',
+    greetingEvening: '晚上好 — 回顾今天的进展，规划下一步。',
+    greetingNight: '夜深了还在准备？你的努力终将被看到。',
     activeApplications: '进行中的申请',
     interviewing: '面试中',
     offersReceived: '已获得 Offer',
