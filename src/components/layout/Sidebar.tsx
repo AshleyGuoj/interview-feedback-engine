@@ -29,17 +29,14 @@ export function Sidebar() {
   const location = useLocation();
   const { signOut, user } = useAuth();
 
-  // Nav items with translation keys
   const navItems = [
     { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
     { to: '/jobs', icon: Briefcase, labelKey: 'nav.jobs' },
     { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
     { to: '/analytics', icon: BarChart3, labelKey: 'nav.analytics' },
     { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
-    
   ];
 
-  // Persist collapse state
   useEffect(() => {
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed));
   }, [collapsed]);
@@ -47,27 +44,30 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'h-screen sticky top-0 border-r border-border bg-card flex flex-col transition-all duration-300',
-        collapsed ? 'w-16' : 'w-56'
+        'h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300',
+        collapsed ? 'w-[60px]' : 'w-[220px]'
       )}
     >
-      {/* Logo & Collapse Toggle */}
+      {/* Logo & Toggle */}
       <div className={cn(
-        'h-20 flex items-center border-b border-border',
-        collapsed ? 'justify-center px-2' : 'justify-between px-3'
+        'h-16 flex items-center border-b border-sidebar-border',
+        collapsed ? 'justify-center px-2' : 'justify-between px-4'
       )}>
-        <div className={cn('flex items-center', collapsed ? '' : 'gap-1.5')}>
-          <img 
-            src={offermindIcon} 
-            alt="OfferMind" 
-            className="h-14 w-14 object-contain shrink-0"
-          />
+        <div className={cn('flex items-center', collapsed ? '' : 'gap-2')}>
+          <div className="w-8 h-8 shrink-0 overflow-hidden rounded-lg">
+            <img 
+              src={offermindIcon} 
+              alt="OfferMind" 
+              className="w-full h-full object-cover scale-[1.6]"
+            />
+          </div>
           {!collapsed && (
-            <span className="font-bold text-lg text-foreground">OfferMind</span>
+            <span className="font-semibold text-[15px] tracking-[-0.01em] text-sidebar-accent-foreground">
+              OfferMind
+            </span>
           )}
         </div>
         
-        {/* Collapse Toggle Button */}
         {collapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
@@ -75,7 +75,7 @@ export function Sidebar() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setCollapsed(false)}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
               >
                 <PanelLeft className="w-4 h-4" />
               </Button>
@@ -83,24 +83,19 @@ export function Sidebar() {
             <TooltipContent side="right">{t('nav.expandSidebar')}</TooltipContent>
           </Tooltip>
         ) : (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCollapsed(true)}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              >
-                <PanelLeftClose className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('nav.collapseSidebar')}</TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(true)}
+            className="h-7 w-7 text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+          >
+            <PanelLeftClose className="w-3.5 h-3.5" />
+          </Button>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-2 space-y-1">
+      <nav className="flex-1 py-3 px-2 space-y-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || 
             (item.to !== '/' && location.pathname.startsWith(item.to));
@@ -111,14 +106,17 @@ export function Sidebar() {
               key={item.to}
               to={item.to}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors',
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60',
                 collapsed && 'justify-center px-2'
               )}
             >
-              <item.icon className="w-5 h-5 shrink-0" />
+              <item.icon className={cn(
+                'w-[18px] h-[18px] shrink-0',
+                isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
+              )} />
               {!collapsed && <span>{label}</span>}
             </NavLink>
           );
@@ -129,7 +127,7 @@ export function Sidebar() {
                 <TooltipTrigger asChild>
                   {linkContent}
                 </TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">
+                <TooltipContent side="right" className="font-medium text-[12px]">
                   {label}
                 </TooltipContent>
               </Tooltip>
@@ -141,14 +139,13 @@ export function Sidebar() {
       </nav>
 
       {/* User & Sign Out */}
-      <div className="p-2 border-t border-border space-y-1">
+      <div className="p-2 border-t border-sidebar-border space-y-1">
         {user && !collapsed && (
-          <div className="px-3 py-2 text-xs text-muted-foreground truncate">
+          <div className="px-3 py-1.5 text-[11px] text-sidebar-foreground/70 truncate">
             {user.email}
           </div>
         )}
 
-        {/* Language Switcher */}
         <LanguageSwitcher collapsed={collapsed} />
         
         {collapsed ? (
@@ -158,7 +155,7 @@ export function Sidebar() {
                 variant="ghost"
                 size="sm"
                 onClick={signOut}
-                className="w-full justify-center text-muted-foreground hover:text-foreground"
+                className="w-full justify-center text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -170,7 +167,7 @@ export function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={signOut}
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent text-[13px]"
           >
             <LogOut className="w-4 h-4" />
             <span className="ml-2">{t('nav.signOut')}</span>
