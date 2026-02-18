@@ -34,7 +34,7 @@ function BrandPanel() {
           <h1 className="text-[28px] font-semibold tracking-[-0.03em] leading-tight text-white/90">
             Turn every interview<br />into a strategic advantage
           </h1>
-          <p className="mt-3 text-[14px] leading-relaxed text-white/45 max-w-[340px]">
+          <p className="mt-3 text-[14px] leading-relaxed text-white/60 max-w-[340px]">
             OfferMind transforms raw interview experiences into structured career intelligence.
           </p>
         </div>
