@@ -493,6 +493,12 @@ export default {
     mediumImpact: '中影响',
     lowImpact: '低影响',
     keepingStrong: '持续保持',
+    loadingTitle: '正在分析你的职业成长',
+    loading_collectData: '收集数据',
+    loading_analyzeTrends: '分析趋势',
+    loading_mapGrowth: '计算轨迹',
+    loading_composeInsights: '生成洞察',
+    loadingHint: '通常需要 15-30 秒',
   },
 
   // Competencies
