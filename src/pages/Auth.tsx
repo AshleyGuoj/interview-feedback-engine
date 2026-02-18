@@ -34,7 +34,7 @@ function BrandPanel() {
           <h1 className="text-[28px] font-semibold tracking-[-0.03em] leading-tight text-white/90">
             Your interviews hold<br />more insight than you think
           </h1>
-          <p className="mt-3 text-[14px] leading-relaxed text-white/60 max-w-[340px]">
+          <p className="mt-3 text-[14px] leading-relaxed text-[hsl(232,60%,80%)] max-w-[340px]">
             Stop guessing what went wrong. OfferMind turns every conversation into a clear signal for your next move.
           </p>
         </div>
