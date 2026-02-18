@@ -1,38 +1,64 @@
 
 
-# Job Detail UI/UX Optimization Plan
+# Analytics Job Tree 优化方案
 
-## Issues Found
+## 当前状态
 
-1. **Location Badge**: Still uses colorful semantic backgrounds (rose/blue/emerald/gray) -- already fixed in JobCard/DraggableJobCard but NOT in JobDetail.tsx (line 52-57)
-2. **Star Rating**: Uses `fill-amber-400 text-amber-400` fluorescent yellow (line 749-755), same issue fixed in AddJobDialog but not here
-3. **Page Title**: Company name uses `text-2xl` (line 615) instead of `text-[28px] sm:text-[32px]` to match Dashboard/JobBoard
-4. **StageEditor Status Badges**: Uses emerald/blue/amber/gray semantic color backgrounds (lines 107-111), not brand-consistent
-5. **StageStatus Offer Icon**: Uses `text-amber-500` / `text-amber-600` for offer and waiting states (lines 126-141), should use brand color
-6. **Attachments Section**: Uses a full Card wrapper -- could be lighter to reduce card repetition on the page
+- 已有搜索功能（fuzzy match by company + role）
+- 排序按 `updatedAt` 降序（最近更新在前）
+- 没有区分活跃/已结束岗位的排序逻辑
+- 没有 filter 功能
 
-## Changes
+## 改造内容
 
-### File 1: `src/pages/JobDetail.tsx`
+### 1. 排序优化：活跃岗位优先，已结束沉底
 
-| Location | Current | Change To |
-|----------|---------|-----------|
-| locationColors (line 52-57) | rose/blue/emerald/gray per location | Unified `bg-muted text-muted-foreground` for all |
-| Company name title (line 615) | `text-2xl` | `text-[28px] sm:text-[32px]` |
-| Star rating (line 749-755) | `fill-amber-400 text-amber-400` | `fill-primary text-primary` |
-| Attachments section (line 789-832) | Full Card wrapper | Open section with `border-l-2 border-l-primary/30 pl-5` to break card monotony |
+将排序逻辑改为两层：
+- 第一层：活跃岗位（applied/interviewing/offer）排在前面，已结束岗位（closed）排在后面
+- 第二层：同组内按 `updatedAt` 降序
 
-### File 2: `src/components/jobs/StageEditor.tsx`
+已结束的岗位用视觉区分（opacity 降低 + 分组标签 "Closed"），让用户一眼区分。
 
-| Location | Current | Change To |
-|----------|---------|-----------|
-| Status badges (line 105-111) | `bg-emerald-100`, `bg-blue-100`, `bg-amber-100`, `bg-gray-100` with matching text colors | Unified: completed = `bg-primary/10 text-primary`, pending/scheduled = `bg-muted text-muted-foreground`, feedback = `bg-muted text-muted-foreground`, terminal = `bg-muted/50 text-muted-foreground/70` |
+### 2. 添加 Filter 功能
 
-### File 3: `src/components/jobs/StageStatus.tsx`
+在搜索框下方添加一排 filter 按钮（pill 样式，与 Timeline 页的 signal filter 风格一致）：
 
-| Location | Current | Change To |
-|----------|---------|-----------|
-| Offer icon/text (line 125-129) | `text-amber-500` / `text-amber-600 dark:text-amber-400` | `text-primary` / `text-primary font-semibold` |
-| Waiting icon (line 139) | `text-amber-500` | `text-muted-foreground` |
-| Completed text (line 116-117) | `text-chart-2` (both icon and text) | `text-primary` |
+| Filter | 说明 |
+|--------|------|
+| All | 显示所有岗位（默认） |
+| Active | 仅显示 applied/interviewing/offer 状态 |
+| With Records | 仅显示有面试记录（questions 或 reflection）的岗位 |
+| Closed | 仅显示已结束的岗位 |
+
+### 3. 已结束岗位视觉淡化
+
+Closed 状态的岗位行添加 `opacity-60`，与 Unified Interview Timeline 中对非活跃 pipeline 的处理一致，让用户聚焦于当前进行中的岗位。
+
+### 4. 品牌色一致性修正
+
+- `CheckCircle2` 图标从 `text-emerald-500` 改为 `text-primary`（与 Job Board/Dashboard 统一后的品牌色体系一致）
+- `Lightbulb` 图标从 `text-amber-500` 改为 `text-primary/70`
+
+## 涉及文件
+
+仅 `src/components/analytics/AnalyticsJobTree.tsx`
+
+## 技术细节
+
+```text
+排序逻辑：
+┌─────────────────────────────┐
+│  Active Jobs (by updatedAt) │  ← applied / interviewing / offer
+├─────────────────────────────┤
+│  ── Closed ──               │  ← 分组标签
+│  Closed Jobs (by updatedAt) │  ← closed
+└─────────────────────────────┘
+```
+
+Filter 状态类型：
+```
+type FilterType = 'all' | 'active' | 'with_records' | 'closed';
+```
+
+Filter UI 放在搜索框和列表之间，使用与 CareerSignalTimeline 相同的 pill tab 样式（`rounded-lg bg-muted/50 p-0.5`），保持全站交互一致性。
 
