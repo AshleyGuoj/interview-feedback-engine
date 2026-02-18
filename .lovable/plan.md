@@ -1,96 +1,102 @@
 
 
-# Timeline + Interview Analysis 视觉层次优化方案
+# Auth 登录页视觉升级方案
 
-## 核心问题
+## 当前状态
 
-两个页面目前只使用 primary (indigo)、muted-foreground (gray)、foreground (near-black) 三种颜色。所有板块视觉上"糊在一起"，缺乏节奏感和故事感，用户没有继续 scroll 的动力。
+页面是一个居中的白色卡片 + 纯灰色背景，功能完整但视觉上缺乏吸引力和品牌故事感。用户看到的第一印象偏"工具化"，没有传递出产品的专业定位和价值。
 
-## 设计策略
+## 设计方向
 
-引入 **4 个语义色调** 作为 CSS 变量，在保持品牌克制的同时创造视觉区分：
+采用 **左右分屏布局**（桌面端），左侧为品牌展示区，右侧为表单区。移动端保持居中单列。
 
-| 语义 | 用途 | 色值 (Light) | 色值 (Dark) |
-|------|------|-------------|-------------|
-| `--accent-warm` | 转折点/offer/正向信号 | 温暖琥珀 `32 45% 46%` | `32 40% 52%` |
-| `--accent-cool` | 面试洞察/分析区域 | 冷调蓝灰 `210 30% 50%` | `210 28% 56%` |
-| `--accent-sage` | 优势/正面反馈 | 鼠尾草绿 `158 25% 42%` | `158 22% 48%` |
-| `--accent-rose` | 风险/改进空间 | 玫瑰灰 `350 30% 52%` | `350 28% 56%` |
+```text
+Desktop (>= 1024px):
+┌─────────────────────────┬───────────────────────┐
+│                         │                       │
+│   OfferMind Logo        │    Explore Demo       │
+│                         │    ─── or ───         │
+│   "Turn every           │    Login / Sign Up    │
+│    interview into       │    [email]            │
+│    a strategic          │    [password]         │
+│    advantage"           │    [Submit]           │
+│                         │                       │
+│   ○ 3 value props       │                       │
+│     with icons          │                       │
+│                         │                       │
+│   Subtle geometric      │                       │
+│   background pattern    │                       │
+│                         │                       │
+└─────────────────────────┴───────────────────────┘
 
-这些色调不是荧光色，而是 desaturated、有质感的中性色，与现有 `--primary` (indigo) 形成互补但不冲突。
+Mobile (< 1024px):
+┌───────────────────────┐
+│   Logo + Tagline      │
+│   [Form Card]         │
+│   Footer              │
+└───────────────────────┘
+```
 
----
+## 具体改动
 
-## 改造内容
+### 文件：`src/pages/Auth.tsx`
 
-### 1. CSS 变量注册（`src/index.css`）
+#### 1. 左侧品牌展示区（仅桌面端显示）
 
-在 `:root` 和 `.dark` 中添加 4 个语义变量 + 对应的 Tailwind utilities。
+- 深色品牌背景：`bg-[hsl(232,30%,14%)]`，与 primary indigo 同色系但更深
+- Logo + 产品名 + 一句话 tagline
+- 3 个 value proposition 条目，每个带 lucide 图标：
+  - `BarChart3` — "Structured interview analytics across all your applications"
+  - `TrendingUp` — "Track competency growth and identify patterns over time"  
+  - `Shield` — "Private, secure career intelligence you own"
+- 右下角一个极淡的几何装饰（纯 CSS，2-3 个 `absolute` 圆形，模糊处理，opacity 很低），增加空间层次感
+- 文字用 `text-white/90` 和 `text-white/50`，保持可读性
 
-### 2. Timeline Page — 信号类型色彩分化
+#### 2. 右侧表单区
 
-**Hero Signal Card**（CareerSignalTimeline.tsx）：
-- turning_point：左边框从 `border-l-primary/30` 改为 `border-l-[hsl(var(--accent-warm))]`，类型标签用 `accent-warm` 色
-- strong_signal：类型标签用 `accent-cool` 色
+- 保持现有表单逻辑完全不变
+- 背景改为 `bg-white`（桌面端占据右半屏）
+- 移除外层卡片的 border 和 shadow（桌面端不需要，右半屏本身就是容器）
+- 移动端保持现有卡片样式
 
-**Signal Timeline Items**（SignalTimelineItem.tsx）：
-- turning_point dot：从 `bg-primary` 改为 `bg-[hsl(var(--accent-warm))]`
-- strong_signal dot：从 `bg-primary/60` 改为 `bg-[hsl(var(--accent-cool))]`
-- 类型标签颜色跟随 dot 颜色
-- turning_point 卡片左边框用 warm 色
+#### 3. 入场动画
 
-**Momentum Indicator**（MomentumIndicator.tsx）：
-- improving 状态图标和标签：从 `text-success` 改为 `text-[hsl(var(--accent-sage))]`
-- declining 状态：改为 `text-[hsl(var(--accent-rose))]`
+- 左侧内容使用 CSS `@keyframes fadeInUp`，从 `opacity:0 translateY(12px)` 到 `opacity:1 translateY(0)`，持续 600ms
+- 3 个 value props 依次延迟 100ms 出现（stagger effect）
+- 右侧表单用同样动画但延迟 200ms
+- 全部用纯 CSS animation，无需额外依赖
 
-**Patterns Discovered**（PatternsList.tsx）：
-- risk dot 颜色映射到新的语义色调：low = accent-sage, medium = accent-warm, high = accent-rose
-- risk pill 样式同步更新
+#### 4. 底部 footer
 
-### 3. Interview Analysis Page — 板块色彩分化
+- 移入右侧表单区底部
+- 桌面端左侧底部显示 "2026 OfferMind" 版权信息
 
-**AnalysisDetailPanel.tsx — 已分析状态**：
-- "Interview Questions" section icon：保持 primary（分析/数据感）
-- "Interview Debrief" section icon：改为 `accent-cool`（洞察/反思感）
-- "What Went Well" border-l：从 `primary/40` 改为 `accent-sage`（正向反馈）
-- "What Could Improve" border-l：从 `muted-foreground/30` 改为 `accent-rose/40`（改进空间）
-- Key Takeaways 背景：添加轻微 `accent-cool` tint
-- Feeling icons：great/good 用 `accent-sage`，poor/bad 用 `accent-rose`
+### 文件：`src/index.css`
 
-**AnalysisDetailPanel.tsx — 新分析结果**：
-- QuestionCard 中 quality badge：high 用 `accent-sage`，low 用 `accent-rose`
-- ReflectionDisplay 中同步上述 "What Went Well"/"Could Improve" 色彩
+添加 `fadeInUp` keyframe 动画：
 
-**AnalysisResults.tsx**（独立分析页面）：
-- Key Strengths section icon：从 `bg-success/10 text-success` 改为 `bg-[hsl(var(--accent-sage))]/10 text-[hsl(var(--accent-sage))]`
-- Key Risks section icon：从 `bg-warning/10 text-warning` 改为 `bg-[hsl(var(--accent-rose))]/10 text-[hsl(var(--accent-rose))]`
-- CheckCircle2 in strengths：用 `accent-sage`
-- AlertTriangle in risks：用 `accent-rose`
-- Lightbulb "Lessons for Future"：用 `accent-warm`
-
-### 4. career-signals.ts 类型配置
-
-更新 `MOMENTUM_CONFIG` 和 `SIGNAL_TYPE_CONFIG` 中的 color 字段以引用新的语义色。
-
----
+```css
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+```
 
 ## 涉及文件
 
 | 文件 | 改动 |
 |------|------|
-| `src/index.css` | 添加 4 个语义色变量 + utility classes |
-| `src/types/career-signals.ts` | 更新 config color 字段 |
-| `src/components/timeline/CareerSignalTimeline.tsx` | Hero card 色彩分化 |
-| `src/components/timeline/SignalTimelineItem.tsx` | Signal dot + label 色彩 |
-| `src/components/timeline/MomentumIndicator.tsx` | Momentum 状态色 |
-| `src/components/timeline/PatternsList.tsx` | Risk dot + pill 色彩 |
-| `src/components/analytics/AnalysisDetailPanel.tsx` | 板块色彩分化 |
-| `src/components/interview/AnalysisResults.tsx` | Section icon + item 色彩 |
+| `src/pages/Auth.tsx` | 重构布局为左右分屏 + 品牌区 + 入场动画 |
+| `src/index.css` | 添加 fadeInUp 动画 |
 
 ## 设计原则
 
-- 不引入荧光色，所有新色调 saturation 控制在 25-45% 之间
-- 色调有语义含义（warm=转折/机会，sage=优势，rose=风险，cool=洞察），用户潜意识可以区分不同信息类型
-- 每个板块有自己的视觉"温度"，scroll 时能感受到节奏变化
-- Dark mode 下同步调整，保持对比度
+- 左侧深色区域传递"专业基础设施"感，而非"AI 工具"感
+- Value props 用简洁英文，每条一行，不超过 10 个词
+- 几何装饰极度克制（2-3 个模糊圆形，opacity < 0.1），不喧宾夺主
+- 移动端完全回退到现有居中布局，不会破坏小屏体验
+- 所有动画 < 1s，respect `prefers-reduced-motion`
 
