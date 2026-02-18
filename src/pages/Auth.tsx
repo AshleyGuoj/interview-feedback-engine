@@ -32,10 +32,10 @@ function BrandPanel() {
             <img src={offermindIcon} alt="OfferMind" className="w-full h-full object-cover scale-[1.6]" />
           </div>
           <h1 className="text-[28px] font-semibold tracking-[-0.03em] leading-tight text-white/90">
-            Turn every interview<br />into a strategic advantage
+            Your interviews hold<br />more insight than you think
           </h1>
           <p className="mt-3 text-[14px] leading-relaxed text-white/60 max-w-[340px]">
-            OfferMind transforms raw interview experiences into structured career intelligence.
+            Stop guessing what went wrong. OfferMind turns every conversation into a clear signal for your next move.
           </p>
         </div>
 
