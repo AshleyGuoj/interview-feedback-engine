@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useJobs } from '@/contexts/JobsContext';
 import { useLanguage } from '@/hooks/useLanguage';
-import { CareerSignalTimeline as CareerSignalTimelineType } from '@/types/career-signals';
+import { CareerSignalTimeline as CareerSignalTimelineType, SignalType } from '@/types/career-signals';
 import { Job, InterviewStage } from '@/types/job';
 import { supabase } from '@/integrations/supabase/client';
 import { SignalTimelineItem } from './SignalTimelineItem';
@@ -14,6 +14,8 @@ import { TimelineLoadingState } from './TimelineLoadingState';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface JobEvent {
   jobId: string;
@@ -65,11 +67,14 @@ function extractEvents(jobs: Job[]): JobEvent[] {
   return events;
 }
 
+type FilterType = 'all' | 'turning_point' | 'strong_signal';
+
 export function CareerSignalTimeline() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { jobs } = useJobs();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [filter, setFilter] = useState<FilterType>('all');
 
   const events = useMemo(() => extractEvents(jobs), [jobs]);
 
@@ -130,29 +135,76 @@ export function CareerSignalTimeline() {
 
   const timeline = signalData;
 
-  // Extract the hero signal — the first turning_point or strong_signal
+  // Extract hero signal
   const heroItem = timeline.timelineItems.find(
     i => i.type === 'turning_point' || i.type === 'strong_signal'
   );
   const remainingItems = timeline.timelineItems.filter(i => i !== heroItem);
 
+  // Apply filter to remaining items
+  const filteredItems = filter === 'all'
+    ? remainingItems
+    : remainingItems.filter(i => i.type === filter);
+
+  const filterOptions: { key: FilterType; label: string }[] = [
+    { key: 'all', label: t('common.all', 'All') },
+    { key: 'turning_point', label: t('timeline.turningPoint', 'Turning Points') },
+    { key: 'strong_signal', label: t('timeline.strongSignal', 'Strong Signals') },
+  ];
+
+  // Split coach note into bullet points for memo format
+  const coachBullets = timeline.coachNote
+    ? timeline.coachNote.split(/[.。]\s*/).filter(s => s.trim().length > 5).slice(0, 3)
+    : [];
+
   return (
-    <div className="space-y-10 max-w-[900px]">
-      {/* Hero Signal Card — the focal point */}
+    <div className="space-y-0">
+      {/* Meta row — event count + refresh */}
+      <div className="flex items-center justify-between mb-7">
+        <span className="text-[13px] text-muted-foreground">
+          {t('timeline.basedOnEvents', { count: events.length })}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="text-[12px] text-muted-foreground hover:surface-insight hover:text-foreground h-8 border-border"
+        >
+          <RefreshCw className={cn('w-3 h-3 mr-1.5', isRefreshing && 'animate-spin')} />
+          {t('timeline.refresh')}
+        </Button>
+      </div>
+
+      {/* ═══ HERO SIGNAL CARD ═══ */}
       {heroItem && (
-        <div className="py-10 px-6 -mx-2 rounded-2xl surface-insight">
-          <p className="text-[11px] font-medium text-primary/70 uppercase tracking-[0.08em] mb-5">
-            {heroItem.type === 'turning_point' ? t('timeline.turningPoint') : t('timeline.strongSignal')}
-          </p>
-          <h2 className="text-[28px] sm:text-[34px] font-semibold text-foreground leading-[1.2] tracking-[-0.02em] mb-5">
+        <div className="rounded-2xl surface-insight border border-primary/[0.08] p-7 sm:p-8 mb-7" style={{ boxShadow: 'var(--shadow-md)' }}>
+          {/* Top meta row */}
+          <div className="flex items-center justify-between mb-5">
+            <span className="text-[11px] font-semibold text-primary uppercase tracking-[0.1em]">
+              {heroItem.type === 'turning_point' ? t('timeline.turningPoint') : t('timeline.strongSignal')}
+            </span>
+            <span className="text-[12px] text-muted-foreground tabular-nums">
+              {format(new Date(heroItem.date), 'yyyy/MM/dd')}
+            </span>
+          </div>
+
+          {/* Headline — largest on page */}
+          <h2 className="text-[24px] sm:text-[28px] font-semibold text-foreground leading-[1.25] tracking-[-0.02em] mb-4">
             {heroItem.title}
           </h2>
-          <p className="text-[16px] text-foreground/75 leading-[1.75] max-w-[640px] mb-3">
+
+          {/* Lead signal summary — bold */}
+          <p className="text-[15px] font-medium text-foreground/85 leading-[1.7] max-w-[640px] mb-4">
             {heroItem.signalSummary}
           </p>
+
+          {/* Why it matters */}
           <p className="text-[14px] text-muted-foreground leading-[1.65] max-w-[600px]">
             {heroItem.whyItMatters}
           </p>
+
+          {/* Context */}
           {(heroItem.context.company || heroItem.context.role) && (
             <p className="text-[12px] text-muted-foreground/50 mt-5">
               {heroItem.context.company}{heroItem.context.role && ` · ${heroItem.context.role}`}
@@ -161,51 +213,51 @@ export function CareerSignalTimeline() {
         </div>
       )}
 
-      {/* Refresh control — quiet, pushed right */}
-      <div className="flex items-center justify-between">
-        <span className="text-[12px] text-muted-foreground/60">
-          {t('timeline.basedOnEvents', { count: events.length })}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="text-[12px] text-muted-foreground hover:text-foreground h-7"
-        >
-          <RefreshCw className={`w-3 h-3 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {t('timeline.refresh')}
-        </Button>
+      {/* ═══ SUPPORTING INSIGHT ROW ═══ */}
+      <div className="grid gap-5 md:grid-cols-2 mb-7">
+        <MomentumIndicator momentum={timeline.momentumStatus} />
+        <CoachNote bullets={coachBullets} fallback={timeline.coachNote} />
       </div>
 
-      {/* Momentum + Strategic Advisory — side by side, different visual weight */}
-      <div className="grid gap-6 md:grid-cols-5">
-        <div className="md:col-span-2">
-          <MomentumIndicator momentum={timeline.momentumStatus} />
-        </div>
-        <div className="md:col-span-3">
-          <CoachNote note={timeline.coachNote} />
-        </div>
-      </div>
-
-      {/* Patterns — borderless, memo-style */}
+      {/* ═══ PATTERNS DISCOVERED ═══ */}
       {timeline.recentPatterns.length > 0 && (
-        <PatternsList patterns={timeline.recentPatterns} />
+        <div className="mb-8">
+          <PatternsList patterns={timeline.recentPatterns} />
+        </div>
       )}
 
-      {/* Signal Timeline — remaining items */}
-      <div className="space-y-3">
-        <h2 className="text-[12px] font-medium text-muted-foreground/60 uppercase tracking-[0.06em]">
-          {t('timeline.signalTimeline')}
-        </h2>
+      {/* ═══ SIGNAL TIMELINE ═══ */}
+      <div className="space-y-4">
+        {/* Section header + filter tabs */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-[16px] font-semibold text-foreground">
+            {t('timeline.signalTimeline')}
+          </h2>
+          <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-0.5">
+            {filterOptions.map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setFilter(opt.key)}
+                className={cn(
+                  'px-3 py-1.5 text-[12px] font-medium rounded-md transition-all',
+                  filter === opt.key
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {remainingItems.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground py-6">
+        {filteredItems.length === 0 ? (
+          <p className="text-[13px] text-muted-foreground py-8 text-center">
             {t('timeline.noSignificantSignals')}
           </p>
         ) : (
           <div className="relative space-y-3 pb-4">
-            {remainingItems.map((item, index) => (
+            {filteredItems.map((item, index) => (
               <SignalTimelineItem
                 key={`${item.date}-${index}`}
                 item={item}

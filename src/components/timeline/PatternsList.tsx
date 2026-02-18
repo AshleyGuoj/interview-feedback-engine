@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { CareerPattern, RISK_LEVEL_CONFIG } from '@/types/career-signals';
+import { CareerPattern } from '@/types/career-signals';
 import { cn } from '@/lib/utils';
 
 interface PatternsListProps {
@@ -18,43 +18,55 @@ export function PatternsList({ patterns }: PatternsListProps) {
     }
   };
 
+  const getRiskPillStyle = (riskLevel: 'low' | 'medium' | 'high') => {
+    switch (riskLevel) {
+      case 'low': return 'text-success bg-success/8';
+      case 'medium': return 'text-warning bg-warning/8';
+      case 'high': return 'text-destructive bg-destructive/8';
+    }
+  };
+
   if (patterns.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="px-5 pt-5 pb-3">
-        <h3 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide">
+    <div className="rounded-2xl surface-elevated border border-border p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[16px] font-semibold text-foreground">
           {t('timeline.patternsDiscovered')}
         </h3>
+        <span className="text-[12px] text-muted-foreground/60">
+          {patterns.length} {patterns.length === 1 ? 'insight' : 'insights'}
+        </span>
       </div>
-      <div className="px-5 pb-5 space-y-3">
-        {patterns.map((pattern, index) => {
-          const riskDot = cn(
-            'w-1.5 h-1.5 rounded-full shrink-0 mt-[7px]',
-            pattern.riskLevel === 'high' && 'bg-destructive/60',
-            pattern.riskLevel === 'medium' && 'bg-warning/60',
-            pattern.riskLevel === 'low' && 'bg-success/60',
-          );
 
-          return (
-            <div key={index} className="flex items-start gap-3 py-2">
-              <div className={riskDot} />
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[13px] font-medium text-foreground">
-                    {pattern.pattern}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground/60">
-                    {getRiskLabel(pattern.riskLevel)}
-                  </span>
-                </div>
-                <p className="text-[12px] text-muted-foreground leading-relaxed">
+      <div className="divide-y divide-border">
+        {patterns.map((pattern, index) => (
+          <div key={index} className="flex items-start justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className={cn(
+                'w-1.5 h-1.5 rounded-full shrink-0 mt-[8px]',
+                pattern.riskLevel === 'high' && 'bg-destructive/50',
+                pattern.riskLevel === 'medium' && 'bg-warning/50',
+                pattern.riskLevel === 'low' && 'bg-success/50',
+              )} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-medium text-foreground leading-snug">
+                  {pattern.pattern}
+                </p>
+                <p className="text-[13px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-1">
                   {pattern.evidence}
                 </p>
               </div>
             </div>
-          );
-        })}
+            <span className={cn(
+              'text-[11px] font-medium px-2 py-0.5 rounded-md shrink-0',
+              getRiskPillStyle(pattern.riskLevel)
+            )}>
+              {getRiskLabel(pattern.riskLevel)}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
