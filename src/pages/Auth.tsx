@@ -4,13 +4,69 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, ArrowRight, Ticket, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowRight, Ticket, CheckCircle2, ArrowLeft, BarChart3, TrendingUp, Shield } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import offermindIcon from '@/assets/offermind-icon.png';
 
-export default function Auth() {
+/* ── Brand Panel (desktop only) ─────────────────────────────── */
+function BrandPanel() {
+  const valueProps = [
+    { icon: BarChart3, text: 'Structured interview analytics across all your applications' },
+    { icon: TrendingUp, text: 'Track competency growth and identify patterns over time' },
+    { icon: Shield, text: 'Private, secure career intelligence you own' },
+  ];
+
+  return (
+    <div className="hidden lg:flex relative flex-col justify-between overflow-hidden bg-[hsl(232,30%,14%)] p-12 xl:p-16">
+      {/* Geometric decorations */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-[hsl(232,40%,30%)] opacity-[0.07] blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-48 h-48 rounded-full bg-[hsl(232,50%,45%)] opacity-[0.05] blur-2xl" />
+        <div className="absolute bottom-1/3 right-1/4 w-32 h-32 rounded-full bg-[hsl(260,35%,40%)] opacity-[0.06] blur-2xl" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <div className="animate-fade-in-up">
+          <div className="w-14 h-14 mb-5 overflow-hidden rounded-2xl bg-white/10">
+            <img src={offermindIcon} alt="OfferMind" className="w-full h-full object-cover scale-[1.6]" />
+          </div>
+          <h1 className="text-[28px] font-semibold tracking-[-0.03em] leading-tight text-white/90">
+            Turn every interview<br />into a strategic advantage
+          </h1>
+          <p className="mt-3 text-[14px] leading-relaxed text-white/45 max-w-[340px]">
+            OfferMind transforms raw interview experiences into structured career intelligence.
+          </p>
+        </div>
+
+        <div className="mt-12 space-y-5">
+          {valueProps.map((vp, i) => (
+            <div
+              key={i}
+              className="animate-fade-in-up flex items-start gap-3.5"
+              style={{ animationDelay: `${200 + i * 100}ms` }}
+            >
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.08]">
+                <vp.icon className="w-4 h-4 text-white/60" />
+              </div>
+              <p className="text-[13px] leading-relaxed text-white/55">{vp.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <p className="relative z-10 text-[11px] text-white/25 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+        © 2026 OfferMind
+      </p>
+    </div>
+  );
+}
+
+/* ── Auth Form Panel ─────────────────────────────────────────── */
+function AuthFormPanel() {
   const { t } = useTranslation();
-  const { user, loading, signIn } = useAuth();
+  const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -20,18 +76,6 @@ export default function Auth() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({ email: '', password: '', confirmPassword: '' });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[hsl(220,16%,96%)]">
-        <Loader2 className="w-6 h-6 animate-spin text-[hsl(230,25%,35%)]" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,75 +176,70 @@ export default function Auth() {
     }
   };
 
+  const inputCls =
+    'w-full h-10 px-3 rounded-lg border border-[hsl(232,12%,88%)] bg-white text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all';
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[hsl(220,16%,96%)] p-4">
+    <div className="flex min-h-screen lg:min-h-0 flex-col items-center justify-center bg-[hsl(var(--background))] lg:bg-white p-6 sm:p-8">
       {/* Language switcher */}
-      <div className="absolute top-5 right-5">
+      <div className="absolute top-5 right-5 z-20">
         <LanguageSwitcher />
       </div>
 
-      <div className="w-full max-w-[420px]">
-        {/* Logo + Branding — outside the card for breathing room */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 mb-3 overflow-hidden rounded-2xl" style={{ background: 'hsl(230, 25%, 96%)' }}>
-            <img
-              src={offermindIcon}
-              alt="OfferMind"
-              className="w-full h-full object-cover scale-[1.6]"
-            />
+      <div className="w-full max-w-[400px] animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+        {/* Mobile-only branding */}
+        <div className="flex flex-col items-center mb-8 lg:hidden">
+          <div className="w-14 h-14 mb-3 overflow-hidden rounded-2xl bg-secondary">
+            <img src={offermindIcon} alt="OfferMind" className="w-full h-full object-cover scale-[1.6]" />
           </div>
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[hsl(230,30%,18%)]">
-            OfferMind
-          </h1>
-          <p className="mt-1 text-[13px] font-normal tracking-[0.01em] text-[hsl(220,10%,50%)]">
-            Career Intelligence Platform
-          </p>
+          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">OfferMind</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">Career Intelligence Platform</p>
         </div>
 
-        {/* Main card */}
-        <div className="rounded-2xl border border-[hsl(220,14%,90%)] bg-white shadow-[0_1px_3px_hsl(220,14%,80%/0.12),0_6px_24px_hsl(220,14%,80%/0.08)] p-7">
+        {/* Desktop heading (no logo — it's on the left) */}
+        <div className="hidden lg:block mb-8">
+          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Welcome back</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">Sign in to your OfferMind workspace</p>
+        </div>
+
+        {/* Card wrapper — styled on mobile, flat on desktop */}
+        <div className="rounded-2xl border border-border bg-white shadow-[var(--shadow-md)] lg:border-0 lg:shadow-none p-7 lg:p-0">
           {/* Demo CTA */}
           <button
             onClick={handleDemoLogin}
             disabled={isDemoLoading}
-            className="w-full h-11 rounded-xl text-[14px] font-medium text-white transition-all
-              bg-[hsl(230,45%,32%)] hover:bg-[hsl(230,45%,28%)] active:bg-[hsl(230,45%,25%)]
-              shadow-[0_1px_2px_hsl(230,45%,20%/0.2)] hover:shadow-[0_2px_8px_hsl(230,45%,20%/0.25)]
+            className="w-full h-11 rounded-xl text-[14px] font-medium text-primary-foreground transition-all
+              bg-primary hover:bg-primary/90 active:bg-primary/80
+              shadow-[0_1px_2px_hsl(232,36%,20%/0.2)] hover:shadow-[0_2px_8px_hsl(232,36%,20%/0.25)]
               disabled:opacity-60 disabled:pointer-events-none
               flex items-center justify-center gap-2"
           >
-            {isDemoLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ArrowRight className="w-4 h-4" />
-            )}
+            {isDemoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
             Explore Demo
           </button>
-          <p className="text-[11px] text-center text-[hsl(220,10%,55%)] mt-2.5 mb-5">
+          <p className="text-[11px] text-center text-muted-foreground mt-2.5 mb-5">
             No signup needed — pre-loaded with sample interview data
           </p>
 
           {/* Divider */}
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[hsl(220,14%,91%)]" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-[11px] text-[hsl(220,10%,60%)] uppercase tracking-wider">
-                or
-              </span>
+              <span className="bg-white px-3 text-[11px] text-muted-foreground uppercase tracking-wider">or</span>
             </div>
           </div>
 
           {/* Tab switcher */}
-          <div className="flex rounded-lg bg-[hsl(220,16%,95%)] p-0.5 mb-5">
+          <div className="flex rounded-lg bg-secondary p-0.5 mb-5">
             <button
               type="button"
               onClick={() => handleTabSwitch('login')}
               className={`flex-1 py-2 text-[13px] font-medium rounded-md transition-all ${
                 activeTab === 'login'
-                  ? 'bg-white text-[hsl(230,30%,18%)] shadow-sm'
-                  : 'text-[hsl(220,10%,50%)] hover:text-[hsl(230,30%,18%)]'
+                  ? 'bg-white text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {t('auth.login')}
@@ -210,8 +249,8 @@ export default function Auth() {
               onClick={() => handleTabSwitch('signup')}
               className={`flex-1 py-2 text-[13px] font-medium rounded-md transition-all ${
                 activeTab === 'signup'
-                  ? 'bg-white text-[hsl(230,30%,18%)] shadow-sm'
-                  : 'text-[hsl(220,10%,50%)] hover:text-[hsl(230,30%,18%)]'
+                  ? 'bg-white text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Sign Up
@@ -222,7 +261,7 @@ export default function Auth() {
           {activeTab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <label htmlFor="login-email" className="block text-[12px] font-medium text-[hsl(220,10%,40%)]">
+                <label htmlFor="login-email" className="block text-[12px] font-medium text-muted-foreground">
                   {t('auth.email')}
                 </label>
                 <input
@@ -232,13 +271,11 @@ export default function Auth() {
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                   required
-                  className="w-full h-10 px-3 rounded-lg border border-[hsl(220,14%,88%)] bg-white text-[14px] text-[hsl(230,30%,18%)] placeholder:text-[hsl(220,10%,65%)]
-                    focus:outline-none focus:ring-2 focus:ring-[hsl(230,45%,55%/0.25)] focus:border-[hsl(230,45%,55%)]
-                    transition-all"
+                  className={inputCls}
                 />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="login-password" className="block text-[12px] font-medium text-[hsl(220,10%,40%)]">
+                <label htmlFor="login-password" className="block text-[12px] font-medium text-muted-foreground">
                   {t('auth.password')}
                 </label>
                 <input
@@ -248,18 +285,16 @@ export default function Auth() {
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                   required
-                  className="w-full h-10 px-3 rounded-lg border border-[hsl(220,14%,88%)] bg-white text-[14px] text-[hsl(230,30%,18%)] placeholder:text-[hsl(220,10%,65%)]
-                    focus:outline-none focus:ring-2 focus:ring-[hsl(230,45%,55%/0.25)] focus:border-[hsl(230,45%,55%)]
-                    transition-all"
+                  className={inputCls}
                 />
               </div>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full h-10 rounded-xl text-[13px] font-medium transition-all
-                  border border-[hsl(220,14%,85%)] bg-white text-[hsl(230,30%,18%)]
-                  hover:bg-[hsl(220,16%,97%)] hover:border-[hsl(220,14%,80%)]
-                  active:bg-[hsl(220,16%,95%)]
+                  border border-border bg-white text-foreground
+                  hover:bg-secondary hover:border-border/80
+                  active:bg-muted
                   disabled:opacity-50 disabled:pointer-events-none
                   flex items-center justify-center gap-2"
               >
@@ -270,7 +305,7 @@ export default function Auth() {
           ) : signUpStep === 'code' ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label htmlFor="invite-code" className="flex items-center gap-1.5 text-[12px] font-medium text-[hsl(220,10%,40%)]">
+                <label htmlFor="invite-code" className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
                   <Ticket className="w-3 h-3" />
                   Invitation Code
                 </label>
@@ -281,30 +316,27 @@ export default function Auth() {
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                   onKeyDown={(e) => e.key === 'Enter' && handleVerifyCode()}
-                  className="w-full h-10 px-3 rounded-lg border border-[hsl(220,14%,88%)] bg-white text-[14px] text-[hsl(230,30%,18%)] placeholder:text-[hsl(220,10%,65%)]
-                    uppercase tracking-widest font-mono text-center
-                    focus:outline-none focus:ring-2 focus:ring-[hsl(230,45%,55%/0.25)] focus:border-[hsl(230,45%,55%)]
-                    transition-all"
+                  className={`${inputCls} uppercase tracking-widest font-mono text-center`}
                 />
               </div>
               <button
                 onClick={handleVerifyCode}
                 disabled={isVerifying || !inviteCode.trim()}
                 className="w-full h-10 rounded-xl text-[13px] font-medium transition-all
-                  border border-[hsl(220,14%,85%)] bg-white text-[hsl(230,30%,18%)]
-                  hover:bg-[hsl(220,16%,97%)] hover:border-[hsl(220,14%,80%)]
+                  border border-border bg-white text-foreground
+                  hover:bg-secondary hover:border-border/80
                   disabled:opacity-50 disabled:pointer-events-none
                   flex items-center justify-center gap-2"
               >
                 {isVerifying && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Verify Code
               </button>
-              <p className="text-[11px] text-center text-[hsl(220,10%,55%)]">
+              <p className="text-[11px] text-center text-muted-foreground">
                 Interested in early access?{' '}
                 <button
                   type="button"
                   onClick={() => window.open('https://www.linkedin.com/in/jiaqi-guo-02ba0329b/', '_blank', 'noopener,noreferrer')}
-                  className="text-[hsl(230,45%,40%)] hover:text-[hsl(230,45%,30%)] hover:underline font-medium cursor-pointer bg-transparent border-none p-0 inline"
+                  className="text-primary hover:text-primary/80 hover:underline font-medium cursor-pointer bg-transparent border-none p-0 inline"
                 >
                   Connect on LinkedIn
                 </button>
@@ -312,14 +344,14 @@ export default function Auth() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[hsl(145,30%,96%)] border border-[hsl(145,25%,88%)]">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(145,40%,40%)] shrink-0" />
-                <span className="text-[12px] font-medium text-[hsl(145,30%,30%)]">
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[hsl(var(--accent-sage))]/[0.08] border border-[hsl(var(--accent-sage))]/20">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(var(--accent-sage))] shrink-0" />
+                <span className="text-[12px] font-medium text-[hsl(var(--accent-sage))]">
                   Code <span className="font-mono tracking-wider">{inviteCode}</span> verified
                 </span>
                 <button
                   type="button"
-                  className="ml-auto text-[11px] text-[hsl(220,10%,55%)] hover:text-[hsl(230,30%,18%)] flex items-center gap-0.5"
+                  className="ml-auto text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
                   onClick={() => setSignUpStep('code')}
                 >
                   <ArrowLeft className="w-3 h-3" />
@@ -328,7 +360,7 @@ export default function Auth() {
               </div>
               <form onSubmit={handleCreateAccount} className="space-y-3.5">
                 <div className="space-y-1.5">
-                  <label htmlFor="signup-email" className="block text-[12px] font-medium text-[hsl(220,10%,40%)]">
+                  <label htmlFor="signup-email" className="block text-[12px] font-medium text-muted-foreground">
                     {t('auth.email')}
                   </label>
                   <input
@@ -338,13 +370,11 @@ export default function Auth() {
                     value={signUpData.email}
                     onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                     required
-                    className="w-full h-10 px-3 rounded-lg border border-[hsl(220,14%,88%)] bg-white text-[14px] text-[hsl(230,30%,18%)] placeholder:text-[hsl(220,10%,65%)]
-                      focus:outline-none focus:ring-2 focus:ring-[hsl(230,45%,55%/0.25)] focus:border-[hsl(230,45%,55%)]
-                      transition-all"
+                    className={inputCls}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="signup-password" className="block text-[12px] font-medium text-[hsl(220,10%,40%)]">
+                  <label htmlFor="signup-password" className="block text-[12px] font-medium text-muted-foreground">
                     {t('auth.password')}
                   </label>
                   <input
@@ -354,13 +384,11 @@ export default function Auth() {
                     value={signUpData.password}
                     onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                     required
-                    className="w-full h-10 px-3 rounded-lg border border-[hsl(220,14%,88%)] bg-white text-[14px] text-[hsl(230,30%,18%)] placeholder:text-[hsl(220,10%,65%)]
-                      focus:outline-none focus:ring-2 focus:ring-[hsl(230,45%,55%/0.25)] focus:border-[hsl(230,45%,55%)]
-                      transition-all"
+                    className={inputCls}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="signup-confirm" className="block text-[12px] font-medium text-[hsl(220,10%,40%)]">
+                  <label htmlFor="signup-confirm" className="block text-[12px] font-medium text-muted-foreground">
                     Confirm Password
                   </label>
                   <input
@@ -370,17 +398,15 @@ export default function Auth() {
                     value={signUpData.confirmPassword}
                     onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
                     required
-                    className="w-full h-10 px-3 rounded-lg border border-[hsl(220,14%,88%)] bg-white text-[14px] text-[hsl(230,30%,18%)] placeholder:text-[hsl(220,10%,65%)]
-                      focus:outline-none focus:ring-2 focus:ring-[hsl(230,45%,55%/0.25)] focus:border-[hsl(230,45%,55%)]
-                      transition-all"
+                    className={inputCls}
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="w-full h-10 rounded-xl text-[13px] font-medium transition-all
-                    border border-[hsl(220,14%,85%)] bg-white text-[hsl(230,30%,18%)]
-                    hover:bg-[hsl(220,16%,97%)] hover:border-[hsl(220,14%,80%)]
+                    border border-border bg-white text-foreground
+                    hover:bg-secondary hover:border-border/80
                     disabled:opacity-50 disabled:pointer-events-none
                     flex items-center justify-center gap-2"
                 >
@@ -393,10 +419,34 @@ export default function Auth() {
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-[11px] text-[hsl(220,10%,60%)]">
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
           Structured interview intelligence for strategic career decisions.
         </p>
       </div>
+    </div>
+  );
+}
+
+/* ── Main Auth Page ──────────────────────────────────────────── */
+export default function Auth() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <div className="min-h-screen lg:grid lg:grid-cols-2">
+      <BrandPanel />
+      <AuthFormPanel />
     </div>
   );
 }
