@@ -1,60 +1,81 @@
 
 
-# Dashboard UI/UX 优化方案
+# Job Board UI/UX 优化方案
 
 ## 问题诊断
 
-从截图和代码分析，当前 Dashboard 存在以下问题：
-
-1. **页面标题与 Career Health 标签重复**：页面标题是 "Dashboard"，Career Health 区块又显示 "DASHBOARD"（大写），语义重复且混淆
-2. **标题层级不够**：Dashboard 标题用 `text-[22px]`，而 Timeline 页用 `text-[32px]`，Dashboard 作为首页反而视觉存在感最弱
-3. **两个并排 Card 形式完全一致**：Interview Pipeline 和 Recent Activity 都是 `border border-border bg-card` 圆角卡片，视觉节奏单一
-4. **空状态缺乏设计**：只有一行灰色文字居中，显得页面"空荡"且没有引导感
-5. **缺少时间问候**：作为每天第一个看到的页面，没有个性化问候
+1. **页面标题层级偏弱**：`text-2xl` 比 Dashboard 的 `text-[28px] sm:text-[32px]` 更小，视觉权重不一致
+2. **Kanban 列头使用语义色圆点**：applied=slate, interviewing=amber, offer=emerald, closed=gray，与已优化的 Dashboard/Analytics 品牌色体系不一致
+3. **InsightStrip 大量 emoji**：📅⏳⚠️🧑‍💼📚💬📩🤝❌📄💤🔁🚫🙅 等，AI 感强烈
+4. **InsightStrip 彩色文字**：blue/amber/orange/purple/cyan/green/red 七色并排，过于花哨
+5. **StatusBadge 组件 emoji + 彩色底色**：SubStatusBadge、RiskTagBadge、ClosedReasonBadge 全部使用 emoji + 鲜艳色块
+6. **Location Badge 彩色底色**：CN=rose, US=blue, Remote=emerald, Other=gray，四种语义色
+7. **Star 评分用 amber 填充**：`fill-amber-400 text-amber-400` 荧光黄
+8. **状态消息含 emoji**：`'Received offer! 🎉'` 在 statusMessages 中
 
 ## 改造策略
 
-### 1. 标题升级 + 时段问候
+### 1. 页面标题对齐
 
-- 标题从 `text-[22px]` 升级到 `text-[28px]` 或 `text-[32px]`，与 Timeline 页视觉权重对齐
-- 副标题替换为时段问候："Good morning" / "Good afternoon" / "Good evening"，增加人性化感受
+将 Job Board 标题从 `text-2xl` 升级到 `text-[28px] sm:text-[32px]`，与 Dashboard 页面保持一致的视觉权重。
 
-### 2. Career Health 标签修正
+### 2. Kanban 列头颜色统一
 
-- 将 Career Health 区块的标签从 `t('dashboard.title')` (即 "Dashboard") 改为固定的 "Career Health"，消除与页面标题的重复
-- 保持左侧品牌竖线和 `surface-insight` 背景不变
+将四列的状态圆点从多色（slate/amber/emerald/gray）统一为品牌色深浅：
 
-### 3. Signal Feed 改为开放区块
+| 列 | 当前 | 改为 |
+|---|---|---|
+| Applied | `bg-slate-500` | `bg-primary/40` |
+| Interviewing | `bg-amber-500` | `bg-primary/70` |
+| Offer | `bg-emerald-500` | `bg-primary` |
+| Closed | `bg-gray-400` | `bg-muted-foreground/40` |
 
-与之前 Role Debrief 和 Interview Analysis 优化一致：
-- Interview Pipeline 保留 Card（有时间/deadline 等结构化信息需要容器）
-- Recent Activity（Signal Feed）去掉 Card 边框，改为 `border-l-2 border-l-primary/30 pl-5` 开放区块
-- 打破两个并排卡片的视觉重复感
+用同色系的深浅来表示进展程度，而非多种语义色。
 
-### 4. 空状态增强
+### 3. InsightStrip：emoji 替换 + 去彩色
 
-为 Interview Pipeline 和 Signal Feed 的空状态添加：
-- 一个轻量 Lucide 图标（`CalendarDays` / `Inbox`）
-- 简短的引导文案 + 行动提示
-- 图标颜色 `text-muted-foreground/30`，不抢焦点但增加页面质感
+- 将所有 emoji 替换为 Lucide 图标（`CalendarCheck`, `Clock`, `AlertCircle`, `UserCheck`, `BookOpen`, `MessageSquare`, `Mail`, `Handshake`, `XCircle`, `FileText`, `Moon`, `RotateCcw`, `Ban`, `X`, `HandRaised`）
+- 将七种颜色统一为两种：`text-primary/70`（活跃状态）和 `text-muted-foreground`（中性/终结状态）
 
-### 5. Interview Pipeline 条目加公司首字母头像
+### 4. StatusBadge 全组件去 emoji + 去彩色底色
 
-- 每个面试条目左侧添加公司名首字母圆形头像（`bg-primary/10 text-primary` 底色）
-- 增加视觉锚点，扫描效率更高
+**SubStatusBadge**：
+- emoji 替换为 Lucide 图标
+- 彩色底色（blue-100/amber-100 等）统一为 `bg-primary/10 text-primary`（活跃）或 `bg-muted text-muted-foreground`（中性）
+
+**RiskTagBadge**：
+- emoji 替换为 Lucide 图标
+- 所有 risk 统一用 `border-muted-foreground/30 text-muted-foreground` 轮廓样式
+
+**ClosedReasonBadge**：
+- emoji 替换为 Lucide 图标
+- 统一为 `bg-muted/50 text-muted-foreground` 淡化样式
+
+### 5. Location Badge 去彩色
+
+将 CN/US/Remote/Other 四种鲜艳底色统一为 `bg-muted text-muted-foreground`，仅靠文字内容区分，去掉视觉噪音。
+
+### 6. Star 评分品牌色
+
+将 `fill-amber-400 text-amber-400` 改为 `fill-primary text-primary`，未选状态保持 `text-muted-foreground`。
+
+### 7. 状态消息去 emoji
+
+将 `'Received offer! 🎉'` 改为 `'Received offer'`。
+
+### 8. 空状态增强
+
+Kanban 列空状态（当前仅灰色文字 + dashed border）添加一个轻量 Lucide 图标（`Inbox`），与 Dashboard 空状态风格一致。
 
 ## 涉及文件
 
-仅 `src/pages/Dashboard.tsx`
-
-## 技术细节
-
-| 位置 | 当前 | 改为 |
-|------|------|------|
-| 页面标题 | `text-[22px]` | `text-[28px] sm:text-[32px]` |
-| 副标题 | 静态 welcome text | 时段问候 (Good morning/afternoon/evening) |
-| Career Health 标签 | `t('dashboard.title')` = "Dashboard" | `"Career Health"` 固定文案 |
-| Signal Feed 容器 | `rounded-xl border border-border bg-card` | `border-l-2 border-l-primary/30 pl-5`（去掉卡片） |
-| 空状态 | 纯文字居中 | 图标 + 文字 + 引导 |
-| 面试条目 | 无头像 | 公司首字母圆形头像 `w-8 h-8 rounded-full bg-primary/10` |
+| 文件 | 改动点 |
+|------|--------|
+| `src/pages/JobBoard.tsx` | 标题字号升级、statusMessages 去 emoji |
+| `src/components/jobs/KanbanColumn.tsx` | 列头圆点颜色统一、空状态增强 |
+| `src/components/jobs/InsightStrip.tsx` | emoji 替换为 Lucide 图标、颜色统一 |
+| `src/components/jobs/StatusBadge.tsx` | 三个 Badge 组件去 emoji + 去彩色底色 |
+| `src/components/jobs/DraggableJobCard.tsx` | Location badge 去彩色 |
+| `src/components/jobs/JobCard.tsx` | Location badge 去彩色（与 DraggableJobCard 同步） |
+| `src/components/jobs/AddJobDialog.tsx` | Star 评分颜色改为品牌色 |
 
