@@ -84,7 +84,7 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
 
         {/* Context */}
         {(item.context.company || item.context.role) && (
-          <p className="text-[12px] text-muted-foreground/60 mb-2">
+          <p className="text-[12px] text-muted-foreground/80 mb-2">
             {item.context.company}
             {item.context.role && ` · ${item.context.role}`}
           </p>
