@@ -394,6 +394,9 @@ export default {
     filterActive: 'Active',
     filterWithRecords: 'Records',
     filterClosed: 'Closed',
+    debriefReady: '{{count}} rounds analyzed — Role Debrief is ready',
+    debriefReadyDesc: 'View aggregate insights across all your interview rounds for this role.',
+    viewDebrief: 'View Debrief',
   },
 
   // Interview Analysis
