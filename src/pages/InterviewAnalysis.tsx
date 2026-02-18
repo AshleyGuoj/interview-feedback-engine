@@ -23,7 +23,9 @@ import {
   ChevronDown,
   ChevronUp,
   Save,
-  Clock
+  Clock,
+  Check,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -41,9 +43,9 @@ import {
 import { TranscriptInput } from '@/components/interview/TranscriptInput';
 
 const QUALITY_CONFIG = {
-  high: { label: '回答优秀', color: 'text-emerald-600 bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
-  medium: { label: '回答一般', color: 'text-amber-600 bg-amber-50 border-amber-200', icon: AlertCircle },
-  low: { label: '需要改进', color: 'text-red-600 bg-red-50 border-red-200', icon: AlertCircle },
+  high: { label: '回答优秀', color: 'text-primary bg-primary/5 border-primary/20', icon: CheckCircle2 },
+  medium: { label: '回答一般', color: 'text-muted-foreground bg-muted/50 border-border', icon: AlertCircle },
+  low: { label: '需要改进', color: 'text-muted-foreground/70 bg-muted/30 border-border', icon: AlertCircle },
 };
 
 export default function InterviewAnalysis() {
@@ -314,8 +316,8 @@ export default function InterviewAnalysis() {
                 {/* Section 3: Detailed Reflection */}
                 <section className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                      <Lightbulb className="w-4 h-4 text-amber-600" />
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Lightbulb className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold">面试复盘分析</h2>
@@ -449,7 +451,7 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
       <Card>
         <CardHeader className="pb-3">
           <h3 className="text-sm font-semibold flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">1</span>
+            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">1</span>
             整体评估
           </h3>
         </CardHeader>
@@ -459,96 +461,76 @@ function ReflectionDisplay({ reflection }: { reflection: ExtractedReflection }) 
       </Card>
 
       {/* What went well */}
-      <Card className="border-emerald-200 bg-emerald-50/30">
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-emerald-700">
-            <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs">2</span>
-            <CheckCircle2 className="w-4 h-4" />
-            表现好的地方
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ul className="space-y-2">
-            {reflection.whatWentWell.map((item, i) => (
-              <li key={i} className="text-sm text-emerald-800 flex items-start gap-2">
-                <span className="text-emerald-500 mt-1.5 shrink-0">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="border-l-2 border-l-primary/40 pl-4 space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">2</span>
+          <CheckCircle2 className="w-4 h-4 text-primary/60" />
+          表现好的地方
+        </h3>
+        <ul className="space-y-1.5">
+          {reflection.whatWentWell.map((item, i) => (
+            <li key={i} className="text-sm flex items-start gap-2">
+              <Check className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* What could improve */}
-      <Card className="border-amber-200 bg-amber-50/30">
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-amber-700">
-            <span className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-xs">3</span>
-            <AlertCircle className="w-4 h-4" />
-            可以改进的地方
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ul className="space-y-2">
-            {reflection.whatCouldImprove.map((item, i) => (
-              <li key={i} className="text-sm text-amber-800 flex items-start gap-2">
-                <span className="text-amber-500 mt-1.5 shrink-0">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="border-l-2 border-l-muted-foreground/30 pl-4 space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">3</span>
+          <AlertCircle className="w-4 h-4 text-muted-foreground/60" />
+          可以改进的地方
+        </h3>
+        <ul className="space-y-1.5">
+          {reflection.whatCouldImprove.map((item, i) => (
+            <li key={i} className="text-sm flex items-start gap-2">
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0 mt-0.5" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Key takeaways */}
-      <Card className="border-blue-200 bg-blue-50/30">
-        <CardHeader className="pb-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-blue-700">
-            <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">4</span>
-            <Lightbulb className="w-4 h-4" />
-            关键收获
-          </h3>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <ul className="space-y-2">
-            {reflection.keyTakeaways.map((item, i) => (
-              <li key={i} className="text-sm text-blue-800 flex items-start gap-2">
-                <span className="text-blue-500 mt-1.5 shrink-0">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl bg-muted/20 p-4 space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">4</span>
+          <Lightbulb className="w-4 h-4 text-primary/60" />
+          关键收获
+        </h3>
+        <ul className="space-y-1.5">
+          {reflection.keyTakeaways.map((item, i) => (
+            <li key={i} className="text-sm flex items-start gap-2">
+              <Check className="w-3.5 h-3.5 text-primary/60 shrink-0 mt-0.5" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Interviewer vibe */}
       {reflection.interviewerVibe && (
-        <Card>
-          <CardHeader className="pb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-xs">5</span>
-              面试官印象
-            </h3>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-sm text-muted-foreground leading-relaxed">{reflection.interviewerVibe}</p>
-          </CardContent>
-        </Card>
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">5</span>
+            面试官印象
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{reflection.interviewerVibe}</p>
+        </div>
       )}
 
       {/* Company insights */}
       {reflection.companyInsights && (
-        <Card>
-          <CardHeader className="pb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-xs">6</span>
-              公司新认知
-            </h3>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <p className="text-sm text-muted-foreground leading-relaxed">{reflection.companyInsights}</p>
-          </CardContent>
-        </Card>
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">6</span>
+            公司新认知
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{reflection.companyInsights}</p>
+        </div>
       )}
     </div>
   );
