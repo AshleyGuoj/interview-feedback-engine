@@ -5,7 +5,7 @@ import { InsightStrip } from './InsightStrip';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-
+import { Inbox } from 'lucide-react';
 interface KanbanColumnProps {
   status: JobStatus;
   jobs: Job[];
@@ -15,19 +15,19 @@ interface KanbanColumnProps {
 const columnConfig: Record<JobStatus, { labelKey: string; color: string }> = {
   applied: { 
     labelKey: 'jobs.applied', 
-    color: 'bg-slate-500' 
+    color: 'bg-primary/40' 
   },
   interviewing: { 
     labelKey: 'jobs.interviewing', 
-    color: 'bg-amber-500' 
+    color: 'bg-primary/70' 
   },
   offer: { 
     labelKey: 'jobs.offer', 
-    color: 'bg-emerald-500' 
+    color: 'bg-primary' 
   },
   closed: { 
     labelKey: 'jobs.closed', 
-    color: 'bg-gray-400' 
+    color: 'bg-muted-foreground/40' 
   },
 };
 
@@ -75,10 +75,11 @@ export function KanbanColumn({ status, jobs, onJobClick }: KanbanColumnProps) {
         
         {jobs.length === 0 && (
           <div className={cn(
-            "text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg transition-colors",
+            "flex flex-col items-center justify-center gap-2 py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg transition-colors",
             isOver && "border-primary/50 bg-primary/10"
           )}>
-            {isOver ? t('jobs.dropHere') : t('jobs.noJobsInColumn')}
+            <Inbox className="w-6 h-6 text-muted-foreground/30" />
+            <span>{isOver ? t('jobs.dropHere') : t('jobs.noJobsInColumn')}</span>
           </div>
         )}
       </div>
