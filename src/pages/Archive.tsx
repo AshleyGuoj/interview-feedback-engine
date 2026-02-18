@@ -99,9 +99,6 @@ export default function Archive() {
                           <LineChart className="w-4 h-4 mr-2" />
                         )}
                         {t('analytics.careerGrowth')}
-                        {isGrowthUnlocked && (
-                          <span className="ml-2 text-xs text-primary">✨</span>
-                        )}
                       </TabsTrigger>
                     </span>
                   </TooltipTrigger>

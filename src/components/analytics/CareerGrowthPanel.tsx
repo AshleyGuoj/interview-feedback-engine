@@ -146,9 +146,9 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return <TrendingUp className="w-4 h-4 text-emerald-500" />;
+        return <TrendingUp className="w-4 h-4 text-primary" />;
       case 'declining':
-        return <TrendingDown className="w-4 h-4 text-red-500" />;
+        return <TrendingDown className="w-4 h-4 text-destructive" />;
       default:
         return <Minus className="w-4 h-4 text-muted-foreground" />;
     }
@@ -157,9 +157,9 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
   const getTrendColor = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+        return 'text-primary bg-primary/5 border-primary/20';
       case 'declining':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-destructive bg-destructive/5 border-destructive/20';
       default:
         return 'text-muted-foreground bg-muted/50 border-border';
     }
@@ -313,53 +313,48 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
           </Card>
         )}
 
-        {/* Insight Summary Cards */}
+        {/* Insight Summary — single card, split view */}
         {analysis?.insightSummary && (
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card className="border-emerald-200 bg-emerald-50/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
-                  <ArrowUpRight className="w-4 h-4" />
-                  {t('careerGrowth.biggestChange')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm font-medium">{analysis.insightSummary.biggestPositiveChange}</p>
-                {analysis.insightSummary.keyImprovements?.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {analysis.insightSummary.keyImprovements.map((item, i) => (
-                      <li key={i} className="text-xs text-emerald-600 flex gap-1.5">
-                        <CheckCircle2 className="w-3 h-3 mt-0.5 shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-amber-200 bg-amber-50/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
-                  <ArrowDownRight className="w-4 h-4" />
-                  {t('careerGrowth.biggestRisk')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm font-medium">{analysis.insightSummary.biggestUnresolvedRisk}</p>
-                {analysis.insightSummary.persistentGaps?.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {analysis.insightSummary.persistentGaps.map((item, i) => (
-                      <li key={i} className="text-xs text-amber-600 flex gap-1.5">
-                        <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardContent className="p-0">
+              <div className="grid md:grid-cols-2 divide-x divide-border">
+                <div className="p-5">
+                  <h4 className="text-sm font-medium flex items-center gap-2 text-primary mb-3">
+                    <ArrowUpRight className="w-4 h-4" />
+                    {t('careerGrowth.biggestChange')}
+                  </h4>
+                  <p className="text-sm font-medium">{analysis.insightSummary.biggestPositiveChange}</p>
+                  {analysis.insightSummary.keyImprovements?.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {analysis.insightSummary.keyImprovements.map((item, i) => (
+                        <li key={i} className="text-xs text-primary/80 flex gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 mt-0.5 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="p-5">
+                  <h4 className="text-sm font-medium flex items-center gap-2 text-muted-foreground mb-3">
+                    <ArrowDownRight className="w-4 h-4" />
+                    {t('careerGrowth.biggestRisk')}
+                  </h4>
+                  <p className="text-sm font-medium">{analysis.insightSummary.biggestUnresolvedRisk}</p>
+                  {analysis.insightSummary.persistentGaps?.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {analysis.insightSummary.persistentGaps.map((item, i) => (
+                        <li key={i} className="text-xs text-muted-foreground flex gap-1.5">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Competency Line Chart */}
@@ -407,101 +402,84 @@ export function CareerGrowthPanel({ jobs }: CareerGrowthPanelProps) {
           </Card>
         )}
 
-        {/* Competency Trends Table */}
+        {/* Competency Trends — Open Section */}
         {analysis?.competencyTrends && analysis.competencyTrends.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                {t('careerGrowth.trendDetails')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analysis.competencyTrends.map((trend, i) => (
-                  <div 
-                    key={i} 
-                    className={cn(
-                      "p-4 rounded-lg border",
-                      getTrendColor(trend.trend)
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {getTrendIcon(trend.trend)}
-                        <span className="font-medium">{trend.competency}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {getTrendLabel(trend.trend)}
-                        </Badge>
-                        <span className="text-sm font-medium">
-                          {trend.delta > 0 ? '+' : ''}{trend.delta.toFixed(1)}
-                        </span>
-                      </div>
+          <div className="border-l-2 border-l-primary/30 pl-5 space-y-4">
+            <h3 className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              {t('careerGrowth.trendDetails')}
+            </h3>
+            <div className="space-y-3">
+              {analysis.competencyTrends.map((trend, i) => (
+                <div 
+                  key={i} 
+                  className={cn(
+                    "p-4 rounded-lg border",
+                    getTrendColor(trend.trend)
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {getTrendIcon(trend.trend)}
+                      <span className="font-medium">{trend.competency}</span>
                     </div>
-                    <p className="text-sm opacity-80">{trend.interpretation}</p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {getTrendLabel(trend.trend)}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {trend.delta > 0 ? '+' : ''}{trend.delta.toFixed(1)}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <p className="text-sm opacity-80">{trend.interpretation}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* Next Growth Priorities */}
+        {/* Next Growth Priorities — Open Section */}
         {analysis?.nextGrowthPriorities && analysis.nextGrowthPriorities.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-amber-500" />
-                {t('careerGrowth.nextPriorities')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analysis.nextGrowthPriorities.map((priority, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
-                    <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-                      priority.expectedImpact === 'high' ? 'bg-red-100 text-red-700' :
-                      priority.expectedImpact === 'medium' ? 'bg-amber-100 text-amber-700' :
-                      'bg-gray-100 text-gray-700'
-                    )}>
-                      {i + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{priority.focusArea}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{priority.reason}</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      {getImpactLabel(priority.expectedImpact)}
-                    </Badge>
+          <div className="border-l-2 border-l-muted-foreground/30 pl-5 space-y-4">
+            <h3 className="text-base font-semibold flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-primary" />
+              {t('careerGrowth.nextPriorities')}
+            </h3>
+            <div className="space-y-3">
+              {analysis.nextGrowthPriorities.map((priority, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-primary/10 text-primary">
+                    {i + 1}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{priority.focusArea}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{priority.reason}</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {getImpactLabel(priority.expectedImpact)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* Stable Advantages */}
+        {/* Stable Advantages — Inline badges */}
         {analysis?.insightSummary?.stableAdvantages?.length > 0 && (
-          <Card className="border-blue-200 bg-blue-50/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
-                <CheckCircle2 className="w-4 h-4" />
-                {t('careerGrowth.stableAdvantages')} ({t('careerGrowth.keepingStrong')})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {analysis.insightSummary.stableAdvantages.map((item, i) => (
-                  <Badge key={i} variant="secondary" className="text-blue-700 bg-blue-100">
-                    {item}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium flex items-center gap-2 text-primary">
+              <CheckCircle2 className="w-4 h-4" />
+              {t('careerGrowth.stableAdvantages')} ({t('careerGrowth.keepingStrong')})
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {analysis.insightSummary.stableAdvantages.map((item, i) => (
+                <Badge key={i} variant="default">
+                  {item}
+                </Badge>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </ScrollArea>
