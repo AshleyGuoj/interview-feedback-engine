@@ -1,65 +1,47 @@
 
 
-# Career Growth 加载状态优化 — 卡片式步骤动画
+# Career Growth 加载动画重新设计 — 简洁环形进度 + 步骤指示
 
-## 目标
+## 问题
 
-替换当前简单的旋转图标加载状态，改为一个更新颖的「卡片式步骤」动画，与 Timeline 的纵向列表式加载做出视觉区分。
+当前的横向 4 格卡片式加载看起来不够精致，格子太小、文字挤在一起，整体视觉不够优雅。
 
-## 设计理念
+## 新方案：环形脉冲 + 纵向步骤列表
 
-Timeline 用的是**纵向文字列表逐行高亮**。Career Growth 改用**横向 4 格卡片依次激活**的布局，每个卡片包含图标 + 标签，当前激活卡片有品牌色发光效果和缩放动画，整体更具「仪表盘分析」的感觉。
+采用一种更干净的设计：顶部是一个带品牌色光晕的圆形图标（类似呼吸灯效果），下方是简洁的纵向步骤列表，但每个步骤前带有圆形数字指示器（1/2/3/4），用颜色和动画区分状态。与 Timeline 的纯文字列表形成差异。
 
 ```text
-Timeline（已有）:            Career Growth（新方案）:
-  · Scanning history           ┌────┐ ┌────┐ ┌────┐ ┌────┐
-  · Detecting signals          │ 📄 │ │ 🧠 │ │ 📈 │ │ ✨ │
-  · Mapping momentum           │收集│ │趋势│ │轨迹│ │洞察│
-  · Composing insights         └────┘ └────┘ └────┘ └────┘
-                                 ▲ active (glow + scale)
+          ╭─────╮
+          │  📈 │  ← 品牌色圆形 + 外圈光晕呼吸动画
+          ╰─────╯
+    Analyzing Your Career Growth
+
+    ① Collecting interview data      ✓
+    ② Analyzing competency trends    ← 当前（脉冲）
+    ③ Mapping growth trajectory
+    ④ Composing growth insights
+
+    ━━━━━━━━━━━━━━━░░░░░░  50%
+
+    This usually takes 15-30 seconds
 ```
 
 ## 改动
 
-### 1. `src/components/analytics/CareerGrowthPanel.tsx`（lines 261-272）
+### 1. `src/components/analytics/CareerGrowthPanel.tsx`（lines 283-346）
 
-替换 loading 状态为新的多步骤动画：
+替换当前的 grid 卡片布局为新设计：
 
-- 外层保持 `h-full flex items-center justify-center p-6`，确保垂直居中
-- 内层使用 `rounded-xl border bg-card py-16 w-full max-w-lg` 的卡片容器
-- 顶部：品牌色图标 + 标题文字
-- 中间：4 个步骤格子横向排列（`grid grid-cols-4 gap-3`），每个格子显示图标和标签
-  - 当前激活步骤：`bg-primary/10 border-primary/30 text-primary scale-105` + 图标 `animate-bounce`
-  - 已完成步骤：`bg-muted/50 text-muted-foreground` + 小对勾标记
-  - 未到达步骤：`bg-muted/20 text-muted-foreground/40`
-- 底部：连续进度条 + 提示文字
-- 使用 `useState` + `useEffect` + `setInterval`（2.5s）轮换步骤
-- 所有过渡使用 `transition-all duration-500` 实现平滑切换
+- 顶部图标区：`w-14 h-14 rounded-full bg-primary/10` 包裹 `LineChart` 图标，外层加一个 `animate-ping` 的半透明圆圈做呼吸光晕
+- 标题文字保持居中
+- 步骤列表改为纵向排列，每行左侧是圆形数字指示器（`w-6 h-6 rounded-full`），右侧是文字
+  - 已完成：指示器为 `bg-primary text-primary-foreground` + 显示对勾图标
+  - 当前激活：指示器为 `border-2 border-primary` + 数字 `animate-pulse`，文字为 `text-foreground font-medium`
+  - 未到达：指示器为 `border border-border`，文字为 `text-muted-foreground/40`
+- 进度条改为 `h-1 bg-primary/30 rounded-full`，更柔和
+- 去掉 `animate-bounce`，改用 `animate-pulse` 更优雅
+- 整体间距调大（`gap-8`），让布局更透气
 
-### 2. `src/lib/i18n/locales/en.ts`
+### 2. 不需要修改 i18n 文件
 
-在 `careerGrowth` 下添加：
-
-| Key | Value |
-|---|---|
-| `loadingTitle` | Analyzing Your Career Growth |
-| `loading_collectData` | Collecting Data |
-| `loading_analyzeTrends` | Analyzing Trends |
-| `loading_mapGrowth` | Mapping Growth |
-| `loading_composeInsights` | Composing Insights |
-| `loadingHint` | This usually takes 15-30 seconds |
-
-### 3. `src/lib/i18n/locales/zh.ts`
-
-在 `careerGrowth` 下添加：
-
-| Key | Value |
-|---|---|
-| `loadingTitle` | 正在分析你的职业成长 |
-| `loading_collectData` | 收集数据 |
-| `loading_analyzeTrends` | 分析趋势 |
-| `loading_mapGrowth` | 计算轨迹 |
-| `loading_composeInsights` | 生成洞察 |
-| `loadingHint` | 通常需要 15-30 秒 |
-
-不涉及其他文件变更。
+已有的翻译键足够使用，无需新增。
