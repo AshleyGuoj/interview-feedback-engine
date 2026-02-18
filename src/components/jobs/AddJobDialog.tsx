@@ -169,7 +169,7 @@ export function AddJobDialog({ onAdd }: AddJobDialogProps) {
                     className={cn(
                       'w-6 h-6 transition-colors',
                       level <= formData.interestLevel
-                        ? 'fill-amber-400 text-amber-400'
+                        ? 'fill-primary text-primary'
                         : 'text-muted-foreground'
                     )}
                   />

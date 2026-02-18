@@ -41,12 +41,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
     return tags;
   }, [job.riskTags, hasLongSilence]);
 
-  const locationColors: Record<string, string> = {
-    CN: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-    US: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    Remote: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    Other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-  };
+  const locationClass = 'bg-muted text-muted-foreground';
 
   return (
     <Card
@@ -76,7 +71,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
           <div className="flex flex-col items-end gap-1 shrink-0">
             <Badge 
               variant="secondary" 
-              className={cn('text-xs font-medium', locationColors[job.location])}
+              className={cn('text-xs font-medium', locationClass)}
             >
               {job.location}
             </Badge>

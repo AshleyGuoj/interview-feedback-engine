@@ -50,7 +50,7 @@ export default function JobBoard() {
       const statusMessages: Record<JobStatus, string> = {
         applied: 'Application submitted',
         interviewing: 'Moved to interviewing',
-        offer: 'Received offer! 🎉',
+        offer: 'Received offer',
         closed: 'Position closed',
       };
       
@@ -69,7 +69,7 @@ export default function JobBoard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">{t('jobs.title')}</h1>
+            <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-tight text-foreground">{t('jobs.title')}</h1>
             <p className="text-muted-foreground mt-1">
               {t('jobs.subtitle', { count: jobs.length })}
             </p>
