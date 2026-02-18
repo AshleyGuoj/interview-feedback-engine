@@ -6,102 +6,113 @@
 
 @layer base {
   :root {
-    --background: 220 18% 97%;
-    --foreground: 225 25% 12%;
+    /* Canvas — faint cool violet tint, not pure gray */
+    --background: 232 18% 97%;
+    --foreground: 230 22% 11%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 225 25% 12%;
+    /* Cards — warm white with barely-there violet */
+    --card: 240 10% 99.5%;
+    --card-foreground: 230 22% 11%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 225 25% 12%;
+    --popover: 240 10% 99.5%;
+    --popover-foreground: 230 22% 11%;
 
-    --primary: 228 40% 38%;
+    /* Brand — muted indigo, not bright purple */
+    --primary: 232 36% 36%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 16% 94%;
-    --secondary-foreground: 225 25% 12%;
+    --secondary: 232 14% 94%;
+    --secondary-foreground: 230 22% 11%;
 
-    --muted: 220 16% 94%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 232 12% 93.5%;
+    --muted-foreground: 230 8% 44%;
 
-    --accent: 228 40% 38%;
+    --accent: 232 36% 36%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    /* Semantic — muted, non-traffic-light */
+    --destructive: 355 50% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 36%;
+    --success: 158 30% 38%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 80% 50%;
+    --warning: 35 55% 48%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
-    --ring: 228 40% 38%;
+    --border: 232 12% 90%;
+    --input: 232 12% 90%;
+    --ring: 232 36% 36%;
 
     --radius: 0.625rem;
 
-    /* Shadows — soft, layered */
-    --shadow-sm: 0 1px 2px 0 hsl(225 20% 20% / 0.04);
-    --shadow-md: 0 2px 8px -2px hsl(225 20% 20% / 0.08), 0 1px 3px hsl(225 20% 20% / 0.04);
-    --shadow-lg: 0 8px 24px -6px hsl(225 20% 20% / 0.1), 0 2px 6px hsl(225 20% 20% / 0.04);
-    --shadow-xl: 0 16px 40px -8px hsl(225 20% 20% / 0.12), 0 4px 12px hsl(225 20% 20% / 0.04);
+    /* Brand tint surfaces — barely noticeable cool violet wash */
+    --surface-insight: 235 25% 96%;
+    --surface-elevated: 232 16% 98%;
 
-    /* Sidebar — slightly darker than canvas */
-    --sidebar-background: 225 20% 95%;
-    --sidebar-foreground: 225 15% 30%;
-    --sidebar-primary: 228 40% 38%;
+    /* Shadows — warm-cool balanced */
+    --shadow-sm: 0 1px 2px 0 hsl(232 18% 20% / 0.04);
+    --shadow-md: 0 2px 8px -2px hsl(232 18% 20% / 0.07), 0 1px 3px hsl(232 18% 20% / 0.03);
+    --shadow-lg: 0 8px 24px -6px hsl(232 18% 20% / 0.09), 0 2px 6px hsl(232 18% 20% / 0.03);
+    --shadow-xl: 0 16px 40px -8px hsl(232 18% 20% / 0.11), 0 4px 12px hsl(232 18% 20% / 0.03);
+
+    /* Sidebar — cooler, slightly darker */
+    --sidebar-background: 232 16% 95%;
+    --sidebar-foreground: 232 12% 32%;
+    --sidebar-primary: 232 36% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 18% 91%;
-    --sidebar-accent-foreground: 225 25% 12%;
-    --sidebar-border: 220 14% 89%;
-    --sidebar-ring: 228 40% 38%;
+    --sidebar-accent: 232 14% 91%;
+    --sidebar-accent-foreground: 230 22% 11%;
+    --sidebar-border: 232 12% 89%;
+    --sidebar-ring: 232 36% 36%;
   }
 
   .dark {
-    --background: 225 25% 6%;
-    --foreground: 220 18% 95%;
+    --background: 232 22% 6%;
+    --foreground: 230 14% 94%;
 
-    --card: 225 22% 9%;
-    --card-foreground: 220 18% 95%;
+    --card: 232 20% 9%;
+    --card-foreground: 230 14% 94%;
 
-    --popover: 225 22% 9%;
-    --popover-foreground: 220 18% 95%;
+    --popover: 232 20% 9%;
+    --popover-foreground: 230 14% 94%;
 
-    --primary: 228 45% 58%;
-    --primary-foreground: 225 25% 6%;
+    --primary: 232 40% 56%;
+    --primary-foreground: 232 22% 6%;
 
-    --secondary: 225 18% 14%;
-    --secondary-foreground: 220 18% 95%;
+    --secondary: 232 16% 14%;
+    --secondary-foreground: 230 14% 94%;
 
-    --muted: 225 18% 14%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 232 16% 14%;
+    --muted-foreground: 230 8% 52%;
 
-    --accent: 228 45% 58%;
-    --accent-foreground: 225 25% 6%;
+    --accent: 232 40% 56%;
+    --accent-foreground: 232 22% 6%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 355 45% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 55% 42%;
+    --success: 158 28% 42%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 75% 52%;
+    --warning: 35 48% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 225 18% 16%;
-    --input: 225 18% 16%;
-    --ring: 228 45% 58%;
+    --border: 232 16% 16%;
+    --input: 232 16% 16%;
+    --ring: 232 40% 56%;
 
-    --sidebar-background: 225 25% 5%;
-    --sidebar-foreground: 220 14% 75%;
-    --sidebar-primary: 228 45% 58%;
-    --sidebar-primary-foreground: 225 25% 6%;
-    --sidebar-accent: 225 18% 12%;
-    --sidebar-accent-foreground: 220 18% 95%;
-    --sidebar-border: 225 18% 14%;
-    --sidebar-ring: 228 45% 58%;
+    --surface-insight: 232 22% 10%;
+    --surface-elevated: 232 18% 8%;
+
+    --sidebar-background: 232 22% 5%;
+    --sidebar-foreground: 230 10% 70%;
+    --sidebar-primary: 232 40% 56%;
+    --sidebar-primary-foreground: 232 22% 6%;
+    --sidebar-accent: 232 16% 12%;
+    --sidebar-accent-foreground: 230 14% 94%;
+    --sidebar-border: 232 16% 14%;
+    --sidebar-ring: 232 40% 56%;
   }
 }
 
@@ -116,12 +127,20 @@
 }
 
 @layer utilities {
+  .surface-insight {
+    background-color: hsl(var(--surface-insight));
+  }
+
+  .surface-elevated {
+    background-color: hsl(var(--surface-elevated));
+  }
+
   .shadow-glow {
-    box-shadow: 0 0 16px hsl(228 40% 38% / 0.15);
+    box-shadow: 0 0 16px hsl(232 36% 36% / 0.12);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(228 40% 38%) 0%, hsl(228 50% 50%) 100%);
+    background: linear-gradient(135deg, hsl(232 36% 36%) 0%, hsl(232 44% 48%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
