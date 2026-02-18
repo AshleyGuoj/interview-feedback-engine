@@ -259,7 +259,16 @@ export default function Auth() {
                 Verify Code
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                Don't have a code? Try the demo above to explore OfferMind.
+                Interested in early access?{' '}
+                <a
+                  href="https://www.linkedin.com/in/jiaqi-guo-02ba0329b/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Connect on LinkedIn
+                </a>{' '}
+                to request an invitation.
               </p>
             </div>
           ) : (
