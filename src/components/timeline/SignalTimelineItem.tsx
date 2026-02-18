@@ -1,8 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { TimelineItem, SIGNAL_TYPE_CONFIG } from '@/types/career-signals';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Star, Zap, Activity, Minus, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -11,21 +8,12 @@ interface SignalTimelineItemProps {
   isFirst?: boolean;
 }
 
-const iconMap = {
-  star: Star,
-  zap: Zap,
-  activity: Activity,
-  minus: Minus,
-};
-
 export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
   const { t, i18n } = useTranslation();
   const config = SIGNAL_TYPE_CONFIG[item.type];
-  const Icon = iconMap[config.icon as keyof typeof iconMap] || Activity;
   const isTurningPoint = item.type === 'turning_point';
   const isEnglish = i18n.language === 'en';
 
-  // Get localized signal type label
   const getSignalLabel = () => {
     switch (item.type) {
       case 'turning_point': return t('timeline.turningPoint');
@@ -36,7 +24,6 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
     }
   };
 
-  // Get localized confidence label
   const getConfidenceLabel = () => {
     switch (item.confidence) {
       case 'high': return t('timeline.highConfidence');
@@ -46,76 +33,66 @@ export function SignalTimelineItem({ item, isFirst }: SignalTimelineItemProps) {
     }
   };
 
+  // Dot color based on signal type — muted palette
+  const dotColor = cn(
+    'w-2 h-2 rounded-full shrink-0',
+    isTurningPoint && 'bg-foreground',
+    item.type === 'strong_signal' && 'bg-foreground/70',
+    item.type === 'medium_signal' && 'bg-foreground/40',
+    item.type === 'weak_signal' && 'bg-foreground/20',
+  );
+
   return (
-    <div className="relative pl-10">
-      {/* Timeline connector */}
-      <div className={cn(
-        'absolute left-3 top-6 w-0.5 h-full',
-        isFirst ? 'bg-gradient-to-b from-primary/50 to-border' : 'bg-border'
-      )} />
+    <div className="relative pl-8">
+      {/* Timeline spine — monochrome */}
+      <div className="absolute left-[5px] top-5 w-px h-full bg-border" />
       
-      {/* Signal dot */}
-      <div className={cn(
-        'absolute left-0 top-3 w-7 h-7 rounded-full flex items-center justify-center',
-        'border-2 bg-background z-10',
-        isTurningPoint && 'border-amber-500 ring-2 ring-amber-200 dark:ring-amber-900/50',
-        item.type === 'strong_signal' && 'border-primary',
-        item.type === 'medium_signal' && 'border-blue-500',
-        item.type === 'weak_signal' && 'border-muted-foreground/50',
-      )}>
-        <Icon className={cn('w-3.5 h-3.5', config.color)} />
+      {/* Signal dot — minimal */}
+      <div className="absolute left-0 top-[10px] w-3 h-3 flex items-center justify-center z-10">
+        <div className={dotColor} />
       </div>
 
-      <Card className={cn(
-        'transition-all hover:shadow-md',
-        isTurningPoint && 'ring-1 ring-amber-300 dark:ring-amber-700',
+      <div className={cn(
+        'rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/30',
+        isTurningPoint && 'border-foreground/15',
       )}>
-        <CardContent className="p-4">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge className={cn('text-xs', config.bgColor, config.color)}>
-                  {getSignalLabel()}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(item.date), 'yyyy/MM/dd')}
-                </span>
-                {item.confidence === 'high' && (
-                  <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-300">
-                    {getConfidenceLabel()}
-                  </Badge>
-                )}
-              </div>
-              <h3 className={cn(
-                'font-semibold',
-                isTurningPoint && 'text-amber-700 dark:text-amber-400'
-              )}>
-                {item.title}
-              </h3>
-            </div>
-          </div>
-
-          {/* Context */}
-          {(item.context.company || item.context.role) && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-              <Building2 className="w-3.5 h-3.5" />
-              <span>
-                {item.context.company}
-                {item.context.role && ` · ${item.context.role}`}
+        {/* Header */}
+        <div className="flex items-baseline justify-between gap-3 mb-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              {getSignalLabel()}
+            </span>
+            {item.confidence === 'high' && (
+              <span className="text-[10px] text-muted-foreground/60">
+                · {getConfidenceLabel()}
               </span>
-            </div>
-          )}
-
-          {/* Signal Summary */}
-          <div className="space-y-2 text-sm">
-            <p className="text-foreground">{item.signalSummary}</p>
-            <p className="text-muted-foreground italic">
-              💡 {item.whyItMatters}
-            </p>
+            )}
           </div>
-        </CardContent>
-      </Card>
+          <span className="text-[11px] text-muted-foreground tabular-nums">
+            {format(new Date(item.date), 'yyyy/MM/dd')}
+          </span>
+        </div>
+
+        <h3 className="text-[14px] font-semibold text-foreground mb-1">
+          {item.title}
+        </h3>
+
+        {/* Context */}
+        {(item.context.company || item.context.role) && (
+          <p className="text-[12px] text-muted-foreground mb-2.5">
+            {item.context.company}
+            {item.context.role && ` · ${item.context.role}`}
+          </p>
+        )}
+
+        {/* Signal content */}
+        <div className="space-y-1.5">
+          <p className="text-[13px] text-foreground/90 leading-relaxed">{item.signalSummary}</p>
+          <p className="text-[12px] text-muted-foreground leading-relaxed">
+            {item.whyItMatters}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

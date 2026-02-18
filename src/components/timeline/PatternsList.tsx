@@ -1,25 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { CareerPattern, RISK_LEVEL_CONFIG } from '@/types/career-signals';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Radar, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PatternsListProps {
   patterns: CareerPattern[];
 }
 
-const riskIconMap = {
-  low: CheckCircle2,
-  medium: AlertCircle,
-  high: AlertTriangle,
-};
-
 export function PatternsList({ patterns }: PatternsListProps) {
-  const { t, i18n } = useTranslation();
-  const isEnglish = i18n.language === 'en';
+  const { t } = useTranslation();
 
-  // Get localized risk level label
   const getRiskLabel = (riskLevel: 'low' | 'medium' | 'high') => {
     switch (riskLevel) {
       case 'low': return t('timeline.riskLow');
@@ -29,51 +18,44 @@ export function PatternsList({ patterns }: PatternsListProps) {
     }
   };
 
-  if (patterns.length === 0) {
-    return null;
-  }
+  if (patterns.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Radar className="w-4 h-4 text-primary" />
+    <div className="rounded-xl border border-border bg-card">
+      <div className="px-5 pt-5 pb-3">
+        <h3 className="text-[13px] font-medium text-muted-foreground uppercase tracking-wide">
           {t('timeline.patternsDiscovered')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+        </h3>
+      </div>
+      <div className="px-5 pb-5 space-y-3">
         {patterns.map((pattern, index) => {
-          const config = RISK_LEVEL_CONFIG[pattern.riskLevel];
-          const RiskIcon = riskIconMap[pattern.riskLevel];
-          
+          const riskDot = cn(
+            'w-1.5 h-1.5 rounded-full shrink-0 mt-[7px]',
+            pattern.riskLevel === 'high' && 'bg-destructive/60',
+            pattern.riskLevel === 'medium' && 'bg-warning/60',
+            pattern.riskLevel === 'low' && 'bg-success/60',
+          );
+
           return (
-            <div 
-              key={index}
-              className={cn(
-                'p-3 rounded-lg border',
-                pattern.riskLevel === 'high' && 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20',
-                pattern.riskLevel === 'medium' && 'border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20',
-                pattern.riskLevel === 'low' && 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20',
-              )}
-            >
-              <div className="flex items-start gap-2">
-                <RiskIcon className={cn('w-4 h-4 mt-0.5 shrink-0', config.color)} />
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{pattern.pattern}</span>
-                    <Badge variant="outline" className={cn('text-xs', config.color)}>
-                      {t('timeline.riskLevel')}: {getRiskLabel(pattern.riskLevel)}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {pattern.evidence}
-                  </p>
+            <div key={index} className="flex items-start gap-3 py-2">
+              <div className={riskDot} />
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[13px] font-medium text-foreground">
+                    {pattern.pattern}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground/60">
+                    {getRiskLabel(pattern.riskLevel)}
+                  </span>
                 </div>
+                <p className="text-[12px] text-muted-foreground leading-relaxed">
+                  {pattern.evidence}
+                </p>
               </div>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
