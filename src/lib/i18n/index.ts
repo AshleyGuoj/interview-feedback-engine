@@ -8,7 +8,7 @@ const LANGUAGE_KEY = 'offermind-language';
 // Get saved language or default to English
 const getSavedLanguage = (): string => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem(LANGUAGE_KEY) || 'en';
+    return localStorage.getItem(LANGUAGE_KEY) || 'zh';
   }
   return 'en';
 };

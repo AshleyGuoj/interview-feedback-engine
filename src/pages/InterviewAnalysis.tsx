@@ -41,6 +41,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { TranscriptInput } from '@/components/interview/TranscriptInput';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const QUALITY_CONFIG = {
   high: { label: '回答优秀', color: 'text-primary bg-primary/5 border-primary/20', icon: CheckCircle2 },
@@ -53,6 +54,7 @@ export default function InterviewAnalysis() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { jobs, updateJob } = useJobs();
+  const { language } = useLanguage();
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<TranscriptAnalysisResult | null>(null);
@@ -104,6 +106,7 @@ export default function InterviewAnalysis() {
       const { data, error } = await supabase.functions.invoke('analyze-transcript', {
         body: { 
           transcript, 
+          language,
           context: {
             company: job.companyName,
             role: job.roleTitle,

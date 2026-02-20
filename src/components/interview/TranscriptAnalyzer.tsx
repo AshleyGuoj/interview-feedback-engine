@@ -29,6 +29,7 @@ import {
   TranscriptAnalysisResult,
   TranscriptAnalysisContext 
 } from '@/types/transcript-analysis';
+import { useLanguage } from '@/hooks/useLanguage';
 import { InterviewQuestion, InterviewReflection } from '@/types/job';
 import {
   Collapsible,
@@ -55,6 +56,7 @@ export function TranscriptAnalyzer({
   onReflectionGenerated,
   onClose 
 }: TranscriptAnalyzerProps) {
+  const { language } = useLanguage();
   const [transcript, setTranscript] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<TranscriptAnalysisResult | null>(null);
@@ -71,7 +73,7 @@ export function TranscriptAnalyzer({
     
     try {
       const { data, error } = await supabase.functions.invoke('analyze-transcript', {
-        body: { transcript, context },
+        body: { transcript, context, language },
       });
 
       if (error) {
