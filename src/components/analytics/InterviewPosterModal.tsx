@@ -29,6 +29,8 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
 
+  const [isSlicing, setIsSlicing] = useState(false);
+
   const generateImage = async (): Promise<string> => {
     if (!posterRef.current) throw new Error('Poster ref not found');
     return await toPng(posterRef.current, {
@@ -55,6 +57,88 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
     }
   };
 
+  const handleDownloadSliced = async () => {
+    setIsSlicing(true);
+    try {
+      const dataUrl = await generateImage();
+
+      // Load the full poster image
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = dataUrl;
+      });
+
+      const fullWidth = img.naturalWidth;
+      const fullHeight = img.naturalHeight;
+
+      // 3:4 ratio page height (matching 1242×1660 Xiaohongshu standard)
+      const pageHeight = Math.floor(fullWidth * (1660 / 1242));
+      const totalPages = Math.ceil(fullHeight / pageHeight);
+
+      const downloadBlob = (blob: Blob, filename: string) =>
+        new Promise<void>((resolve) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+            resolve();
+          }, 100);
+        });
+
+      for (let i = 0; i < totalPages; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = fullWidth;
+        canvas.height = pageHeight;
+        const ctx = canvas.getContext('2d')!;
+
+        // White background (prevents black fill on last page)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, fullWidth, pageHeight);
+
+        const srcY = i * pageHeight;
+        const srcH = Math.min(pageHeight, fullHeight - srcY);
+        ctx.drawImage(img, 0, srcY, fullWidth, srcH, 0, 0, fullWidth, srcH);
+
+        // Page number badge (bottom-right)
+        const badge = `${i + 1} / ${totalPages}`;
+        const badgePad = 10;
+        const badgeFontSize = Math.round(fullWidth * 0.035);
+        ctx.font = `600 ${badgeFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        const badgeW = ctx.measureText(badge).width + badgePad * 2.5;
+        const badgeH = badgeFontSize + badgePad * 1.5;
+        const badgeX = fullWidth - badgeW - badgePad * 1.5;
+        const badgeY = pageHeight - badgeH - badgePad * 1.5;
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, badgeFontSize / 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badge, badgeX + badgePad * 1.25, badgeY + badgeH / 2);
+
+        const blob = await new Promise<Blob>((resolve, reject) =>
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png')
+        );
+
+        await downloadBlob(blob, `面试复盘-${job.companyName}-${i + 1}.png`);
+        // Small delay between downloads for browser compatibility
+        if (i < totalPages - 1) await new Promise((r) => setTimeout(r, 200));
+      }
+
+      toast.success(`已下载 ${totalPages} 张图片，可直接上传到小红书 🎉`);
+    } catch (err) {
+      console.error(err);
+      toast.error('分割下载失败，请重试');
+    } finally {
+      setIsSlicing(false);
+    }
+  };
+
   const handleCopy = async () => {
     setIsCopying(true);
     try {
@@ -71,27 +155,41 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
     }
   };
 
+  const anyLoading = isDownloading || isSlicing || isCopying;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[480px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>生成分享海报</DialogTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            小红书版会将长图自动切割为 3:4 竖版，可直接多图上传 📕
+          </p>
         </DialogHeader>
 
         {/* Action buttons */}
-        <div className="flex gap-2 shrink-0">
-          <Button onClick={handleDownload} disabled={isDownloading || isCopying} className="gap-2 flex-1">
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          <Button onClick={handleDownload} disabled={anyLoading} className="gap-2 flex-1 min-w-[100px]">
             {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            下载图片
+            下载长图
           </Button>
-          <Button variant="outline" onClick={handleCopy} disabled={isDownloading || isCopying} className="gap-2 flex-1">
+          <Button
+            variant="outline"
+            onClick={handleDownloadSliced}
+            disabled={anyLoading}
+            className="gap-2 flex-1 min-w-[140px] border-rose-300 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+          >
+            {isSlicing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            下载小红书版
+          </Button>
+          <Button variant="outline" onClick={handleCopy} disabled={anyLoading} className="gap-2 flex-1 min-w-[100px]">
             {isCopying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
             复制图片
           </Button>
         </div>
 
         {/* Poster preview */}
-        <div className="overflow-y-auto flex-1 rounded-lg border bg-gray-50 p-2">
+        <div className="overflow-y-auto flex-1 rounded-lg border bg-muted/30 p-2">
           <PosterContent ref={posterRef} job={job} stage={stage} t={t} />
         </div>
       </DialogContent>
