@@ -1087,20 +1087,56 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {[
-              { emoji: '📊', title: '面试级分析', desc: 'AI 提取问题、分类题型、评分引用原话为证' },
-              { emoji: '🔍', title: '岗位级洞察', desc: '多轮信号聚合 · 能力热力图 · 录用/风险预判' },
-              { emoji: '📈', title: '职业级成长', desc: '跨公司追踪能力趋势 · 找到真正的转折点' },
-              { emoji: '🎯', title: '职业信号时间线', desc: '从混乱记录里筛出改变轨迹的关键时刻' },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                ),
+                title: '面试级分析', desc: 'AI 提取问题、分类题型、评分引用原话为证'
+              },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                ),
+                title: '岗位级洞察', desc: '多轮信号聚合 · 能力热力图 · 录用/风险预判'
+              },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                  </svg>
+                ),
+                title: '职业级成长', desc: '跨公司追踪能力趋势 · 找到真正的转折点'
+              },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                ),
+                title: '职业信号时间线', desc: '从混乱记录里筛出改变轨迹的关键时刻'
+              },
             ].map((item) => (
               <div key={item.title} style={{
-                backgroundColor: 'rgba(255,255,255,0.65)',
+                backgroundColor: 'rgba(255,255,255,0.72)',
                 borderRadius: '8px',
                 padding: '8px 10px',
                 display: 'flex',
                 gap: '7px',
                 alignItems: 'flex-start',
+                border: '1px solid rgba(199,210,254,0.5)',
               }}>
-                <span style={{ fontSize: '15px', lineHeight: 1 }}>{item.emoji}</span>
+                <div style={{
+                  width: '22px', height: '22px', borderRadius: '6px',
+                  backgroundColor: 'rgba(99,102,241,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0, marginTop: '1px',
+                }}>
+                  {item.icon}
+                </div>
                 <div>
                   <p style={{ fontSize: '11px', fontWeight: 700, color: '#312e81', margin: '0 0 2px' }}>{item.title}</p>
                   <p style={{ fontSize: '10px', color: '#6b7280', margin: 0, lineHeight: 1.4 }}>{item.desc}</p>
