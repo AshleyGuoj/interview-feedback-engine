@@ -25,10 +25,19 @@ function collectSafeCuts(el: HTMLDivElement, pixelRatio: number): number[] {
   return cuts.sort((a, b) => a - b);
 }
 
-function snapToCut(idealY: number, safeCuts: number[], maxOverlap: number): number {
+function snapToCut(idealY: number, safeCuts: number[], maxOverlap: number, fullHeight: number): number {
+  // If we're within one page of the end, just take the rest — avoid a tiny orphan slice
+  if (fullHeight - idealY < maxOverlap * 0.5) return fullHeight;
+
   const below = safeCuts.filter(c => c <= idealY);
   if (below.length === 0) return idealY;
   const best = below[below.length - 1];
+
+  // If snapping back would leave a very small trailing slice (< 15% of pageHeight),
+  // skip this cut and let the ideal boundary stand — the next iteration will snap properly.
+  const remaining = fullHeight - best;
+  if (remaining > 0 && remaining < maxOverlap * 0.6) return idealY;
+
   if (idealY - best > maxOverlap) return idealY;
   return best;
 }
@@ -377,7 +386,7 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
       let sliceY = 0;
       while (sliceY < fullHeight) {
         const idealEnd = sliceY + pageHeight;
-        const snappedEnd = snapToCut(idealEnd, safeCuts, pageHeight * 0.25);
+        const snappedEnd = snapToCut(idealEnd, safeCuts, pageHeight * 0.25, fullHeight);
         const actualEnd = Math.min(snappedEnd, fullHeight);
         const srcH = actualEnd - sliceY;
         if (srcH <= 0) break;
