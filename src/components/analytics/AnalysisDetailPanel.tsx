@@ -164,6 +164,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
 
       const newReflection: InterviewReflection = {
         overallFeeling: result.reflection.overallFeeling,
+        performanceSummary: result.reflection.performanceSummary,
         whatWentWell: result.reflection.whatWentWell,
         whatCouldImprove: result.reflection.whatCouldImprove,
         keyTakeaways: result.reflection.keyTakeaways,
@@ -263,71 +264,18 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {stage.reflection.whatWentWell?.length > 0 && (
-                  <div className="border-l-2 border-l-[hsl(var(--accent-sage))]/40 pl-4 space-y-1.5">
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[hsl(var(--accent-sage))]/60" />
-                      {t('analysisDetail.whatWentWell')}
-                    </h3>
-                    <ul className="space-y-1.5">
-                      {stage.reflection.whatWentWell.map((item, i) => (
-                        <li key={i} className="text-sm flex items-start gap-2">
-                          <Check className="w-3.5 h-3.5 text-[hsl(var(--accent-sage))]/60 shrink-0 mt-0.5" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {stage.reflection.whatCouldImprove?.length > 0 && (
-                  <div className="border-l-2 border-l-[hsl(var(--accent-rose))]/40 pl-4 space-y-1.5">
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-[hsl(var(--accent-rose))]/60" />
-                      {t('analysisDetail.whatCouldImprove')}
-                    </h3>
-                    <ul className="space-y-1.5">
-                      {stage.reflection.whatCouldImprove.map((item, i) => (
-                        <li key={i} className="text-sm flex items-start gap-2">
-                          <ArrowRight className="w-3.5 h-3.5 text-[hsl(var(--accent-rose))]/60 shrink-0 mt-0.5" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {stage.reflection.keyTakeaways?.length > 0 && (
-                  <div className="rounded-xl bg-[hsl(var(--accent-cool))]/5 p-4 space-y-1.5">
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-primary/60" />
-                      {t('analysisDetail.keyTakeaways')}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {stage.reflection.keyTakeaways.map((item, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {item}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {stage.reflection.interviewerVibe && (
-                  <div className="space-y-1.5">
-                    <h3 className="text-sm font-semibold">{t('analysisDetail.interviewerStyle')}</h3>
-                    <p className="text-sm text-muted-foreground">{stage.reflection.interviewerVibe}</p>
-                  </div>
-                )}
-
-                {stage.reflection.companyInsights && (
-                  <div className="space-y-1.5">
-                    <h3 className="text-sm font-semibold">{t('analysisDetail.companyInsights')}</h3>
-                    <p className="text-sm text-muted-foreground">{stage.reflection.companyInsights}</p>
-                  </div>
-                )}
-              </div>
+              <ReflectionDisplay
+                reflection={{
+                  overallFeeling: stage.reflection.overallFeeling,
+                  performanceSummary: stage.reflection.performanceSummary,
+                  whatWentWell: stage.reflection.whatWentWell ?? [],
+                  whatCouldImprove: stage.reflection.whatCouldImprove ?? [],
+                  keyTakeaways: stage.reflection.keyTakeaways ?? [],
+                  interviewerVibe: stage.reflection.interviewerVibe ?? '',
+                  companyInsights: stage.reflection.companyInsights ?? '',
+                }}
+                t={t}
+              />
             </section>
           )}
 
@@ -630,7 +578,7 @@ function SavedQuestionCard({
 }
 
 // Reflection display component
-function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection; t: (key: string) => string }) {
+function ReflectionDisplay({ reflection, t }: { reflection: ExtractedReflection | (Omit<ExtractedReflection, 'performanceSummary'> & { performanceSummary?: string }); t: (key: string) => string }) {
   return (
     <div className="space-y-4">
       {/* Overall assessment */}
