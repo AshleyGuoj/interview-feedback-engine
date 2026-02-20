@@ -49,6 +49,10 @@ export interface InterviewQuestion {
   wasAsked: boolean; // true if actually asked, false if predicted
   answeredWell?: boolean; // self-assessment
   tags?: string[];
+  // AI-extracted fields (saved from transcript analysis)
+  responseQuality?: 'high' | 'medium' | 'low';
+  evaluationFocus?: string;
+  qualityReasoning?: string;
 }
 
 // Self-reflection after interview

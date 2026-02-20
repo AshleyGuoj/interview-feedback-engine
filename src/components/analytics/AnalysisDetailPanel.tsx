@@ -157,6 +157,9 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
         wasAsked: true,
         answeredWell: q.responseQuality === 'high',
         tags: q.tags,
+        responseQuality: q.responseQuality,
+        evaluationFocus: q.evaluationFocus,
+        qualityReasoning: q.qualityReasoning,
       }));
 
       const newReflection: InterviewReflection = {
@@ -235,35 +238,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
 
               <div className="space-y-3">
                 {stage.questions.map((q, index) => (
-                  <Card key={q.id} className="overflow-hidden">
-                    <div className="flex items-start gap-3 p-4">
-                      <span className="text-sm font-medium text-muted-foreground w-8 shrink-0">
-                        Q{index + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{q.question}</p>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <Badge variant="outline" className="text-xs">
-                            {t(`questionCategory.${q.category}`)}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {t('analysisDetail.difficulty')} {q.difficulty}/5
-                          </span>
-                          {q.answeredWell === true && (
-                            <ThumbsUp className="w-3.5 h-3.5 text-primary" />
-                          )}
-                          {q.answeredWell === false && (
-                            <ThumbsDown className="w-3.5 h-3.5 text-muted-foreground" />
-                          )}
-                        </div>
-                        {q.myAnswer && (
-                          <p className="text-sm text-muted-foreground mt-2 border-t pt-2">
-                            {q.myAnswer}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
+                  <SavedQuestionCard key={q.id} question={q} index={index} t={t} />
                 ))}
               </div>
             </section>
@@ -559,6 +534,86 @@ function QuestionCard({
               <p className="text-sm text-muted-foreground">{question.qualityReasoning}</p>
             </div>
             {question.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {question.tags.map((tag, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
+// Saved question card (mirrors QuestionCard but uses InterviewQuestion type)
+function SavedQuestionCard({
+  question,
+  index,
+  t,
+}: {
+  question: InterviewQuestion;
+  index: number;
+  t: (key: string) => string;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const QUALITY_CONFIG = getQualityConfig(t);
+  const qualityConfig = question.responseQuality ? QUALITY_CONFIG[question.responseQuality] : null;
+  const QualityIcon = qualityConfig?.icon;
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <Card className="overflow-hidden">
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-start gap-3 p-4 hover:bg-muted/30 transition-colors text-left">
+            <span className="text-sm font-medium text-muted-foreground w-8 shrink-0">Q{index + 1}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium line-clamp-2">{question.question}</p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge variant="outline" className="text-xs">
+                  {t(`questionCategory.${question.category}`)}
+                </Badge>
+                {qualityConfig && QualityIcon && (
+                  <Badge variant="outline" className={cn('text-xs', qualityConfig.color)}>
+                    <QualityIcon className="w-3 h-3 mr-1" />
+                    {qualityConfig.label}
+                  </Badge>
+                )}
+                <span className="text-xs text-muted-foreground">{t('analysisDetail.difficulty')} {question.difficulty}/5</span>
+              </div>
+            </div>
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="px-4 pb-4 pt-0 space-y-3 border-t bg-muted/30 ml-8">
+            {question.myAnswer && (
+              <div className="pt-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('interview.whatWorked')}</p>
+                <p className="text-sm">{question.myAnswer}</p>
+              </div>
+            )}
+            {question.evaluationFocus && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('interview.interviewFocus')}</p>
+                <p className="text-sm">{question.evaluationFocus}</p>
+              </div>
+            )}
+            {question.qualityReasoning && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('roleDebrief.reasons')}</p>
+                <p className="text-sm text-muted-foreground">{question.qualityReasoning}</p>
+              </div>
+            )}
+            {question.tags && question.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 pt-1">
                 {question.tags.map((tag, i) => (
                   <Badge key={i} variant="secondary" className="text-xs">
