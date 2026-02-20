@@ -86,7 +86,7 @@ export default function Analytics() {
       if (s.id === selectedStageId) {
         return {
           ...s,
-          questions: [...(s.questions || []), ...questions],
+          questions: questions,
           reflection,
         };
       }
