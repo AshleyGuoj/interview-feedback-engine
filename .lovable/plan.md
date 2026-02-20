@@ -1,139 +1,136 @@
 
-# 功能：海报生成前手动标记敏感内容，打上马赛克
+# 功能升级：文字级别精准马赛克选择
 
-## 核心设计思路
+## 当前实现的局限
 
-由于以下原因，**手动选择（用户点击标记）** 是最合适的方案：
-- AI 自动检测哪些是"敏感信息"逻辑复杂，且容易误判
-- 每个人对"敏感"的定义不同（有人在乎公司名，有人在乎项目细节，有人在乎具体数字）
-- 用户自己点击一下要遮挡的内容，直接、准确、可控
+现在的隐私模式是**整块遮挡**——点击一张题目卡片，整道题目文字都模糊；点击"表现良好"，整个列表都消失。用户的需求是：只遮挡一道题里的某几个字，或者一段复盘里的某个公司项目名词。
 
-**马赛克实现方式**：在海报 DOM 中，被标记的文字替换为一段灰色模糊矩形（`filter: blur(6px)` + 灰色背景），`html-to-image` 会把 CSS blur 完整捕获到图片中，效果与微信截图打码一致。
+## 核心技术方案：文字划选 + 高亮标注
 
-## 用户交互流程
+实现思路分两步：
+
+**Step 1：用户"划选"文字**
+在隐私模式开启时，用户可以像平时选文字一样，在海报预览区域用鼠标拖拽选中某段文字。此时浏览器的 `Selection API`（`window.getSelection()`）会记录选中范围。
+
+**Step 2：把选中范围转为"遮挡片段"**
+当用户松开鼠标，系统读取 `Selection` 对象，记录：
+- 选中文字所在的内容块 ID（如 `question-0`、`reflection-summary`）
+- 选中文字在该块中的起始/结束字符偏移量（`anchorOffset` / `focusOffset`）
+
+然后把对应的文字片段渲染为：**前段正常文字 + 中间遮挡块（blur灰条）+ 后段正常文字**，整段文字在 DOM 中被拆分为三个 `<span>`，中间那段加上 blur 样式。
+
+## 数据结构
+
+```typescript
+interface TextRedaction {
+  blockId: string;     // 'question-0', 'reflection-summary' 等
+  start: number;       // 字符起始偏移
+  end: number;         // 字符结束偏移
+  text: string;        // 被遮挡的原文（用于调试和撤销）
+}
+
+// 状态：多条遮挡记录，可逐条撤销
+const [textRedactions, setTextRedactions] = useState<TextRedaction[]>([]);
+```
+
+## 渲染方式：文字分段 + 行内 blur
+
+每个可遮挡的文本区块（题目文字、复盘段落、列表条目）都用一个辅助组件 `RedactableText` 来渲染：
+
+```
+"金融客户具体的工作流中有哪些需要AI赋能"
+        ↓ 用户划选"金融客户"
+"████ 具体的工作流中有哪些需要AI赋能"
+  ↑ 灰色blur span，宽度与文字等宽
+```
+
+具体 DOM 结构：
+```tsx
+<span>
+  <span>具体的工作流中有哪些需要</span>         {/* 前段 */}
+  <span style={{ filter:'blur(5px)', backgroundColor:'#d1d5db' }}>金融客户</span>  {/* 遮挡 */}
+  <span>AI赋能</span>                              {/* 后段 */}
+</span>
+```
+
+## 交互流程
 
 ```text
-打开「生成海报」弹窗
-        ↓
-弹窗右上角出现「🛡️ 隐私模式」切换开关
-        ↓
-开启后，海报预览中：
-- 每道题目的题目文字旁出现「点击遮挡」提示
-- 复盘各区块（总体评价/表现良好/可改进/核心收获/面试官风格/公司洞察）整块可点击
-        ↓
-用户点击想遮挡的内容 → 该块变为模糊马赛克效果
-再次点击 → 取消遮挡（切换）
-        ↓
-确认无误后，点击下载/复制 → 马赛克会渲染进图片
+开启隐私模式
+      ↓
+海报预览区显示「用鼠标划选文字可打马赛克」提示
+      ↓
+用户在题目或复盘文字上拖拽选中部分词句
+      ↓
+松开鼠标 → 弹出一个小型浮动菜单（Tooltip）
+  [ 🛡️ 打上马赛克 ]  [ 取消 ]
+      ↓
+点击「打上马赛克」→ 选中的文字变为灰色模糊条
+再次点击遮挡条 → 可以撤销
+      ↓
+下载图片时，分段渲染的 blur 被 html-to-image 完整捕获
 ```
 
-## 可以遮挡的颗粒度
+## 小浮动菜单（Selection Toolbar）
 
-| 内容块 | 遮挡单位 |
+当用户松开鼠标后（`mouseup` 事件），计算选区位置，在选区正上方或正下方显示一个小按钮：
+
+```
+  ┌──────────────┐
+  │ 🛡️ 打上马赛克 │  ← 绝对定位，跟随选区位置
+  └──────────────┘
+```
+
+实现方式：在海报预览外层的 `div` 上监听 `mouseup`，读取 `window.getSelection()` 的 `getRangeAt(0).getBoundingClientRect()` 获取选区坐标，把按钮定位到该位置。
+
+## 与现有功能的兼容
+
+| 功能 | 处理方式 |
 |---|---|
-| 面试题目 | 每道题的题目文字（独立，可单独遮挡） |
-| 总体评价 | 整段文字 |
-| 表现良好 | 整个列表 |
-| 可改进之处 | 整个列表 |
-| 核心收获 | 整个列表 |
-| 面试官风格 | 整段文字 |
-| 公司洞察 | 整段文字 |
-
-## 技术实现
-
-### 1. 状态管理（新增到 `InterviewPosterModal`）
-
-```typescript
-// 隐私模式开关
-const [privacyMode, setPrivacyMode] = useState(false);
-
-// 被标记为敏感的内容 ID 集合
-// 格式：'question-0', 'question-1', 'reflection-summary', 
-//        'reflection-well', 'reflection-improve', 
-//        'reflection-takeaways', 'reflection-vibe', 'reflection-insights'
-const [redactedItems, setRedactedItems] = useState<Set<string>>(new Set());
-
-const toggleRedact = (id: string) => {
-  setRedactedItems(prev => {
-    const next = new Set(prev);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    return next;
-  });
-};
-```
-
-### 2. 将状态传入 `PosterContent`
-
-```typescript
-// PosterContent props 增加：
-interface PosterContentProps {
-  job: Job;
-  stage: InterviewStage;
-  t: (key: string) => string;
-  privacyMode: boolean;
-  redactedItems: Set<string>;
-  onToggleRedact: (id: string) => void;
-}
-```
-
-### 3. 马赛克渲染（CSS blur + 灰块）
-
-```typescript
-// 工具函数：生成遮挡样式
-function redactStyle(isRedacted: boolean, isEditing: boolean) {
-  return isRedacted
-    ? {
-        filter: 'blur(6px)',
-        backgroundColor: '#d1d5db',
-        borderRadius: '4px',
-        userSelect: 'none' as const,
-        cursor: isEditing ? 'pointer' : 'default',
-      }
-    : isEditing
-    ? { cursor: 'pointer', outline: '2px dashed #6366f1', outlineOffset: '2px', borderRadius: '4px' }
-    : {};
-}
-```
-
-### 4. 隐私模式 UI（弹窗顶部新增切换条）
-
-在按钮行和预览之间加一条提示栏：
-
-```
-┌─────────────────────────────────────────────────────┐
-│  🛡️ 隐私模式   ●  开启后，点击内容块可打上马赛克    │
-│  [已遮挡 3 块内容，将在图片中隐藏]                  │
-└─────────────────────────────────────────────────────┘
-```
-
-- 用 `Switch` 组件控制隐私模式开/关
-- 开启后预览区有虚线边框提示可点击区域
-- 被遮挡的块显示 blur 效果
-- 计数显示「已遮挡 N 块内容」
-
-### 5. 视觉效果预览
-
-```
-隐私模式开启时，题目区域样式：
-
-Q1  ████████████████████   ← 模糊（被标记）
-    [行为题] [表现良好]
-
-Q2  金融客户具体的工作流...  ← 清晰（未标记）
-    [技术题] [有待提升]
-
-```
+| 原有整块遮挡 | 保留，仍然可以点击整块 |
+| 文字级精准遮挡（新增） | 在隐私模式下，划选文字出现小菜单 |
+| 下载长图 | 直接用 `html-to-image` 捕获含 blur span 的 DOM，效果正确 |
+| 下载小红书版 | 同上，Canvas 切割不影响 span 渲染 |
+| 关闭弹窗重置 | `textRedactions` 随弹窗关闭被清空 |
 
 ## 需要修改的文件
 
 | 文件 | 改动内容 |
 |---|---|
-| `src/components/analytics/InterviewPosterModal.tsx` | 新增隐私模式状态；`PosterContent` 接收 `redactedItems` prop；各内容块包裹可点击遮挡层；新增隐私模式控制 UI |
+| `src/components/analytics/InterviewPosterModal.tsx` | 新增 `TextRedaction` 类型；新增 `textRedactions` 状态；新增 `RedactableText` 组件（负责按遮挡范围拆分文字为三段 span）；新增 `SelectionToolbar` 浮动按钮；在海报预览容器上监听 `onMouseUp` 处理文字选区；更新各文字内容块使用 `RedactableText` 替代纯文字 |
+
+## 技术细节
+
+### Selection API 读取字符偏移
+
+当用户在一个文字节点上划选时，`window.getSelection()` 返回选区，其中：
+- `anchorNode.parentElement`：选区起点所在的 DOM 元素
+- `anchorOffset`：起点字符位置
+- `focusOffset`：终点字符位置
+
+通过给每个 `RedactableText` 容器设置 `data-block-id` 属性，可以准确判断用户划选的是哪个内容块。
+
+### 多段遮挡叠加
+
+同一个文字块支持多次划选，每次新增一个 `TextRedaction`，渲染时对所有遮挡范围做排序和合并（防止重叠），然后分段渲染。
+
+### 撤销单条遮挡
+
+点击某个遮挡块（灰色模糊条）可以单独取消该条遮挡，而不影响同一块内其他遮挡片段。
+
+## 隐私模式 UI 更新
+
+将现有的提示文字从：
+> "点击海报中的题目或复盘区块即可打上马赛克"
+
+更新为：
+> "划选文字可精准打马赛克；或点击整块遮挡整段内容"
+
+同时在计数里区分：
+> "已精准遮挡 2 处 · 整块遮挡 1 块"
 
 ## 改动范围
 
-- 纯前端改动，无需后端
-- 不影响数据存储（遮挡状态只在弹窗内存中，关闭弹窗后重置）
-- 不影响现有下载/复制/分割功能（遮挡效果跟随 DOM 一起被捕获进图片）
-- CSS `filter: blur()` 被 `html-to-image` 完整支持，效果与预览一致
+- 纯前端，无需后端
+- 不影响下载/复制/小红书分割逻辑
+- 向下兼容：整块遮挡功能保留不变
