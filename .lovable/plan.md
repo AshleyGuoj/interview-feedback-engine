@@ -1,117 +1,80 @@
 
-# 修复：海报图标与平台 UI 不一致（emoji 变成 AI 风格图标）
+# 功能升级：海报自动分割为小红书标准尺寸图片组
 
-## 根本原因
+## 小红书图片规范
 
-`InterviewPosterModal.tsx` 的 `PosterContent` 组件在以下地方使用了 emoji 和 Unicode 文字符号：
+根据平台官方规范：
+- **竖版最优尺寸**：1242 × 1660px（3:4 比例）
+- **支持多图上传**：小红书支持最多 18 张图，建议每组 3-4 张，阅读体验最佳
+- **当前海报宽度**：390px × pixelRatio 2 = 780px 实际输出宽度
 
-- `SectionTitle` 组件用 `"📝"` 和 `"💡"` 作为图标
-- "表现良好"区块用 `"✓"` 字符标记每条内容
-- "可改进之处"区块用 `"→"` 字符标记每条内容
+## 核心技术方案：Canvas 裁切
 
-当 `html-to-image` 把 DOM 转成 PNG 时，emoji 会用操作系统字体（macOS 上是 Apple Color Emoji）渲染，看起来就是"AI 风格的彩色 emoji"，与平台里干净的 Lucide SVG 图标完全不同。
+思路：先用 `html-to-image` 把完整海报渲染成一张长图，然后用浏览器原生 `Canvas API` 把这张长图按固定高度（1660px 对应比例）切成多张，每张都自动加上顶部 Header（公司+轮次）和底部水印，让每张单独看都有完整上下文。
 
-平台实际 UI（`AnalysisDetailPanel.tsx` 里的 `ReflectionDisplay`）用的是：
-- 数字圆圈 + `CheckCircle2` Lucide 图标（表现良好）
-- 数字圆圈 + `AlertCircle` Lucide 图标（可改进）
-- 数字圆圈 + `Lightbulb` Lucide 图标（核心收获）
-- 数字圆圈 + 无图标（面试官风格、公司洞察）
-- Section 标题：`MessageSquare` + `Lightbulb` 图标
-
-## 修复方案
-
-**把所有 emoji 和 Unicode 符号替换成内联 SVG 路径**。`html-to-image` 能完美捕获内联 SVG，完全不依赖操作系统字体，视觉与平台完全一致。
-
-### 具体改动：`src/components/analytics/InterviewPosterModal.tsx`
-
-**改动 1：`SectionTitle` 组件**
-
-将 `number` prop（原本接收 `"📝"` 这样的 emoji）改为接收 SVG 路径，或者直接换成数字圆圈 + 一个 SVG icon prop 的设计，与平台 `ReflectionDisplay` 一致：
-
-```tsx
-// Before
-<SectionTitle number="📝" title={`面试题目（${questions.length} 题）`} />
-<SectionTitle number="💡" title="面试复盘" />
-
-// After - 使用内联 SVG（与平台图标一致）
-<SectionTitle icon={<MessageSquareSvg />} title={`面试题目（${questions.length} 题）`} />
-<SectionTitle icon={<LightbulbSvg />} title="面试复盘" />
+```text
+长图（例如 780 × 3200px）
+        ↓ Canvas 裁切
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ 封面（第1张） │  │ 题目（第2张） │  │ 复盘（第3张） │
+│ Header+问题  │  │ 续接问题      │  │ 反思+收获    │
+│ OfferMind水印│  │ OfferMind水印 │  │ OfferMind水印│
+└──────────────┘  └──────────────┘  └──────────────┘
 ```
 
-**改动 2：在文件底部新增两个 SVG helper 函数**
+## 具体实现
 
-提取 Lucide 对应图标的 SVG path 路径，封装成内联组件：
-- `MessageSquareSvg`：对应 Lucide `MessageSquare`
-- `LightbulbSvg`：对应 Lucide `Lightbulb`
-- `CheckSvg`：对应 Lucide `Check`（用在"表现良好"每条）
-- `ArrowRightSvg`：对应 Lucide `ArrowRight`（用在"可改进"每条）
-- `CheckCircleSvg`：对应 Lucide `CheckCircle2`
+### 新增下载逻辑 `handleDownloadSliced`
 
-**改动 3："表现良好"每条内容的前缀符号**
+在 `InterviewPosterModal.tsx` 里新增一个"下载分页图" 按钮，触发以下流程：
 
-```tsx
-// Before
-<span style={{ color: '#16a34a', marginTop: '1px', flexShrink: 0 }}>✓</span>
+1. 用 `toPng()` 把完整海报渲染成一张 data URL 长图（pixelRatio: 2，实际输出约 780px 宽）
+2. 把 data URL 加载到 `<img>` 对象中，读取实际像素高度
+3. 计算每一页的高度：按 `width × (1660/1242)` 即 3:4 比例得到每页像素高
+4. 循环用 Canvas `drawImage` 截取每一段，最后一页用白色填充不足部分
+5. 在每张图底部叠加一个"页码"标注（如"1/3"）和 OfferMind 水印
+6. 批量调用 `canvas.toBlob()` + `<a>` 标签触发多次下载，文件名为 `面试复盘-公司名-1.png`、`面试复盘-公司名-2.png`…
 
-// After - 内联 SVG
-<CheckSvg color="#16a34a" />
+### 弹窗 UI 改动
+
+将现有按钮区域改为三个按钮：
+
+```
+[ 下载长图 ]   [ 下载小红书版（3-4张）]   [ 复制 ]
 ```
 
-**改动 4："可改进之处"每条内容的前缀符号**
+"下载小红书版"按钮有特殊说明文字："自动切成多张，直接上传小红书"。
 
-```tsx
-// Before
-<span style={{ color: '#dc2626', marginTop: '1px', flexShrink: 0 }}>→</span>
+同时在弹窗标题下方加一行提示：
+> "小红书版会将长图自动切割为 3:4 竖版，可直接多图上传"
 
-// After - 内联 SVG
-<ArrowRightSvg color="#dc2626" />
+## 需要修改的文件
+
+| 文件 | 改动内容 |
+|---|---|
+| `src/components/analytics/InterviewPosterModal.tsx` | 新增 `handleDownloadSliced` 函数（Canvas 裁切逻辑）；UI 改为三个按钮 |
+
+## 不需要改动的文件
+
+- `PosterContent` 组件本身不动，仍用于渲染完整海报
+- `AnalysisDetailPanel.tsx` 不动
+- 不涉及后端/数据库
+
+## 技术细节补充
+
+- **每页高度**（CSS 像素）= `posterWidth × pixelRatio × (1660/1242)` ÷ `pixelRatio` = `posterWidth × 1.336`，即 390 × 1.336 ≈ 521px（CSS），对应实际图片像素约 1042px（pixelRatio=2）
+- **最后一页处理**：不足一整页的部分，Canvas 用白色 `fillRect` 补全，避免出现黑色空白
+- **页码叠加**：在每张 Canvas 底部右侧用半透明圆角标注"1/3"，与水印错开位置
+- **下载时序**：连续触发多次 `<a>.click()` 在现代浏览器（Chrome/Safari）均可正常触发多文件下载
+
+## 用户体验流程
+
+```text
+用户点击"生成海报" → 弹窗出现长图预览
+↓
+点击"下载小红书版" → 显示 Loading 旋转
+↓
+自动生成 3-4 张图片，逐一下载
+↓
+toast: "已下载 3 张图片，可直接上传到小红书"
 ```
-
-**改动 5：反射复盘各小节的 section 标题图标**
-
-将 `"✓ 表现良好"` 里的 `✓` 替换为 `CheckCircleSvg`，与平台 `ReflectionDisplay` 里的 `CheckCircle2` 图标一致。
-
-将 `"→ 可改进之处"` 里的 `→` 替换为 `AlertCircleSvg`（对应平台的 `AlertCircle`）。
-
-**改动 6：`SectionTitle` 组件定义更新**
-
-```tsx
-// Before
-function SectionTitle({ number, title }: { number: string; title: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-      <span style={{ fontSize: '15px' }}>{number}</span>   // ← emoji 在这里
-      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{title}</span>
-    </div>
-  );
-}
-
-// After
-function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-      {icon}   // ← 内联 SVG，不依赖操作系统字体
-      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{title}</span>
-    </div>
-  );
-}
-```
-
-## 海报与平台对比（修复前后）
-
-| 元素 | 修复前（下载图片） | 修复后（下载图片） |
-|---|---|---|
-| 面试题目 section 标题 | 📝 emoji（彩色，AI 风格） | MessageSquare SVG（平台同款） |
-| 面试复盘 section 标题 | 💡 emoji（彩色，AI 风格） | Lightbulb SVG（平台同款） |
-| 表现良好每条前缀 | ✓ Unicode 字符 | Check SVG 图标 |
-| 可改进每条前缀 | → Unicode 字符 | ArrowRight SVG 图标 |
-
-## 改动范围
-
-| 文件 | 类型 | 内容 |
-|---|---|---|
-| `src/components/analytics/InterviewPosterModal.tsx` | 修改 | 替换所有 emoji 和 Unicode 符号为内联 SVG；更新 `SectionTitle` 组件接口 |
-
-- 不涉及后端、数据库、Edge Function
-- 不影响海报的下载/复制逻辑
-- 视觉与平台完全一致，不依赖操作系统字体
