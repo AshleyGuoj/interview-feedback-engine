@@ -58,6 +58,7 @@ export interface InterviewQuestion {
 // Self-reflection after interview
 export interface InterviewReflection {
   overallFeeling: 'great' | 'good' | 'neutral' | 'poor' | 'bad';
+  performanceSummary?: string;   // 总体评价（AI 提取）
   whatWentWell: string[];
   whatCouldImprove: string[];
   surprisingQuestions?: string[];
