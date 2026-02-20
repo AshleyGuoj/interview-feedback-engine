@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toPng } from 'html-to-image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Job, InterviewStage } from '@/types/job';
 import { format } from 'date-fns';
-import { Download, Copy, Loader2, Shield } from 'lucide-react';
+import { Download, Copy, Loader2, Shield, X } from 'lucide-react';
 import { toast } from 'sonner';
 import offermindLogo from '@/assets/offermind-logo-clean.png';
 import React from 'react';
@@ -24,7 +24,27 @@ interface InterviewPosterModalProps {
   stage: InterviewStage;
 }
 
-// ─── Redaction helpers ───
+// ─── Text-level redaction types ───
+
+interface TextRedaction {
+  id: string;
+  blockId: string;
+  start: number;
+  end: number;
+  text: string;
+}
+
+interface SelectionToolbarState {
+  visible: boolean;
+  x: number;
+  y: number;
+  blockId: string;
+  start: number;
+  end: number;
+  selectedText: string;
+}
+
+// ─── Block-level redaction style (for whole-block click) ───
 
 function getRedactStyle(isRedacted: boolean, isEditing: boolean): React.CSSProperties {
   if (isRedacted) {
@@ -39,26 +59,106 @@ function getRedactStyle(isRedacted: boolean, isEditing: boolean): React.CSSPrope
   }
   if (isEditing) {
     return {
-      cursor: 'pointer',
-      outline: '2px dashed #6366f1',
-      outlineOffset: '2px',
-      borderRadius: '4px',
+      cursor: 'text',
       transition: 'outline 0.15s',
     };
   }
   return {};
 }
 
+// ─── RedactableText: renders text with inline blur spans ───
+
+interface RedactableTextProps {
+  text: string;
+  blockId: string;
+  redactions: TextRedaction[];
+  onRemoveRedaction: (id: string) => void;
+  privacyMode: boolean;
+  style?: React.CSSProperties;
+}
+
+function RedactableText({ text, blockId, redactions, onRemoveRedaction, privacyMode, style }: RedactableTextProps) {
+  const blockRedactions = redactions
+    .filter(r => r.blockId === blockId)
+    .sort((a, b) => a.start - b.start);
+
+  if (blockRedactions.length === 0) {
+    return <span style={style}>{text}</span>;
+  }
+
+  // Merge overlapping ranges
+  const merged: { start: number; end: number; ids: string[] }[] = [];
+  for (const r of blockRedactions) {
+    const last = merged[merged.length - 1];
+    if (last && r.start <= last.end) {
+      last.end = Math.max(last.end, r.end);
+      last.ids.push(r.id);
+    } else {
+      merged.push({ start: r.start, end: r.end, ids: [r.id] });
+    }
+  }
+
+  const segments: { text: string; redacted: boolean; ids: string[] }[] = [];
+  let cursor = 0;
+  for (const seg of merged) {
+    if (cursor < seg.start) {
+      segments.push({ text: text.slice(cursor, seg.start), redacted: false, ids: [] });
+    }
+    segments.push({ text: text.slice(seg.start, seg.end), redacted: true, ids: seg.ids });
+    cursor = seg.end;
+  }
+  if (cursor < text.length) {
+    segments.push({ text: text.slice(cursor), redacted: false, ids: [] });
+  }
+
+  return (
+    <span style={style}>
+      {segments.map((seg, i) =>
+        seg.redacted ? (
+          <span
+            key={i}
+            onClick={privacyMode ? (e) => { e.stopPropagation(); seg.ids.forEach(id => onRemoveRedaction(id)); } : undefined}
+            title={privacyMode ? '点击撤销遮挡' : undefined}
+            style={{
+              filter: 'blur(6px)',
+              backgroundColor: '#d1d5db',
+              borderRadius: '3px',
+              userSelect: 'none',
+              cursor: privacyMode ? 'pointer' : 'default',
+              display: 'inline',
+              padding: '0 1px',
+            }}
+          >
+            {seg.text}
+          </span>
+        ) : (
+          <span key={i}>{seg.text}</span>
+        )
+      )}
+    </span>
+  );
+}
+
+// ─── Main Modal ───
+
 export function InterviewPosterModal({ open, onOpenChange, job, stage }: InterviewPosterModalProps) {
   const { t } = useTranslation();
   const posterRef = useRef<HTMLDivElement>(null);
+  const previewWrapperRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isSlicing, setIsSlicing] = useState(false);
 
   // Privacy mode state
   const [privacyMode, setPrivacyMode] = useState(false);
+  // Block-level redactions (whole card/section)
   const [redactedItems, setRedactedItems] = useState<Set<string>>(new Set());
+  // Text-level redactions
+  const [textRedactions, setTextRedactions] = useState<TextRedaction[]>([]);
+  // Selection toolbar
+  const [selectionToolbar, setSelectionToolbar] = useState<SelectionToolbarState>({
+    visible: false, x: 0, y: 0, blockId: '', start: 0, end: 0, selectedText: '',
+  });
 
   const toggleRedact = (id: string) => {
     if (!privacyMode) return;
@@ -72,7 +172,114 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
 
   const handlePrivacyModeChange = (val: boolean) => {
     setPrivacyMode(val);
-    if (!val) setRedactedItems(new Set());
+    if (!val) {
+      setRedactedItems(new Set());
+      setTextRedactions([]);
+      setSelectionToolbar(s => ({ ...s, visible: false }));
+    }
+  };
+
+  const removeTextRedaction = useCallback((id: string) => {
+    setTextRedactions(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    if (!privacyMode) return;
+
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+      setSelectionToolbar(s => ({ ...s, visible: false }));
+      return;
+    }
+
+    const selectedText = sel.toString().trim();
+    if (!selectedText) {
+      setSelectionToolbar(s => ({ ...s, visible: false }));
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+
+    // Find which block the selection is in by traversing up to data-block-id
+    const anchor = range.startContainer;
+    let el: Node | null = anchor;
+    let blockId = '';
+    while (el && el !== previewWrapperRef.current) {
+      if (el instanceof Element && el.getAttribute('data-block-id')) {
+        blockId = el.getAttribute('data-block-id')!;
+        break;
+      }
+      el = el.parentNode;
+    }
+
+    if (!blockId) {
+      setSelectionToolbar(s => ({ ...s, visible: false }));
+      return;
+    }
+
+    // Get the full text content of the block element to compute offsets
+    const blockEl = previewWrapperRef.current?.querySelector(`[data-block-id="${blockId}"]`);
+    if (!blockEl) {
+      setSelectionToolbar(s => ({ ...s, visible: false }));
+      return;
+    }
+
+    const blockText = blockEl.textContent ?? '';
+    // Find the selected text's position within the block text
+    const selText = sel.toString();
+
+    // Walk the block's text nodes to find the offset of range.startContainer
+    let charOffset = 0;
+    let found = false;
+    const walker = document.createTreeWalker(blockEl, NodeFilter.SHOW_TEXT);
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      if (node === range.startContainer) {
+        charOffset += range.startOffset;
+        found = true;
+        break;
+      }
+      charOffset += (node.textContent ?? '').length;
+    }
+
+    if (!found) {
+      setSelectionToolbar(s => ({ ...s, visible: false }));
+      return;
+    }
+
+    const start = charOffset;
+    const end = start + selText.length;
+
+    // Position toolbar above/below the selection
+    const rect = range.getBoundingClientRect();
+    const wrapperRect = previewWrapperRef.current!.getBoundingClientRect();
+    const toolbarX = rect.left - wrapperRect.left + rect.width / 2;
+    const toolbarY = rect.top - wrapperRect.top - 44; // above
+
+    setSelectionToolbar({
+      visible: true,
+      x: toolbarX,
+      y: toolbarY,
+      blockId,
+      start,
+      end,
+      selectedText: selText,
+    });
+  }, [privacyMode]);
+
+  const applyTextRedaction = () => {
+    const { blockId, start, end, selectedText } = selectionToolbar;
+    setTextRedactions(prev => [
+      ...prev,
+      { id: `tr-${Date.now()}-${Math.random()}`, blockId, start, end, text: selectedText },
+    ]);
+    window.getSelection()?.removeAllRanges();
+    setSelectionToolbar(s => ({ ...s, visible: false }));
+  };
+
+  const dismissToolbar = () => {
+    window.getSelection()?.removeAllRanges();
+    setSelectionToolbar(s => ({ ...s, visible: false }));
   };
 
   const generateImage = async (): Promise<string> => {
@@ -195,7 +402,8 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
   };
 
   const anyLoading = isDownloading || isSlicing || isCopying;
-  const redactCount = redactedItems.size;
+  const blockRedactCount = redactedItems.size;
+  const textRedactCount = textRedactions.length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -237,10 +445,13 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
             </p>
             <p className="text-xs text-muted-foreground leading-tight">
               {privacyMode
-                ? redactCount > 0
-                  ? `已遮挡 ${redactCount} 块内容，将在图片中隐藏`
-                  : '点击海报中的题目或复盘区块即可打上马赛克'
-                : '开启后可点击内容块打上马赛克，保护敏感信息'}
+                ? (textRedactCount > 0 || blockRedactCount > 0)
+                  ? [
+                      textRedactCount > 0 && `已精准遮挡 ${textRedactCount} 处`,
+                      blockRedactCount > 0 && `整块遮挡 ${blockRedactCount} 块`,
+                    ].filter(Boolean).join(' · ')
+                  : '划选文字可精准打马赛克；或点击整块遮挡整段内容'
+                : '开启后可划选文字精准打马赛克，或点击整块遮挡'}
             </p>
           </div>
           <Switch
@@ -250,8 +461,69 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
           />
         </div>
 
-        {/* Poster preview */}
-        <div className="overflow-y-auto flex-1 rounded-lg border bg-muted/30 p-2">
+        {/* Poster preview wrapper — captures mouseup for selection */}
+        <div
+          ref={previewWrapperRef}
+          className="overflow-y-auto flex-1 rounded-lg border bg-muted/30 p-2 relative"
+          onMouseUp={handleMouseUp}
+        >
+          {/* Floating selection toolbar */}
+          {privacyMode && selectionToolbar.visible && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${selectionToolbar.x}px`,
+                top: `${selectionToolbar.y}px`,
+                transform: 'translateX(-50%)',
+                zIndex: 50,
+                display: 'flex',
+                gap: '4px',
+                background: '#1e1b4b',
+                borderRadius: '8px',
+                padding: '5px 8px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                alignItems: 'center',
+                pointerEvents: 'all',
+              }}
+              onMouseDown={(e) => e.preventDefault()} // prevent selection clear
+            >
+              <button
+                onClick={applyTextRedaction}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#c7d2fe',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                🛡️ 打上马赛克
+              </button>
+              <div style={{ width: '1px', height: '14px', background: '#4338ca' }} />
+              <button
+                onClick={dismissToolbar}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#9ca3af',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           <PosterContent
             ref={posterRef}
             job={job}
@@ -260,6 +532,8 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
             privacyMode={privacyMode}
             redactedItems={redactedItems}
             onToggleRedact={toggleRedact}
+            textRedactions={textRedactions}
+            onRemoveTextRedaction={removeTextRedaction}
           />
         </div>
       </DialogContent>
@@ -332,10 +606,12 @@ interface PosterContentProps {
   privacyMode: boolean;
   redactedItems: Set<string>;
   onToggleRedact: (id: string) => void;
+  textRedactions: TextRedaction[];
+  onRemoveTextRedaction: (id: string) => void;
 }
 
 const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
-  ({ job, stage, t, privacyMode, redactedItems, onToggleRedact }, ref) => {
+  ({ job, stage, t, privacyMode, redactedItems, onToggleRedact, textRedactions, onRemoveTextRedaction }, ref) => {
     const questions = stage.questions ?? [];
     const reflection = stage.reflection;
 
@@ -388,27 +664,46 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   return (
                     <div
                       key={q.id}
-                      onClick={() => onToggleRedact(rid)}
                       style={{
                         border: '1px solid #e5e7eb',
                         borderRadius: '10px',
                         padding: '12px',
                         backgroundColor: '#fafafa',
                         position: 'relative',
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
                       }}
                     >
-                      {/* Redact overlay hint */}
+                      {/* Click whole card to block-redact */}
                       {privacyMode && !isRedacted && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '6px',
-                          right: '8px',
-                          fontSize: '10px',
-                          color: '#6366f1',
-                          opacity: 0.7,
-                          pointerEvents: 'none',
-                        }}>
-                          点击遮挡
+                        <div
+                          onClick={() => onToggleRedact(rid)}
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '8px',
+                            fontSize: '10px',
+                            color: '#6366f1',
+                            opacity: 0.7,
+                            cursor: 'pointer',
+                            zIndex: 1,
+                            userSelect: 'none',
+                          }}
+                        >
+                          整块遮挡
+                        </div>
+                      )}
+                      {isRedacted && (
+                        <div
+                          onClick={() => onToggleRedact(rid)}
+                          style={{
+                            position: 'absolute', inset: 0, borderRadius: '10px',
+                            backgroundColor: '#d1d5db', filter: 'blur(0px)',
+                            cursor: 'pointer', zIndex: 2, display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <div style={{ filter: 'blur(8px)', width: '100%', height: '100%', position: 'absolute', inset: 0, backgroundColor: '#d1d5db', borderRadius: '10px' }} />
+                          <span style={{ position: 'relative', zIndex: 1, fontSize: '10px', color: '#6366f1' }}>点击撤销遮挡</span>
                         </div>
                       )}
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
@@ -417,16 +712,22 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         </span>
                         <div style={{ flex: 1 }}>
                           <p
+                            data-block-id={rid}
                             style={{
                               fontSize: '13px',
                               fontWeight: 500,
                               color: '#111827',
                               margin: '0 0 8px',
                               lineHeight: 1.5,
-                              ...getRedactStyle(isRedacted, privacyMode),
                             }}
                           >
-                            {q.question}
+                            <RedactableText
+                              text={q.question}
+                              blockId={rid}
+                              redactions={textRedactions}
+                              onRemoveRedaction={onRemoveTextRedaction}
+                              privacyMode={privacyMode}
+                            />
                           </p>
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                             {q.category && (
@@ -475,21 +776,33 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
-                      onClick={() => onToggleRedact(rid)}
                       style={{
                         border: '1px solid #e5e7eb',
                         borderRadius: '10px',
                         padding: '12px',
                         backgroundColor: '#fafafa',
                         position: 'relative',
-                        ...getRedactStyle(isRedacted, privacyMode),
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
+                        ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <RedactHint />}
+                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', marginBottom: '6px' }}>
                         <NumberCircle n={1} />总体评价
                       </p>
-                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.performanceSummary}</p>
+                      <p
+                        data-block-id={rid}
+                        style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}
+                      >
+                        <RedactableText
+                          text={reflection.performanceSummary}
+                          blockId={rid}
+                          redactions={textRedactions}
+                          onRemoveRedaction={onRemoveTextRedaction}
+                          privacyMode={privacyMode}
+                        />
+                      </p>
                     </div>
                   );
                 })()}
@@ -500,15 +813,16 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
-                      onClick={() => onToggleRedact(rid)}
                       style={{
                         borderLeft: '3px solid #86efac',
                         paddingLeft: '12px',
                         position: 'relative',
-                        ...getRedactStyle(isRedacted, privacyMode),
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <RedactHint />}
+                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <NumberCircle n={2} color="#16a34a" />
                         <CheckCircleSvg color="#16a34a" />
@@ -518,7 +832,17 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         {reflection.whatWentWell.map((item, i) => (
                           <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                             <CheckSvg color="#16a34a" />
-                            {item}
+                            <span
+                              data-block-id={`${rid}-${i}`}
+                            >
+                              <RedactableText
+                                text={item}
+                                blockId={`${rid}-${i}`}
+                                redactions={textRedactions}
+                                onRemoveRedaction={onRemoveTextRedaction}
+                                privacyMode={privacyMode}
+                              />
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -532,15 +856,16 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
-                      onClick={() => onToggleRedact(rid)}
                       style={{
                         borderLeft: '3px solid #fca5a5',
                         paddingLeft: '12px',
                         position: 'relative',
-                        ...getRedactStyle(isRedacted, privacyMode),
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <RedactHint />}
+                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <NumberCircle n={3} color="#dc2626" />
                         <AlertCircleSvg color="#dc2626" />
@@ -550,7 +875,17 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         {reflection.whatCouldImprove.map((item, i) => (
                           <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                             <ArrowRightSvg color="#dc2626" />
-                            {item}
+                            <span
+                              data-block-id={`${rid}-${i}`}
+                            >
+                              <RedactableText
+                                text={item}
+                                blockId={`${rid}-${i}`}
+                                redactions={textRedactions}
+                                onRemoveRedaction={onRemoveTextRedaction}
+                                privacyMode={privacyMode}
+                              />
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -564,29 +899,40 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
-                      onClick={() => onToggleRedact(rid)}
                       style={{
                         backgroundColor: '#eff6ff',
                         borderRadius: '10px',
                         padding: '12px',
                         position: 'relative',
-                        ...getRedactStyle(isRedacted, privacyMode),
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
+                        ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <RedactHint />}
+                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', marginBottom: '8px' }}>
                         <NumberCircle n={4} color="#2563eb" /> 核心收获
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                         {reflection.keyTakeaways.map((item, i) => (
-                          <span key={i} style={{
-                            fontSize: '12px',
-                            padding: '3px 10px',
-                            borderRadius: '9999px',
-                            backgroundColor: '#dbeafe',
-                            color: '#1e40af',
-                          }}>
-                            {item}
+                          <span
+                            key={i}
+                            data-block-id={`${rid}-${i}`}
+                            style={{
+                              fontSize: '12px',
+                              padding: '3px 10px',
+                              borderRadius: '9999px',
+                              backgroundColor: '#dbeafe',
+                              color: '#1e40af',
+                            }}
+                          >
+                            <RedactableText
+                              text={item}
+                              blockId={`${rid}-${i}`}
+                              redactions={textRedactions}
+                              onRemoveRedaction={onRemoveTextRedaction}
+                              privacyMode={privacyMode}
+                            />
                           </span>
                         ))}
                       </div>
@@ -600,14 +946,29 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
-                      onClick={() => onToggleRedact(rid)}
-                      style={{ position: 'relative', ...getRedactStyle(isRedacted, privacyMode) }}
+                      style={{
+                        position: 'relative',
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
+                      }}
                     >
-                      {privacyMode && !isRedacted && <RedactHint />}
+                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
                         <NumberCircle n={5} /> 面试官风格
                       </p>
-                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.interviewerVibe}</p>
+                      <p
+                        data-block-id={rid}
+                        style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}
+                      >
+                        <RedactableText
+                          text={reflection.interviewerVibe}
+                          blockId={rid}
+                          redactions={textRedactions}
+                          onRemoveRedaction={onRemoveTextRedaction}
+                          privacyMode={privacyMode}
+                        />
+                      </p>
                     </div>
                   );
                 })()}
@@ -618,14 +979,29 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
-                      onClick={() => onToggleRedact(rid)}
-                      style={{ position: 'relative', ...getRedactStyle(isRedacted, privacyMode) }}
+                      style={{
+                        position: 'relative',
+                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
+                      }}
                     >
-                      {privacyMode && !isRedacted && <RedactHint />}
+                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
                         <NumberCircle n={6} /> 公司洞察
                       </p>
-                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.companyInsights}</p>
+                      <p
+                        data-block-id={rid}
+                        style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}
+                      >
+                        <RedactableText
+                          text={reflection.companyInsights}
+                          blockId={rid}
+                          redactions={textRedactions}
+                          onRemoveRedaction={onRemoveTextRedaction}
+                          privacyMode={privacyMode}
+                        />
+                      </p>
                     </div>
                   );
                 })()}
@@ -654,19 +1030,45 @@ PosterContent.displayName = 'PosterContent';
 
 // ─── Small helper components ───
 
-function RedactHint() {
+function BlockRedactHint({ onClick }: { onClick: () => void }) {
   return (
-    <div style={{
-      position: 'absolute',
-      top: '6px',
-      right: '8px',
-      fontSize: '10px',
-      color: '#6366f1',
-      opacity: 0.7,
-      pointerEvents: 'none',
-      zIndex: 1,
-    }}>
-      点击遮挡
+    <div
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={{
+        position: 'absolute',
+        top: '6px',
+        right: '8px',
+        fontSize: '10px',
+        color: '#6366f1',
+        opacity: 0.7,
+        cursor: 'pointer',
+        zIndex: 1,
+        userSelect: 'none',
+      }}
+    >
+      整块遮挡
+    </div>
+  );
+}
+
+function UnredactHint({ onClick }: { onClick: () => void }) {
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 3,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 'inherit',
+      }}
+    >
+      <span style={{ fontSize: '10px', color: '#6366f1', background: 'rgba(255,255,255,0.6)', padding: '2px 6px', borderRadius: '4px' }}>
+        点击撤销遮挡
+      </span>
     </div>
   );
 }
