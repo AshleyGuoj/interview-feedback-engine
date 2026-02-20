@@ -1,58 +1,90 @@
 
-# 将所有 AI Agent 输出语言锁定为中文
+# 修复：保存后的问题详情显示与分析结果对齐
 
-## 目标
+## 问题根因
 
-无论用户的 UI 语言是什么，所有 AI Agent 生成的分析内容（Interview Analysis、Transcript Analyzer、Role Debrief、Career Growth、Career Signals）全部强制输出中文。
+**两个独立的 bug，叠加导致用户看到的不一致：**
 
-## 问题根源
+### Bug 1：保存时字段丢失
 
-当前有两个层面的问题：
+`handleSaveAll`（line 151-160）将 AI 分析结果映射到 `InterviewQuestion` 时，只保存了部分字段：
 
-**第一层：默认语言是英文**
-`src/lib/i18n/index.ts` 中，当 localStorage 没有保存语言时默认用 `'en'`。
+```ts
+// 当前：只保存了这些
+{
+  question: q.question,
+  category: q.category,
+  myAnswer: q.myAnswerSummary,     // ← 答案摘要
+  difficulty: q.difficulty,
+  wasAsked: true,
+  answeredWell: q.responseQuality === 'high',
+  tags: q.tags,
+  // ❌ q.evaluationFocus 没有保存（面试重点）
+  // ❌ q.qualityReasoning 没有保存（表现原因）
+  // ❌ q.responseQuality 没有保存（用来显示表现良好/中/差）
+}
+```
 
-**第二层：部分调用点没有传 `language` 参数**
-3 个调用点完全没有传 `language`，导致边缘函数用自己的默认值（也是 `'en'`）：
+`InterviewQuestion` 类型里没有 `evaluationFocus` 和 `qualityReasoning` 字段，这些 AI 产出的内容被彻底丢弃了。
 
-| 文件 | 函数 | 是否传 language |
-|---|---|---|
-| `CareerGrowthPanel.tsx` | `analyze-career-growth` | ✅ 传了 |
-| `RoleDebriefPanel.tsx` | `generate-role-debrief` | ✅ 传了 |
-| `CareerSignalTimeline.tsx` | `analyze-career-signals` | ✅ 传了 |
-| `AnalysisDetailPanel.tsx` | `analyze-transcript` | ✅ 传了 |
-| `TranscriptAnalyzer.tsx` | `analyze-transcript` | ❌ 没传 |
-| `InterviewAnalysis.tsx` | `analyze-transcript` | ❌ 没传 |
-| `Index.tsx` | `analyze-interview` | ❌ 没传 |
-| `AnalyzeInterview.tsx` | `analyze-interview` | ❌ 没传 |
+### Bug 2：已保存视图的问题卡片不支持展开
 
-## 方案
+保存后的"existing analysis"视图（lines 236-268）里，每个问题只用一个简单 `<Card>` 显示，**没有用 `<Collapsible>` 展开组件**，所以即使字段保存成功，用户也无法看到下拉详情（面试重点、原因、标签等）。
 
-### 1. `src/hooks/useLanguage.ts`
+## 修复方案
 
-将 `language` 的 fallback 从 `'en'` 改为 `'zh'`，保证调用 `useLanguage()` 的地方默认使用中文。
+### 改动 1：扩展 `InterviewQuestion` 类型 — `src/types/job.ts`
 
-### 2. `src/lib/i18n/index.ts`
+在 `InterviewQuestion` 接口中新增三个可选字段：
 
-将 `getSavedLanguage()` 的 localStorage 默认值从 `'en'` 改为 `'zh'`，保证首次使用的用户默认语言是中文。
+```ts
+export interface InterviewQuestion {
+  // ...现有字段...
+  evaluationFocus?: string;    // 面试重点（AI 提取）
+  qualityReasoning?: string;   // 表现原因（AI 提取）
+  responseQuality?: 'high' | 'medium' | 'low'; // 表现评级
+}
+```
 
-### 3. `src/components/interview/TranscriptAnalyzer.tsx`
+### 改动 2：保存时包含全部字段 — `AnalysisDetailPanel.tsx` `handleSaveAll`
 
-- import `useLanguage` hook
-- 在 `handleAnalyze` 的 invoke body 中加入 `language`
+```ts
+const newQuestions: InterviewQuestion[] = result.questions.map((q, index) => ({
+  id: `extracted-${Date.now()}-${index}`,
+  question: q.question,
+  category: q.category,
+  myAnswer: q.myAnswerSummary,
+  difficulty: q.difficulty,
+  wasAsked: true,
+  answeredWell: q.responseQuality === 'high',
+  responseQuality: q.responseQuality,   // ✅ 新增
+  evaluationFocus: q.evaluationFocus,   // ✅ 新增
+  qualityReasoning: q.qualityReasoning, // ✅ 新增
+  tags: q.tags,
+}));
+```
 
-### 4. `src/pages/InterviewAnalysis.tsx`
+### 改动 3：已保存视图的问题卡片改为可展开 — `AnalysisDetailPanel.tsx`（lines 236-268）
 
-- import `useLanguage` hook
-- 在 `handleAnalyze` 的 invoke body 中加入 `language`
+将现有的静态 `<Card>` 替换为与分析结果视图一致的 `<Collapsible>` 卡片，展开后显示：
 
-### 5. `src/pages/Index.tsx` 和 `src/pages/AnalyzeInterview.tsx`
+- **我的回答**（`myAnswer`）
+- **面试重点**（`evaluationFocus`）— 原来不展示
+- **表现原因**（`qualityReasoning`）— 原来不展示
+- **表现评级 badge**（`responseQuality` 对应 QUALITY_CONFIG）— 原来只用 thumbsUp/Down 图标
+- **标签 badges**（`tags`）— 原来不展示
 
-- import `useLanguage` hook
-- 在 `handleSubmit` 的 invoke body 中加入 `language`
+这样保存后的展示与分析结果视图完全对齐，用户不会感受到数据丢失。
 
-## 效果
+## 需要修改的文件
 
-修改后，所有 AI Agent 的输出都会跟随用户当前语言设置。由于默认语言改为中文，新用户的所有分析结果都会是中文。已选择英文 UI 的用户如果需要英文分析，可以通过语言切换器控制。
+| 文件 | 修改内容 |
+|---|---|
+| `src/types/job.ts` | `InterviewQuestion` 新增 3 个可选字段 |
+| `src/components/analytics/AnalysisDetailPanel.tsx` | `handleSaveAll` 加 3 个字段；existing questions 展示改用 Collapsible 卡片 |
 
-这是最灵活的方案——把"分析语言跟随 UI 语言"这件事做完整，而不是硬编码成中文，这样英文用户也不会受影响。
+## 改动范围
+
+- 只新增可选字段，不破坏现有数据（旧记录里这些字段为 `undefined`，UI 有 `?.` 保护）
+- 已有的问题数据不受影响
+- 不需要修改数据库 schema（数据存在 JSONB 的 `stages` 字段里，天然支持任意字段扩展）
