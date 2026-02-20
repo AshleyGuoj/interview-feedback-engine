@@ -1074,6 +1074,45 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
           )}
         </div>
 
+        {/* Product feature highlight banner */}
+        <div data-slice-block="true" style={{
+          margin: '0 20px 20px',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 60%, #ede9fe 100%)',
+          border: '1px solid #c7d2fe',
+          padding: '14px 16px',
+        }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: '#4338ca', marginBottom: '10px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            ✦ OfferMind · AI 职业情报平台
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {[
+              { emoji: '🎯', title: '面试级分析', desc: 'AI 解析面试题目 & 回答质量' },
+              { emoji: '📊', title: '岗位级洞察', desc: '多轮信号聚合 · 能力热力图' },
+              { emoji: '📈', title: '职业成长追踪', desc: '长期竞争力趋势 & 转折点' },
+              { emoji: '🗂️', title: 'Job Dashboard', desc: '追踪每个投递的全流程变化' },
+            ].map((item) => (
+              <div key={item.title} style={{
+                backgroundColor: 'rgba(255,255,255,0.65)',
+                borderRadius: '8px',
+                padding: '8px 10px',
+                display: 'flex',
+                gap: '7px',
+                alignItems: 'flex-start',
+              }}>
+                <span style={{ fontSize: '15px', lineHeight: 1 }}>{item.emoji}</span>
+                <div>
+                  <p style={{ fontSize: '11px', fontWeight: 700, color: '#312e81', margin: '0 0 2px' }}>{item.title}</p>
+                  <p style={{ fontSize: '10px', color: '#6b7280', margin: 0, lineHeight: 1.4 }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: '10px', color: '#818cf8', marginTop: '10px', textAlign: 'center', letterSpacing: '0.02em' }}>
+            interview-feedback-engine.lovable.app
+          </p>
+        </div>
+
         {/* Watermark footer */}
         <div data-slice-block="true" style={{
           borderTop: '1px solid #f3f4f6',
