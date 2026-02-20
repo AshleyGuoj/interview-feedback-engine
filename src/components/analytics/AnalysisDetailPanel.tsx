@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Job, InterviewStage, InterviewQuestion, InterviewReflection, QUESTION_CATEGORIES } from '@/types/job';
+import { InterviewPosterModal } from '@/components/analytics/InterviewPosterModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ import {
   AlertTriangle,
   Check,
   ArrowRight,
+  Image,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -92,6 +94,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
   const [showReanalyzeInput, setShowReanalyzeInput] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
+  const [showPoster, setShowPoster] = useState(false);
 
   const QUALITY_CONFIG = getQualityConfig(t);
   const FEELING_CONFIG = getFeelingConfig(t);
@@ -187,6 +190,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
   // Show existing analysis if available
   if (hasExistingAnalysis && !result && !showReanalyzeInput) {
     return (
+      <>
       <ScrollArea className="h-full">
         <div className="p-6 space-y-6">
           {/* Header */}
@@ -279,9 +283,9 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
             </section>
           )}
 
-          {/* Re-analyze button */}
-          <div className="pt-4 border-t">
-          <Button
+          {/* Re-analyze button + poster button */}
+          <div className="pt-4 border-t flex items-center gap-3 flex-wrap">
+            <Button
               variant="outline"
               onClick={() => setShowReanalyzeInput(true)}
               className="gap-2"
@@ -289,9 +293,25 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
               <Sparkles className="w-4 h-4" />
               {t('analysisDetail.reAnalyze')}
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowPoster(true)}
+              className="gap-2"
+            >
+              <Image className="w-4 h-4" />
+              生成海报
+            </Button>
           </div>
         </div>
       </ScrollArea>
+
+      <InterviewPosterModal
+        open={showPoster}
+        onOpenChange={setShowPoster}
+        job={job}
+        stage={stage}
+      />
+    </>
     );
   }
 
