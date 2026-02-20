@@ -89,6 +89,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
   const { language } = useLanguage();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<TranscriptAnalysisResult | null>(null);
+  const [showReanalyzeInput, setShowReanalyzeInput] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
 
@@ -170,6 +171,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
       await onSave(newQuestions, newReflection);
       toast.success(t('analysisDetail.savedSuccess'));
       setResult(null);
+      setShowReanalyzeInput(false);
     } catch (error) {
       console.error('Error saving analysis:', error);
       toast.error(t('analysisDetail.saveFailed'));
@@ -179,7 +181,7 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
   };
 
   // Show existing analysis if available
-  if (hasExistingAnalysis && !result) {
+  if (hasExistingAnalysis && !result && !showReanalyzeInput) {
     return (
       <ScrollArea className="h-full">
         <div className="p-6 space-y-6">
@@ -356,9 +358,9 @@ export function AnalysisDetailPanel({ job, stage, onSave }: AnalysisDetailPanelP
 
           {/* Re-analyze button */}
           <div className="pt-4 border-t">
-            <Button
+          <Button
               variant="outline"
-              onClick={() => setResult(null)}
+              onClick={() => setShowReanalyzeInput(true)}
               className="gap-2"
             >
               <Sparkles className="w-4 h-4" />
