@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { toPng } from 'html-to-image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,6 +11,29 @@ import { Download, Copy, Loader2, Shield, X } from 'lucide-react';
 import { toast } from 'sonner';
 import offermindLogo from '@/assets/offermind-logo-clean.png';
 import React from 'react';
+
+// ─── Smart slicing helpers ───
+
+function collectSafeCuts(el: HTMLDivElement, pixelRatio: number): number[] {
+  const containerRect = el.getBoundingClientRect();
+  const cuts: number[] = [];
+  el.querySelectorAll('[data-slice-block]').forEach(block => {
+    const r = block.getBoundingClientRect();
+    const bottomPx = (r.bottom - containerRect.top) * pixelRatio;
+    cuts.push(Math.floor(bottomPx));
+  });
+  return cuts.sort((a, b) => a - b);
+}
+
+function snapToCut(idealY: number, safeCuts: number[], maxOverlap: number): number {
+  const below = safeCuts.filter(c => c <= idealY);
+  if (below.length === 0) return idealY;
+  const best = below[below.length - 1];
+  if (idealY - best > maxOverlap) return idealY;
+  return best;
+}
+
+// ─── Quality labels ───
 
 const QUALITY_LABELS: Record<string, { label: string; color: string }> = {
   high: { label: '表现良好', color: '#16a34a' },
@@ -251,11 +275,10 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
     const start = charOffset;
     const end = start + selText.length;
 
-    // Position toolbar above/below the selection
+    // Position toolbar using viewport coords (for portal with position:fixed)
     const rect = range.getBoundingClientRect();
-    const wrapperRect = previewWrapperRef.current!.getBoundingClientRect();
-    const toolbarX = rect.left - wrapperRect.left + rect.width / 2;
-    const toolbarY = rect.top - wrapperRect.top - 44; // above
+    const toolbarX = rect.left + rect.width / 2;
+    const toolbarY = rect.top - 44; // above selection
 
     setSelectionToolbar({
       visible: true,
@@ -318,6 +341,10 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
   const handleDownloadSliced = async () => {
     setIsSlicing(true);
     try {
+      // Collect safe cut lines BEFORE generating image (DOM is still live)
+      const pixelRatio = 2;
+      const safeCuts = posterRef.current ? collectSafeCuts(posterRef.current, pixelRatio) : [];
+
       const dataUrl = await generateImage();
 
       const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -331,7 +358,6 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
       const fullHeight = img.naturalHeight;
 
       const pageHeight = Math.floor(fullWidth * (1660 / 1242));
-      const totalPages = Math.ceil(fullHeight / pageHeight);
 
       const downloadBlob = (blob: Blob, filename: string) =>
         new Promise<void>((resolve) => {
@@ -346,17 +372,31 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
           }, 100);
         });
 
+      // Smart slicing loop — snap each page boundary to a safe cut
+      const pages: { srcY: number; srcH: number }[] = [];
+      let sliceY = 0;
+      while (sliceY < fullHeight) {
+        const idealEnd = sliceY + pageHeight;
+        const snappedEnd = snapToCut(idealEnd, safeCuts, pageHeight * 0.25);
+        const actualEnd = Math.min(snappedEnd, fullHeight);
+        const srcH = actualEnd - sliceY;
+        if (srcH <= 0) break;
+        pages.push({ srcY: sliceY, srcH });
+        sliceY = actualEnd;
+      }
+
+      const totalPages = pages.length;
+
       for (let i = 0; i < totalPages; i++) {
+        const { srcY, srcH } = pages[i];
         const canvas = document.createElement('canvas');
         canvas.width = fullWidth;
-        canvas.height = pageHeight;
+        canvas.height = srcH;
         const ctx = canvas.getContext('2d')!;
 
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, fullWidth, pageHeight);
+        ctx.fillRect(0, 0, fullWidth, srcH);
 
-        const srcY = i * pageHeight;
-        const srcH = Math.min(pageHeight, fullHeight - srcY);
         ctx.drawImage(img, 0, srcY, fullWidth, srcH, 0, 0, fullWidth, srcH);
 
         const badge = `${i + 1} / ${totalPages}`;
@@ -366,7 +406,7 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
         const badgeW = ctx.measureText(badge).width + badgePad * 2.5;
         const badgeH = badgeFontSize + badgePad * 1.5;
         const badgeX = fullWidth - badgeW - badgePad * 1.5;
-        const badgeY = pageHeight - badgeH - badgePad * 1.5;
+        const badgeY = srcH - badgeH - badgePad * 1.5;
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
         ctx.beginPath();
         ctx.roundRect(badgeX, badgeY, badgeW, badgeH, badgeFontSize / 2);
@@ -474,15 +514,15 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
           className="overflow-y-auto flex-1 rounded-lg border bg-muted/30 p-2 relative"
           onMouseUp={handleMouseUp}
         >
-          {/* Floating selection toolbar */}
-          {privacyMode && selectionToolbar.visible && (
+        {/* Floating selection toolbar — rendered via portal so it stays above the selection regardless of scroll */}
+          {privacyMode && selectionToolbar.visible && ReactDOM.createPortal(
             <div
               style={{
-                position: 'absolute',
+                position: 'fixed',
                 left: `${selectionToolbar.x}px`,
                 top: `${selectionToolbar.y}px`,
                 transform: 'translateX(-50%)',
-                zIndex: 50,
+                zIndex: 9999,
                 display: 'flex',
                 gap: '4px',
                 background: '#1e1b4b',
@@ -528,7 +568,8 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
               >
                 ✕
               </button>
-            </div>
+            </div>,
+            document.body
           )}
 
           <PosterContent
@@ -640,6 +681,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
       >
         {/* Header */}
         <div
+          data-slice-block="true"
           style={{
             background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
             padding: '24px 20px 20px',
@@ -673,6 +715,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   return (
                     <div
                       key={q.id}
+                      data-slice-block="true"
                       style={{
                         border: '1px solid #e5e7eb',
                         borderRadius: '10px',
@@ -791,6 +834,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
+                      data-slice-block="true"
                       style={{
                         border: '1px solid #e5e7eb',
                         borderRadius: '10px',
@@ -828,6 +872,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
+                      data-slice-block="true"
                       style={{
                         borderLeft: '3px solid #86efac',
                         paddingLeft: '12px',
@@ -871,6 +916,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
+                      data-slice-block="true"
                       style={{
                         borderLeft: '3px solid #fca5a5',
                         paddingLeft: '12px',
@@ -914,6 +960,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
+                      data-slice-block="true"
                       style={{
                         backgroundColor: '#eff6ff',
                         borderRadius: '10px',
@@ -961,6 +1008,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
+                      data-slice-block="true"
                       style={{
                         position: 'relative',
                         ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
@@ -994,6 +1042,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                   const isRedacted = redactedItems.has(rid);
                   return (
                     <div
+                      data-slice-block="true"
                       style={{
                         position: 'relative',
                         ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
@@ -1026,7 +1075,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
         </div>
 
         {/* Watermark footer */}
-        <div style={{
+        <div data-slice-block="true" style={{
           borderTop: '1px solid #f3f4f6',
           padding: '12px 20px',
           display: 'flex',
