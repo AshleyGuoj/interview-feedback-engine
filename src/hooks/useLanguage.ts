@@ -9,7 +9,7 @@ export function useLanguage() {
   const { i18n } = useTranslation();
   
   return {
-    language: i18n.language || 'en',
+    language: i18n.language || 'zh',
     isEnglish: i18n.language === 'en',
     isChinese: i18n.language === 'zh',
   };

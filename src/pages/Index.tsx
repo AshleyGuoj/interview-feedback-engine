@@ -6,8 +6,10 @@ import { LoadingState } from "@/components/interview/LoadingState";
 import { InterviewInput, AnalysisResult } from "@/types/interview";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function Index() {
+  const { language } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
 
@@ -17,7 +19,7 @@ export default function Index() {
 
     try {
       const { data: analysisResult, error } = await supabase.functions.invoke("analyze-interview", {
-        body: data,
+        body: { ...data, language },
       });
 
       if (error) {

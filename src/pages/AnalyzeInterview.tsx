@@ -7,10 +7,12 @@ import { AnalysisResults } from '@/components/interview/AnalysisResults';
 import { InterviewInput, AnalysisResult } from '@/types/interview';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useLanguage } from '@/hooks/useLanguage';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AnalyzeInterview() {
+  const { language } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
 
@@ -20,7 +22,7 @@ export default function AnalyzeInterview() {
 
     try {
       const { data: analysisResult, error } = await supabase.functions.invoke('analyze-interview', {
-        body: data,
+        body: { ...data, language },
       });
 
       if (error) {
