@@ -8,7 +8,47 @@ const corsHeaders = {
 
 const getSystemPrompt = (language: string) => {
   const isEnglish = language === 'en';
-  
+  const langLabel = isEnglish ? 'English' : '中文';
+  const langMust = isEnglish ? 'MUST BE IN ENGLISH' : '必须用中文，禁止出现英文';
+
+  // Field descriptions switch by language
+  const questionDesc = isEnglish
+    ? 'string - the core question asked (in English)'
+    : 'string - 面试官提问的核心问题（必须用中文）';
+  const answerDesc = isEnglish
+    ? 'string - brief summary of how the candidate answered (in English)'
+    : 'string - 候选人回答的简要总结（必须用中文）';
+  const evalDesc = isEnglish
+    ? 'string - what the interviewer was really testing (in English)'
+    : 'string - 面试官真正考察的核心能力（必须用中文）';
+  const qualityDesc = isEnglish
+    ? 'string - why this quality rating (in English)'
+    : 'string - 该质量评级的原因说明（必须用中文）';
+  const tagsExample = isEnglish
+    ? '["Product Sense", "Leadership", "Data Analysis", "System Design"]'
+    : '["产品思维", "领导力", "数据分析", "系统设计", "跨团队协作"]';
+  const perfSummaryDesc = isEnglish
+    ? 'string - 2-3 sentence overall assessment (in English)'
+    : 'string - 2-3句话的整体表现评价（必须用中文）';
+  const whatWentWellDesc = isEnglish
+    ? 'array of specific things the candidate did well (in English)'
+    : '候选人表现出色的具体事项列表（每条必须用中文）';
+  const improveDesc = isEnglish
+    ? 'array of actionable improvement suggestions (in English)'
+    : '可操作的改进建议列表（每条必须用中文）';
+  const takeawaysDesc = isEnglish
+    ? 'array of lessons learned from this interview (in English)'
+    : '本次面试的关键收获列表（每条必须用中文）';
+  const vibeDesc = isEnglish
+    ? 'string - description of the interviewer\'s style and focus (in English)'
+    : 'string - 面试官风格与关注点的描述（必须用中文）';
+  const insightsDesc = isEnglish
+    ? 'string - any new learnings about the company/team/role (in English)'
+    : 'string - 对公司/团队/岗位的新认知（必须用中文）';
+  const difficultyDesc = isEnglish
+    ? 'string - easy/medium/hard assessment (in English)'
+    : 'string - 难度评估：简单/中等/困难（用中文）';
+
   return `You are an expert interview analysis assistant that helps job seekers extract structured data from raw interview transcripts.
 
 Your task is to analyze messy, unstructured interview transcripts (which may be in mixed Chinese/English) and generate:
@@ -16,7 +56,7 @@ Your task is to analyze messy, unstructured interview transcripts (which may be 
 1. **Structured Interview Questions** - Extract each distinct question asked by the interviewer
 2. **Interview Reflection** - Generate a comprehensive reflection based on the full transcript
 
-IMPORTANT: All text content in your response MUST be in ${isEnglish ? 'English' : 'Chinese (中文)'}.
+🚨 CRITICAL LANGUAGE RULE: ALL natural-language text fields in your JSON response MUST be written in ${langLabel}. This includes question text, summaries, tags, reasoning, and all reflection fields. DO NOT use English for any text field when the target language is 中文.
 
 === Question Extraction Guidelines ===
 - Identify interviewer questions vs candidate responses
@@ -36,35 +76,36 @@ Return your analysis as JSON with this exact structure:
 {
   "questions": [
     {
-      "question": "string - the core question asked",
+      "question": "${questionDesc}",
       "category": "behavioral" | "technical" | "situational" | "case" | "motivation" | "other",
-      "myAnswerSummary": "string - brief summary of how the candidate answered",
-      "evaluationFocus": "string - what the interviewer was really testing",
+      "myAnswerSummary": "${answerDesc}",
+      "evaluationFocus": "${evalDesc}",
       "responseQuality": "high" | "medium" | "low",
-      "qualityReasoning": "string - why this quality rating",
+      "qualityReasoning": "${qualityDesc}",
       "difficulty": 1-5,
-      "tags": ["string array of relevant skills/topics"]
+      "tags": ${tagsExample}
     }
   ],
   "reflection": {
     "overallFeeling": "great" | "good" | "neutral" | "poor" | "bad",
-    "performanceSummary": "string - 2-3 sentence overall assessment",
-    "whatWentWell": ["array of specific things the candidate did well"],
-    "whatCouldImprove": ["array of actionable improvement suggestions"],
-    "keyTakeaways": ["array of lessons learned from this interview"],
-    "interviewerVibe": "string - description of the interviewer's style and focus",
-    "companyInsights": "string - any new learnings about the company/team/role"
+    "performanceSummary": "${perfSummaryDesc}",
+    "whatWentWell": ["${whatWentWellDesc}"],
+    "whatCouldImprove": ["${improveDesc}"],
+    "keyTakeaways": ["${takeawaysDesc}"],
+    "interviewerVibe": "${vibeDesc}",
+    "companyInsights": "${insightsDesc}"
   },
   "metadata": {
     "totalQuestions": number,
     "dominantCategory": "string - most common question type",
-    "overallDifficulty": "string - easy/medium/hard assessment",
+    "overallDifficulty": "${difficultyDesc}",
     "languageDetected": "string - primary language of the transcript"
   }
 }
 
 Be thorough but concise. Focus on actionable insights over generic observations.
-ALL TEXT CONTENT MUST BE IN ${isEnglish ? 'ENGLISH' : 'CHINESE (中文)'}.`;
+
+🔒 FINAL LANGUAGE ENFORCEMENT: Every single text value in the JSON above ${langMust}. Tags, question text, summaries, reasoning, reflections — ALL of them. No exceptions.`;
 };
 
 Deno.serve(async (req) => {
@@ -98,9 +139,12 @@ Deno.serve(async (req) => {
       userPrompt += `**Interview Stage:** ${context.stage}\n`;
     }
     
-    const outputLanguage = language === 'en' ? 'English' : 'Chinese (中文)';
+    const outputLanguage = language === 'en' ? 'English' : '中文';
+    const langEnforcement = language === 'en'
+      ? 'ALL text values (question, myAnswerSummary, evaluationFocus, qualityReasoning, tags, and all reflection fields) MUST be in English.'
+      : '所有文本字段（question、myAnswerSummary、evaluationFocus、qualityReasoning、tags 标签、以及所有 reflection 字段）必须全部用中文书写，严禁出现英文单词或短语（专有名词如公司名、技术缩写 AI/SQL/PM 除外）。';
     userPrompt += `\n=== TRANSCRIPT START ===\n${transcript}\n=== TRANSCRIPT END ===\n\n`;
-    userPrompt += `Analyze the above transcript and return your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text. ALL text content must be in ${outputLanguage}.`;
+    userPrompt += `Analyze the above transcript and return your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text.\n\n🔒 LANGUAGE REQUIREMENT: Output language is ${outputLanguage}. ${langEnforcement}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
