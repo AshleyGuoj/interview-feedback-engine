@@ -1,140 +1,119 @@
 
-# 修复：下载图片时去除隐私模式 UI 装饰元素
+# Two Fixes: Smart Image Slicing + Floating Selection Toolbar
 
-## 问题根因分析
+## Fix 1: Selection Toolbar Follows the Mouse
 
-`html-to-image` 的 `toPng()` 直接截取 `posterRef` 所指向的整个 DOM，当前 DOM 中混杂了两类元素：
+### The Problem
+The toolbar is positioned using `position: absolute` inside the scrollable preview wrapper, with coordinates calculated from `range.getBoundingClientRect()` minus `wrapperRef.getBoundingClientRect()`. When the user scrolls down inside the preview, the toolbar appears far off-screen at the top of the scroll container.
 
-**应该出现在图片里的（内容）**
-- 模糊的文字 span（`filter: blur(6px)` + 灰色背景）✅ 已正确截入
-- 整块模糊的卡片效果 ✅ 已正确截入
+### The Fix
+Switch from `position: absolute` (scroll-relative) to `position: fixed` (viewport-relative). The toolbar will be rendered outside the scroll container using a React portal attached to `document.body`, with coordinates taken directly from `range.getBoundingClientRect()` — which always returns viewport-relative coordinates regardless of scroll position.
 
-**不应该出现在图片里的（交互 UI）**
-- "整块遮挡" 小按钮（`BlockRedactHint`）
-- "点击撤销遮挡" 文字（`UnredactHint`）
-- 所有区块的虚线外框（`outline: 1.5px dashed #a5b4fc`）
-- 浮动的「🛡️ 打上马赛克」工具栏（已在 `previewWrapperRef` 层，不在 `posterRef` 内，问题较小）
-
-## 修复方案：传入"下载模式"标志
-
-在 `PosterContent` 组件 props 中新增一个 `isCapturing: boolean` 标志。调用 `generateImage()` 时，先将 `isCapturing` 设为 `true`，触发重新渲染，让 DOM 去掉所有交互 UI 装饰，然后执行截图，截图完成后再还原。
-
-### 状态流动
-
-```text
-用户点击「下载」按钮
-      ↓
-setIsCapturing(true)   ← 告知 PosterContent 进入截图模式
-      ↓
-PosterContent 重新渲染：
-  · 去掉所有虚线 outline
-  · 隐藏 BlockRedactHint（"整块遮挡"）
-  · 隐藏 UnredactHint（"点击撤销遮挡"）
-  · 保留 blur 效果（文字级 + 整块）
-      ↓
-await new Promise(r => setTimeout(r, 50))  ← 等 DOM 更新
-      ↓
-toPng(posterRef.current) → 截图，UI 干净
-      ↓
-setIsCapturing(false)  ← 恢复预览 UI
-      ↓
-下载/切割/复制
+**Before:**
+```
+previewWrapperRef (overflow-y: auto)
+  └── toolbar (position: absolute, top: rect.top - wrapperRect.top - 44)
+         ← disappears when scrolled
 ```
 
-## 具体改动（仅修改 `InterviewPosterModal.tsx`）
-
-### 1. 新增 `isCapturing` state
-
-```typescript
-const [isCapturing, setIsCapturing] = useState(false);
+**After:**
+```
+document.body
+  └── toolbar (position: fixed, top: rect.top - 44)
+         ← always floats near the selection
 ```
 
-### 2. `generateImage()` 改为先设置标志
+The `SelectionToolbarState` will store `clientX` / `clientY` (viewport coords) instead of wrapper-relative coords. The toolbar renders via `ReactDOM.createPortal` into `document.body`.
+
+---
+
+## Fix 2: Smart Slicing — No Mid-Sentence Cuts
+
+### The Problem
+The current slicing logic cuts the full poster PNG at exact pixel multiples of `pageHeight`. Since the image is a flat bitmap at this point, there is no semantic knowledge of where paragraphs end, so sentences are cut in the middle.
+
+### The Fix: Content-Aware Cut Points
+
+Before flattening the DOM to PNG, we read the **bounding boxes of natural break elements** from the live DOM to build a list of "safe cut lines". Then, when slicing the PNG, each page boundary is snapped to the nearest safe cut line that falls below the desired cut position.
+
+#### Step-by-step:
+
+**Step 1 — Collect safe cut lines from the DOM**
+
+After `setIsCapturing(true)` and the 80ms paint delay (before `toPng`), we scan the `posterRef` for block-level elements: each question card, each reflection section, and the header/footer. We record the bottom Y of each block, multiplied by `pixelRatio: 2` to match the PNG's pixel coordinate space.
 
 ```typescript
-const generateImage = async (): Promise<string> => {
-  if (!posterRef.current) throw new Error('Poster ref not found');
-  setIsCapturing(true);
-  // 等 React 渲染完成（下一个 paint）
-  await new Promise(r => setTimeout(r, 80));
-  try {
-    return await toPng(posterRef.current, {
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      cacheBust: true,
-    });
-  } finally {
-    setIsCapturing(false);
-  }
+const collectSafeCuts = (el: HTMLDivElement, pixelRatio: number): number[] => {
+  const containerRect = el.getBoundingClientRect();
+  const selectors = [
+    '[data-slice-block]',   // we add this attribute to each major block
+  ];
+  const cuts: number[] = [];
+  el.querySelectorAll('[data-slice-block]').forEach(block => {
+    const r = block.getBoundingClientRect();
+    // bottom of this block, relative to container top, scaled to PNG pixels
+    const bottomPx = (r.bottom - containerRect.top) * pixelRatio;
+    cuts.push(Math.floor(bottomPx));
+  });
+  return cuts.sort((a, b) => a - b);
 };
 ```
 
-### 3. `PosterContent` 接收 `isCapturing` prop
+**Step 2 — Add `data-slice-block` to each major block in `PosterContent`**
+
+We add `data-slice-block="true"` to each top-level content block:
+- The header `<div>`
+- Each question card `<div>`
+- Each reflection section div (summary, whatWentWell, whatCouldImprove, keyTakeaways, interviewerVibe, companyInsights)
+- The watermark footer `<div>`
+
+**Step 3 — Snap cut position to nearest safe cut**
 
 ```typescript
-interface PosterContentProps {
-  // ...现有 props
-  isCapturing: boolean;   // 新增
+const snapToCut = (idealY: number, safeCuts: number[], maxOverlap: number): number => {
+  // Find the largest safe cut that is <= idealY
+  // If none, fall back to idealY (plain cut)
+  const below = safeCuts.filter(c => c <= idealY);
+  if (below.length === 0) return idealY;
+  const best = below[below.length - 1];
+  // If the gap is too large (would leave huge blank), fall back
+  if (idealY - best > maxOverlap) return idealY;
+  return best;
+};
+```
+
+The `maxOverlap` is set to `pageHeight * 0.25` — if the nearest safe break is more than 25% above where we'd normally cut, we accept the plain cut rather than producing a very short page.
+
+**Step 4 — Rebuild the slicing loop with variable page heights**
+
+Instead of fixed `pageHeight` per slice, we calculate each page's actual height:
+
+```typescript
+let sliceY = 0;
+let page = 0;
+while (sliceY < fullHeight) {
+  const idealEnd = sliceY + pageHeight;
+  const snappedEnd = snapToCut(idealEnd, safeCuts, pageHeight * 0.25);
+  const actualEnd = Math.min(snappedEnd, fullHeight);
+  // draw canvas from sliceY to actualEnd
+  sliceY = actualEnd;
+  page++;
 }
 ```
 
-### 4. 条件渲染——截图时隐藏 UI 元素
+This means pages may be slightly shorter or taller than the ideal 3:4 ratio, but they will never cut mid-sentence.
 
-所有使用 `BlockRedactHint` 和 `UnredactHint` 的地方改为：
+---
 
-```tsx
-{privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={...} />}
-{isRedacted && !isCapturing && <UnredactHint onClick={...} />}
-```
+## Files to Modify
 
-所有区块的虚线外框样式改为：
-
-```typescript
-...(privacyMode && !isRedacted && !isCapturing
-  ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' }
-  : {})
-```
-
-### 5. 整块遮挡卡片的"点击撤销"层（题目卡片内部）
-
-题目卡片有一个单独的 `isRedacted` 覆盖层（lines 695–708），截图时整块遮挡依然生效（灰色 + blur），但覆盖层本身（含 `cursor: pointer` 和"点击撤销遮挡"文字）在 `isCapturing` 时不渲染：
-
-```tsx
-{isRedacted && !isCapturing && (
-  <div onClick={...} style={{ position: 'absolute', inset: 0, ... cursor: 'pointer' }}>
-    ...
-  </div>
-)}
-// 截图时，用一个纯样式层代替（只保留视觉 blur，不带文字）
-{isRedacted && isCapturing && (
-  <div style={{
-    position: 'absolute', inset: 0, borderRadius: '10px',
-    backgroundColor: '#d1d5db', filter: 'blur(8px)',
-    zIndex: 2,
-  }} />
-)}
-```
-
-## 改动涉及范围
-
-| 元素 | 截图时的处理 |
+| File | Changes |
 |---|---|
-| "整块遮挡" 小按钮（BlockRedactHint） | 不渲染 |
-| "点击撤销遮挡" 覆盖层（UnredactHint） | 不渲染 |
-| 各区块虚线 outline | 移除 |
-| 文字级 blur span | 保留（正确效果）|
-| 整块卡片灰色 blur | 保留，但无交互文字/cursor |
-| 浮动「打上马赛克」工具栏 | 在 previewWrapperRef 层，不在 posterRef 内，不影响截图 |
+| `src/components/analytics/InterviewPosterModal.tsx` | Fix 1: Portal-based toolbar with `position: fixed`. Fix 2: `data-slice-block` on each block; `collectSafeCuts()` helper; smart slicing loop |
 
-## 需要修改的文件
+## Scope
 
-| 文件 | 改动量 |
-|---|---|
-| `src/components/analytics/InterviewPosterModal.tsx` | 新增 `isCapturing` state；更新 `generateImage()`；`PosterContent` props 增加 `isCapturing`；7 处条件渲染修改 |
-
-## 改动范围
-
-- 纯前端，无 API 调用
-- 不影响数据存储
-- 三个下载路径（长图、小红书版、复制）均走同一个 `generateImage()` 函数，统一修复
-- 用户预览体验不变，只有截图的瞬间（80ms）DOM 会更新
+- Pure frontend, no backend changes
+- Both fixes are isolated to `InterviewPosterModal.tsx`
+- The `isCapturing` flow is unchanged; safe cuts are collected during the existing 80ms paint window
+- All three download paths (长图, 小红书版, 复制) still share `generateImage()`; only the slicing loop in `handleDownloadSliced` is updated
