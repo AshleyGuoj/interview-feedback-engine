@@ -148,6 +148,7 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isSlicing, setIsSlicing] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   // Privacy mode state
   const [privacyMode, setPrivacyMode] = useState(false);
@@ -284,11 +285,17 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
 
   const generateImage = async (): Promise<string> => {
     if (!posterRef.current) throw new Error('Poster ref not found');
-    return await toPng(posterRef.current, {
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      cacheBust: true,
-    });
+    setIsCapturing(true);
+    await new Promise(r => setTimeout(r, 80));
+    try {
+      return await toPng(posterRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+      });
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -534,6 +541,7 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
             onToggleRedact={toggleRedact}
             textRedactions={textRedactions}
             onRemoveTextRedaction={removeTextRedaction}
+            isCapturing={isCapturing}
           />
         </div>
       </DialogContent>
@@ -608,10 +616,11 @@ interface PosterContentProps {
   onToggleRedact: (id: string) => void;
   textRedactions: TextRedaction[];
   onRemoveTextRedaction: (id: string) => void;
+  isCapturing: boolean;
 }
 
 const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
-  ({ job, stage, t, privacyMode, redactedItems, onToggleRedact, textRedactions, onRemoveTextRedaction }, ref) => {
+  ({ job, stage, t, privacyMode, redactedItems, onToggleRedact, textRedactions, onRemoveTextRedaction, isCapturing }, ref) => {
     const questions = stage.questions ?? [];
     const reflection = stage.reflection;
 
@@ -670,11 +679,11 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         padding: '12px',
                         backgroundColor: '#fafafa',
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
                       }}
                     >
                       {/* Click whole card to block-redact */}
-                      {privacyMode && !isRedacted && (
+                      {privacyMode && !isRedacted && !isCapturing && (
                         <div
                           onClick={() => onToggleRedact(rid)}
                           style={{
@@ -692,7 +701,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                           整块遮挡
                         </div>
                       )}
-                      {isRedacted && (
+                      {isRedacted && !isCapturing && (
                         <div
                           onClick={() => onToggleRedact(rid)}
                           style={{
@@ -705,6 +714,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                           <div style={{ filter: 'blur(8px)', width: '100%', height: '100%', position: 'absolute', inset: 0, backgroundColor: '#d1d5db', borderRadius: '10px' }} />
                           <span style={{ position: 'relative', zIndex: 1, fontSize: '10px', color: '#6366f1' }}>点击撤销遮挡</span>
                         </div>
+                      )}
+                      {isRedacted && isCapturing && (
+                        <div style={{
+                          position: 'absolute', inset: 0, borderRadius: '10px',
+                          backgroundColor: '#d1d5db', filter: 'blur(8px)', zIndex: 2,
+                        }} />
                       )}
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', minWidth: '28px' }}>
@@ -782,12 +797,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         padding: '12px',
                         backgroundColor: '#fafafa',
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
                         ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
-                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
+                      {privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && !isCapturing && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', marginBottom: '6px' }}>
                         <NumberCircle n={1} />总体评价
                       </p>
@@ -817,12 +832,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         borderLeft: '3px solid #86efac',
                         paddingLeft: '12px',
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
                         ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
-                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
+                      {privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && !isCapturing && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <NumberCircle n={2} color="#16a34a" />
                         <CheckCircleSvg color="#16a34a" />
@@ -860,12 +875,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         borderLeft: '3px solid #fca5a5',
                         paddingLeft: '12px',
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
                         ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
-                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
+                      {privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && !isCapturing && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <NumberCircle n={3} color="#dc2626" />
                         <AlertCircleSvg color="#dc2626" />
@@ -904,12 +919,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                         borderRadius: '10px',
                         padding: '12px',
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px' } : {}),
                         ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
-                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
+                      {privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && !isCapturing && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', marginBottom: '8px' }}>
                         <NumberCircle n={4} color="#2563eb" /> 核心收获
                       </p>
@@ -948,12 +963,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                     <div
                       style={{
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
                         ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
-                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
+                      {privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && !isCapturing && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
                         <NumberCircle n={5} /> 面试官风格
                       </p>
@@ -981,12 +996,12 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
                     <div
                       style={{
                         position: 'relative',
-                        ...(privacyMode && !isRedacted ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
+                        ...(privacyMode && !isRedacted && !isCapturing ? { outline: '1.5px dashed #a5b4fc', outlineOffset: '1px', borderRadius: '4px' } : {}),
                         ...(isRedacted ? { filter: 'blur(7px)', backgroundColor: '#d1d5db', borderRadius: '4px' } : {}),
                       }}
                     >
-                      {privacyMode && !isRedacted && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
-                      {isRedacted && <UnredactHint onClick={() => onToggleRedact(rid)} />}
+                      {privacyMode && !isRedacted && !isCapturing && <BlockRedactHint onClick={() => onToggleRedact(rid)} />}
+                      {isRedacted && !isCapturing && <UnredactHint onClick={() => onToggleRedact(rid)} />}
                       <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
                         <NumberCircle n={6} /> 公司洞察
                       </p>
