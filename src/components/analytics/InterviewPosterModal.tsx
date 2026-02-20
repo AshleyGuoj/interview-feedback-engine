@@ -3,26 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { toPng } from 'html-to-image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Job, InterviewStage, QUESTION_CATEGORIES } from '@/types/job';
 import { format } from 'date-fns';
-import {
-  Building2,
-  Briefcase,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  ArrowRight,
-  Check,
-  Lightbulb,
-  Download,
-  Copy,
-  Loader2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Download, Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import offermindLogo from '@/assets/offermind-logo-clean.png';
+import React from 'react';
 
 const QUALITY_LABELS: Record<string, { label: string; color: string }> = {
   high: { label: '表现良好', color: '#16a34a' },
@@ -113,8 +99,63 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
   );
 }
 
-// Poster DOM — this is what gets captured as PNG
-import React from 'react';
+// ─── Inline SVG helpers (html-to-image captures SVG perfectly, no OS font dependency) ───
+
+function MessageSquareSvg() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4338ca" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function LightbulbSvg() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4338ca" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+    </svg>
+  );
+}
+
+function CheckCircleSvg({ color = '#16a34a' }: { color?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function AlertCircleSvg({ color = '#dc2626' }: { color?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function CheckSvg({ color = '#16a34a' }: { color?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function ArrowRightSvg({ color = '#dc2626' }: { color?: string }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}>
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+}
+
+// ─── Poster DOM — captured as PNG ───
 
 const PosterContent = React.forwardRef<
   HTMLDivElement,
@@ -163,11 +204,10 @@ const PosterContent = React.forwardRef<
         {/* Questions section */}
         {questions.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
-            <SectionTitle number="📝" title={`面试题目（${questions.length} 题）`} />
+            <SectionTitle icon={<MessageSquareSvg />} title={`面试题目（${questions.length} 题）`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
               {questions.map((q, index) => {
                 const quality = q.responseQuality ? QUALITY_LABELS[q.responseQuality] : null;
-                const category = q.category ? QUESTION_CATEGORIES[q.category] : null;
                 return (
                   <div
                     key={q.id}
@@ -187,7 +227,7 @@ const PosterContent = React.forwardRef<
                           {q.question}
                         </p>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          {category && (
+                          {q.category && (
                             <span style={{
                               fontSize: '11px',
                               padding: '2px 8px',
@@ -224,7 +264,7 @@ const PosterContent = React.forwardRef<
         {/* Reflection section */}
         {reflection && (
           <div>
-            <SectionTitle number="💡" title="面试复盘" />
+            <SectionTitle icon={<LightbulbSvg />} title="面试复盘" />
             <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Performance summary */}
               {reflection.performanceSummary && (
@@ -245,12 +285,14 @@ const PosterContent = React.forwardRef<
               {reflection.whatWentWell && reflection.whatWentWell.length > 0 && (
                 <div style={{ borderLeft: '3px solid #86efac', paddingLeft: '12px' }}>
                   <p style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <NumberCircle n={2} color="#16a34a" /> ✓ 表现良好
+                    <NumberCircle n={2} color="#16a34a" />
+                    <CheckCircleSvg color="#16a34a" />
+                    <span style={{ marginLeft: '2px' }}>表现良好</span>
                   </p>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {reflection.whatWentWell.map((item, i) => (
                       <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <span style={{ color: '#16a34a', marginTop: '1px', flexShrink: 0 }}>✓</span>
+                        <CheckSvg color="#16a34a" />
                         {item}
                       </li>
                     ))}
@@ -261,13 +303,15 @@ const PosterContent = React.forwardRef<
               {/* What could improve */}
               {reflection.whatCouldImprove && reflection.whatCouldImprove.length > 0 && (
                 <div style={{ borderLeft: '3px solid #fca5a5', paddingLeft: '12px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '6px' }}>
-                    <NumberCircle n={3} color="#dc2626" /> → 可改进之处
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <NumberCircle n={3} color="#dc2626" />
+                    <AlertCircleSvg color="#dc2626" />
+                    <span style={{ marginLeft: '2px' }}>可改进之处</span>
                   </p>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {reflection.whatCouldImprove.map((item, i) => (
                       <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <span style={{ color: '#dc2626', marginTop: '1px', flexShrink: 0 }}>→</span>
+                        <ArrowRightSvg color="#dc2626" />
                         {item}
                       </li>
                     ))}
@@ -342,7 +386,8 @@ const PosterContent = React.forwardRef<
 });
 PosterContent.displayName = 'PosterContent';
 
-// Small helper components for inline styles
+// ─── Small helper components ───
+
 function PosterBadge({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return (
     <span style={{
@@ -378,10 +423,10 @@ function NumberCircle({ n, color = '#6b7280' }: { n: number; color?: string }) {
   );
 }
 
-function SectionTitle({ number, title }: { number: string; title: string }) {
+function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-      <span style={{ fontSize: '15px' }}>{number}</span>
+      {icon}
       <span style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{title}</span>
     </div>
   );
