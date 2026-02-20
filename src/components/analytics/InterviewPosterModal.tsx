@@ -1086,11 +1086,11 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
             ✦ OfferMind · AI 职业情报平台
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {[
-              { emoji: '🎯', title: '面试级分析', desc: 'AI 解析面试题目 & 回答质量' },
-              { emoji: '📊', title: '岗位级洞察', desc: '多轮信号聚合 · 能力热力图' },
-              { emoji: '📈', title: '职业成长追踪', desc: '长期竞争力趋势 & 转折点' },
-              { emoji: '🗂️', title: 'Job Dashboard', desc: '追踪每个投递的全流程变化' },
+          {[
+              { emoji: '📊', title: '面试级分析', desc: 'AI 提取问题、分类题型、评分引用原话为证' },
+              { emoji: '🔍', title: '岗位级洞察', desc: '多轮信号聚合 · 能力热力图 · 录用/风险预判' },
+              { emoji: '📈', title: '职业级成长', desc: '跨公司追踪能力趋势 · 找到真正的转折点' },
+              { emoji: '🎯', title: '职业信号时间线', desc: '从混乱记录里筛出改变轨迹的关键时刻' },
             ].map((item) => (
               <div key={item.title} style={{
                 backgroundColor: 'rgba(255,255,255,0.65)',
@@ -1109,7 +1109,7 @@ const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
             ))}
           </div>
           <p style={{ fontSize: '10px', color: '#818cf8', marginTop: '10px', textAlign: 'center', letterSpacing: '0.02em' }}>
-            interview-feedback-engine.lovable.app
+            aicareeroffermind.com · 感兴趣可联系我要邀请码
           </p>
         </div>
 
