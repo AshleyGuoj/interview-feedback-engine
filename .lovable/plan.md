@@ -1,80 +1,139 @@
 
-# 功能升级：海报自动分割为小红书标准尺寸图片组
+# 功能：海报生成前手动标记敏感内容，打上马赛克
 
-## 小红书图片规范
+## 核心设计思路
 
-根据平台官方规范：
-- **竖版最优尺寸**：1242 × 1660px（3:4 比例）
-- **支持多图上传**：小红书支持最多 18 张图，建议每组 3-4 张，阅读体验最佳
-- **当前海报宽度**：390px × pixelRatio 2 = 780px 实际输出宽度
+由于以下原因，**手动选择（用户点击标记）** 是最合适的方案：
+- AI 自动检测哪些是"敏感信息"逻辑复杂，且容易误判
+- 每个人对"敏感"的定义不同（有人在乎公司名，有人在乎项目细节，有人在乎具体数字）
+- 用户自己点击一下要遮挡的内容，直接、准确、可控
 
-## 核心技术方案：Canvas 裁切
+**马赛克实现方式**：在海报 DOM 中，被标记的文字替换为一段灰色模糊矩形（`filter: blur(6px)` + 灰色背景），`html-to-image` 会把 CSS blur 完整捕获到图片中，效果与微信截图打码一致。
 
-思路：先用 `html-to-image` 把完整海报渲染成一张长图，然后用浏览器原生 `Canvas API` 把这张长图按固定高度（1660px 对应比例）切成多张，每张都自动加上顶部 Header（公司+轮次）和底部水印，让每张单独看都有完整上下文。
+## 用户交互流程
 
 ```text
-长图（例如 780 × 3200px）
-        ↓ Canvas 裁切
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ 封面（第1张） │  │ 题目（第2张） │  │ 复盘（第3张） │
-│ Header+问题  │  │ 续接问题      │  │ 反思+收获    │
-│ OfferMind水印│  │ OfferMind水印 │  │ OfferMind水印│
-└──────────────┘  └──────────────┘  └──────────────┘
+打开「生成海报」弹窗
+        ↓
+弹窗右上角出现「🛡️ 隐私模式」切换开关
+        ↓
+开启后，海报预览中：
+- 每道题目的题目文字旁出现「点击遮挡」提示
+- 复盘各区块（总体评价/表现良好/可改进/核心收获/面试官风格/公司洞察）整块可点击
+        ↓
+用户点击想遮挡的内容 → 该块变为模糊马赛克效果
+再次点击 → 取消遮挡（切换）
+        ↓
+确认无误后，点击下载/复制 → 马赛克会渲染进图片
 ```
 
-## 具体实现
+## 可以遮挡的颗粒度
 
-### 新增下载逻辑 `handleDownloadSliced`
+| 内容块 | 遮挡单位 |
+|---|---|
+| 面试题目 | 每道题的题目文字（独立，可单独遮挡） |
+| 总体评价 | 整段文字 |
+| 表现良好 | 整个列表 |
+| 可改进之处 | 整个列表 |
+| 核心收获 | 整个列表 |
+| 面试官风格 | 整段文字 |
+| 公司洞察 | 整段文字 |
 
-在 `InterviewPosterModal.tsx` 里新增一个"下载分页图" 按钮，触发以下流程：
+## 技术实现
 
-1. 用 `toPng()` 把完整海报渲染成一张 data URL 长图（pixelRatio: 2，实际输出约 780px 宽）
-2. 把 data URL 加载到 `<img>` 对象中，读取实际像素高度
-3. 计算每一页的高度：按 `width × (1660/1242)` 即 3:4 比例得到每页像素高
-4. 循环用 Canvas `drawImage` 截取每一段，最后一页用白色填充不足部分
-5. 在每张图底部叠加一个"页码"标注（如"1/3"）和 OfferMind 水印
-6. 批量调用 `canvas.toBlob()` + `<a>` 标签触发多次下载，文件名为 `面试复盘-公司名-1.png`、`面试复盘-公司名-2.png`…
+### 1. 状态管理（新增到 `InterviewPosterModal`）
 
-### 弹窗 UI 改动
+```typescript
+// 隐私模式开关
+const [privacyMode, setPrivacyMode] = useState(false);
 
-将现有按钮区域改为三个按钮：
+// 被标记为敏感的内容 ID 集合
+// 格式：'question-0', 'question-1', 'reflection-summary', 
+//        'reflection-well', 'reflection-improve', 
+//        'reflection-takeaways', 'reflection-vibe', 'reflection-insights'
+const [redactedItems, setRedactedItems] = useState<Set<string>>(new Set());
+
+const toggleRedact = (id: string) => {
+  setRedactedItems(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+};
+```
+
+### 2. 将状态传入 `PosterContent`
+
+```typescript
+// PosterContent props 增加：
+interface PosterContentProps {
+  job: Job;
+  stage: InterviewStage;
+  t: (key: string) => string;
+  privacyMode: boolean;
+  redactedItems: Set<string>;
+  onToggleRedact: (id: string) => void;
+}
+```
+
+### 3. 马赛克渲染（CSS blur + 灰块）
+
+```typescript
+// 工具函数：生成遮挡样式
+function redactStyle(isRedacted: boolean, isEditing: boolean) {
+  return isRedacted
+    ? {
+        filter: 'blur(6px)',
+        backgroundColor: '#d1d5db',
+        borderRadius: '4px',
+        userSelect: 'none' as const,
+        cursor: isEditing ? 'pointer' : 'default',
+      }
+    : isEditing
+    ? { cursor: 'pointer', outline: '2px dashed #6366f1', outlineOffset: '2px', borderRadius: '4px' }
+    : {};
+}
+```
+
+### 4. 隐私模式 UI（弹窗顶部新增切换条）
+
+在按钮行和预览之间加一条提示栏：
 
 ```
-[ 下载长图 ]   [ 下载小红书版（3-4张）]   [ 复制 ]
+┌─────────────────────────────────────────────────────┐
+│  🛡️ 隐私模式   ●  开启后，点击内容块可打上马赛克    │
+│  [已遮挡 3 块内容，将在图片中隐藏]                  │
+└─────────────────────────────────────────────────────┘
 ```
 
-"下载小红书版"按钮有特殊说明文字："自动切成多张，直接上传小红书"。
+- 用 `Switch` 组件控制隐私模式开/关
+- 开启后预览区有虚线边框提示可点击区域
+- 被遮挡的块显示 blur 效果
+- 计数显示「已遮挡 N 块内容」
 
-同时在弹窗标题下方加一行提示：
-> "小红书版会将长图自动切割为 3:4 竖版，可直接多图上传"
+### 5. 视觉效果预览
+
+```
+隐私模式开启时，题目区域样式：
+
+Q1  ████████████████████   ← 模糊（被标记）
+    [行为题] [表现良好]
+
+Q2  金融客户具体的工作流...  ← 清晰（未标记）
+    [技术题] [有待提升]
+
+```
 
 ## 需要修改的文件
 
 | 文件 | 改动内容 |
 |---|---|
-| `src/components/analytics/InterviewPosterModal.tsx` | 新增 `handleDownloadSliced` 函数（Canvas 裁切逻辑）；UI 改为三个按钮 |
+| `src/components/analytics/InterviewPosterModal.tsx` | 新增隐私模式状态；`PosterContent` 接收 `redactedItems` prop；各内容块包裹可点击遮挡层；新增隐私模式控制 UI |
 
-## 不需要改动的文件
+## 改动范围
 
-- `PosterContent` 组件本身不动，仍用于渲染完整海报
-- `AnalysisDetailPanel.tsx` 不动
-- 不涉及后端/数据库
-
-## 技术细节补充
-
-- **每页高度**（CSS 像素）= `posterWidth × pixelRatio × (1660/1242)` ÷ `pixelRatio` = `posterWidth × 1.336`，即 390 × 1.336 ≈ 521px（CSS），对应实际图片像素约 1042px（pixelRatio=2）
-- **最后一页处理**：不足一整页的部分，Canvas 用白色 `fillRect` 补全，避免出现黑色空白
-- **页码叠加**：在每张 Canvas 底部右侧用半透明圆角标注"1/3"，与水印错开位置
-- **下载时序**：连续触发多次 `<a>.click()` 在现代浏览器（Chrome/Safari）均可正常触发多文件下载
-
-## 用户体验流程
-
-```text
-用户点击"生成海报" → 弹窗出现长图预览
-↓
-点击"下载小红书版" → 显示 Loading 旋转
-↓
-自动生成 3-4 张图片，逐一下载
-↓
-toast: "已下载 3 张图片，可直接上传到小红书"
-```
+- 纯前端改动，无需后端
+- 不影响数据存储（遮挡状态只在弹窗内存中，关闭弹窗后重置）
+- 不影响现有下载/复制/分割功能（遮挡效果跟随 DOM 一起被捕获进图片）
+- CSS `filter: blur()` 被 `html-to-image` 完整支持，效果与预览一致
