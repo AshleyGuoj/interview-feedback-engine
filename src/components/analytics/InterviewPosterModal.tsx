@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { toPng } from 'html-to-image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Job, InterviewStage, QUESTION_CATEGORIES } from '@/types/job';
+import { Switch } from '@/components/ui/switch';
+import { Job, InterviewStage } from '@/types/job';
 import { format } from 'date-fns';
-import { Download, Copy, Loader2 } from 'lucide-react';
+import { Download, Copy, Loader2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import offermindLogo from '@/assets/offermind-logo-clean.png';
 import React from 'react';
@@ -23,13 +24,56 @@ interface InterviewPosterModalProps {
   stage: InterviewStage;
 }
 
+// ─── Redaction helpers ───
+
+function getRedactStyle(isRedacted: boolean, isEditing: boolean): React.CSSProperties {
+  if (isRedacted) {
+    return {
+      filter: 'blur(7px)',
+      backgroundColor: '#d1d5db',
+      borderRadius: '4px',
+      userSelect: 'none',
+      cursor: isEditing ? 'pointer' : 'default',
+      transition: 'filter 0.2s, background-color 0.2s',
+    };
+  }
+  if (isEditing) {
+    return {
+      cursor: 'pointer',
+      outline: '2px dashed #6366f1',
+      outlineOffset: '2px',
+      borderRadius: '4px',
+      transition: 'outline 0.15s',
+    };
+  }
+  return {};
+}
+
 export function InterviewPosterModal({ open, onOpenChange, job, stage }: InterviewPosterModalProps) {
   const { t } = useTranslation();
   const posterRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
-
   const [isSlicing, setIsSlicing] = useState(false);
+
+  // Privacy mode state
+  const [privacyMode, setPrivacyMode] = useState(false);
+  const [redactedItems, setRedactedItems] = useState<Set<string>>(new Set());
+
+  const toggleRedact = (id: string) => {
+    if (!privacyMode) return;
+    setRedactedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handlePrivacyModeChange = (val: boolean) => {
+    setPrivacyMode(val);
+    if (!val) setRedactedItems(new Set());
+  };
 
   const generateImage = async (): Promise<string> => {
     if (!posterRef.current) throw new Error('Poster ref not found');
@@ -62,7 +106,6 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
     try {
       const dataUrl = await generateImage();
 
-      // Load the full poster image
       const img = await new Promise<HTMLImageElement>((resolve, reject) => {
         const image = new Image();
         image.onload = () => resolve(image);
@@ -73,7 +116,6 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
       const fullWidth = img.naturalWidth;
       const fullHeight = img.naturalHeight;
 
-      // 3:4 ratio page height (matching 1242×1660 Xiaohongshu standard)
       const pageHeight = Math.floor(fullWidth * (1660 / 1242));
       const totalPages = Math.ceil(fullHeight / pageHeight);
 
@@ -96,7 +138,6 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
         canvas.height = pageHeight;
         const ctx = canvas.getContext('2d')!;
 
-        // White background (prevents black fill on last page)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, fullWidth, pageHeight);
 
@@ -104,7 +145,6 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
         const srcH = Math.min(pageHeight, fullHeight - srcY);
         ctx.drawImage(img, 0, srcY, fullWidth, srcH, 0, 0, fullWidth, srcH);
 
-        // Page number badge (bottom-right)
         const badge = `${i + 1} / ${totalPages}`;
         const badgePad = 10;
         const badgeFontSize = Math.round(fullWidth * 0.035);
@@ -126,7 +166,6 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
         );
 
         await downloadBlob(blob, `面试复盘-${job.companyName}-${i + 1}.png`);
-        // Small delay between downloads for browser compatibility
         if (i < totalPages - 1) await new Promise((r) => setTimeout(r, 200));
       }
 
@@ -156,6 +195,7 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
   };
 
   const anyLoading = isDownloading || isSlicing || isCopying;
+  const redactCount = redactedItems.size;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -188,16 +228,46 @@ export function InterviewPosterModal({ open, onOpenChange, job, stage }: Intervi
           </Button>
         </div>
 
+        {/* Privacy mode bar */}
+        <div className={`shrink-0 flex items-center gap-3 rounded-lg px-3 py-2 border transition-colors ${privacyMode ? 'bg-indigo-50 border-indigo-200' : 'bg-muted/40 border-border'}`}>
+          <Shield className={`w-4 h-4 shrink-0 ${privacyMode ? 'text-indigo-600' : 'text-muted-foreground'}`} />
+          <div className="flex-1 min-w-0">
+            <p className={`text-xs font-medium ${privacyMode ? 'text-indigo-700' : 'text-foreground'}`}>
+              🛡️ 隐私模式
+            </p>
+            <p className="text-xs text-muted-foreground leading-tight">
+              {privacyMode
+                ? redactCount > 0
+                  ? `已遮挡 ${redactCount} 块内容，将在图片中隐藏`
+                  : '点击海报中的题目或复盘区块即可打上马赛克'
+                : '开启后可点击内容块打上马赛克，保护敏感信息'}
+            </p>
+          </div>
+          <Switch
+            checked={privacyMode}
+            onCheckedChange={handlePrivacyModeChange}
+            aria-label="隐私模式"
+          />
+        </div>
+
         {/* Poster preview */}
         <div className="overflow-y-auto flex-1 rounded-lg border bg-muted/30 p-2">
-          <PosterContent ref={posterRef} job={job} stage={stage} t={t} />
+          <PosterContent
+            ref={posterRef}
+            job={job}
+            stage={stage}
+            t={t}
+            privacyMode={privacyMode}
+            redactedItems={redactedItems}
+            onToggleRedact={toggleRedact}
+          />
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-// ─── Inline SVG helpers (html-to-image captures SVG perfectly, no OS font dependency) ───
+// ─── Inline SVG helpers ───
 
 function MessageSquareSvg() {
   return (
@@ -255,236 +325,351 @@ function ArrowRightSvg({ color = '#dc2626' }: { color?: string }) {
 
 // ─── Poster DOM — captured as PNG ───
 
-const PosterContent = React.forwardRef<
-  HTMLDivElement,
-  { job: Job; stage: InterviewStage; t: (key: string) => string }
->(({ job, stage, t }, ref) => {
-  const questions = stage.questions ?? [];
-  const reflection = stage.reflection;
+interface PosterContentProps {
+  job: Job;
+  stage: InterviewStage;
+  t: (key: string) => string;
+  privacyMode: boolean;
+  redactedItems: Set<string>;
+  onToggleRedact: (id: string) => void;
+}
 
-  return (
-    <div
-      ref={ref}
-      style={{
-        width: '390px',
-        backgroundColor: '#ffffff',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
-        fontSize: '14px',
-        color: '#111827',
-        padding: '0',
-        borderRadius: '16px',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
+const PosterContent = React.forwardRef<HTMLDivElement, PosterContentProps>(
+  ({ job, stage, t, privacyMode, redactedItems, onToggleRedact }, ref) => {
+    const questions = stage.questions ?? [];
+    const reflection = stage.reflection;
+
+    return (
       <div
+        ref={ref}
         style={{
-          background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
-          padding: '24px 20px 20px',
-          borderBottom: '1px solid #e5e7eb',
+          width: '390px',
+          backgroundColor: '#ffffff',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
+          fontSize: '14px',
+          color: '#111827',
+          padding: '0',
+          borderRadius: '16px',
+          overflow: 'hidden',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>{job.companyName}</span>
-          <span style={{ color: '#9ca3af', fontSize: '13px' }}>·</span>
-          <span style={{ fontSize: '14px', color: '#374151' }}>{job.roleTitle}</span>
+        {/* Header */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
+            padding: '24px 20px 20px',
+            borderBottom: '1px solid #e5e7eb',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>{job.companyName}</span>
+            <span style={{ color: '#9ca3af', fontSize: '13px' }}>·</span>
+            <span style={{ fontSize: '14px', color: '#374151' }}>{job.roleTitle}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <PosterBadge>{stage.name}</PosterBadge>
+            {stage.scheduledTime && (
+              <PosterBadge>{format(new Date(stage.scheduledTime), 'yyyy/MM/dd')}</PosterBadge>
+            )}
+            <PosterBadge accent>AI 面试复盘</PosterBadge>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <PosterBadge>{stage.name}</PosterBadge>
-          {stage.scheduledTime && (
-            <PosterBadge>{format(new Date(stage.scheduledTime), 'yyyy/MM/dd')}</PosterBadge>
-          )}
-          <PosterBadge accent>AI 面试复盘</PosterBadge>
-        </div>
-      </div>
 
-      <div style={{ padding: '20px' }}>
-        {/* Questions section */}
-        {questions.length > 0 && (
-          <div style={{ marginBottom: '20px' }}>
-            <SectionTitle icon={<MessageSquareSvg />} title={`面试题目（${questions.length} 题）`} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-              {questions.map((q, index) => {
-                const quality = q.responseQuality ? QUALITY_LABELS[q.responseQuality] : null;
-                return (
-                  <div
-                    key={q.id}
-                    style={{
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      padding: '12px',
-                      backgroundColor: '#fafafa',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', minWidth: '28px' }}>
-                        Q{index + 1}
-                      </span>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '13px', fontWeight: 500, color: '#111827', margin: '0 0 8px', lineHeight: 1.5 }}>
-                          {q.question}
-                        </p>
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          {q.category && (
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                              border: '1px solid #d1d5db',
-                              color: '#374151',
-                              backgroundColor: '#ffffff',
-                            }}>
-                              {t(`questionCategory.${q.category}`)}
-                            </span>
-                          )}
-                          {quality && (
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                              border: `1px solid ${quality.color}33`,
-                              color: quality.color,
-                              backgroundColor: `${quality.color}0d`,
-                            }}>
-                              {quality.label}
-                            </span>
-                          )}
+        <div style={{ padding: '20px' }}>
+          {/* Questions section */}
+          {questions.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <SectionTitle icon={<MessageSquareSvg />} title={`面试题目（${questions.length} 题）`} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                {questions.map((q, index) => {
+                  const quality = q.responseQuality ? QUALITY_LABELS[q.responseQuality] : null;
+                  const rid = `question-${index}`;
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      key={q.id}
+                      onClick={() => onToggleRedact(rid)}
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '10px',
+                        padding: '12px',
+                        backgroundColor: '#fafafa',
+                        position: 'relative',
+                      }}
+                    >
+                      {/* Redact overlay hint */}
+                      {privacyMode && !isRedacted && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '8px',
+                          fontSize: '10px',
+                          color: '#6366f1',
+                          opacity: 0.7,
+                          pointerEvents: 'none',
+                        }}>
+                          点击遮挡
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', minWidth: '28px' }}>
+                          Q{index + 1}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <p
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              color: '#111827',
+                              margin: '0 0 8px',
+                              lineHeight: 1.5,
+                              ...getRedactStyle(isRedacted, privacyMode),
+                            }}
+                          >
+                            {q.question}
+                          </p>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {q.category && (
+                              <span style={{
+                                fontSize: '11px',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                border: '1px solid #d1d5db',
+                                color: '#374151',
+                                backgroundColor: '#ffffff',
+                              }}>
+                                {t(`questionCategory.${q.category}`)}
+                              </span>
+                            )}
+                            {quality && (
+                              <span style={{
+                                fontSize: '11px',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                border: `1px solid ${quality.color}33`,
+                                color: quality.color,
+                                backgroundColor: `${quality.color}0d`,
+                              }}>
+                                {quality.label}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Reflection section */}
-        {reflection && (
-          <div>
-            <SectionTitle icon={<LightbulbSvg />} title="面试复盘" />
-            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Performance summary */}
-              {reflection.performanceSummary && (
-                <div style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  backgroundColor: '#fafafa',
-                }}>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', marginBottom: '6px' }}>
-                    <NumberCircle n={1} />总体评价
-                  </p>
-                  <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.performanceSummary}</p>
-                </div>
-              )}
+          {/* Reflection section */}
+          {reflection && (
+            <div>
+              <SectionTitle icon={<LightbulbSvg />} title="面试复盘" />
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-              {/* What went well */}
-              {reflection.whatWentWell && reflection.whatWentWell.length > 0 && (
-                <div style={{ borderLeft: '3px solid #86efac', paddingLeft: '12px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <NumberCircle n={2} color="#16a34a" />
-                    <CheckCircleSvg color="#16a34a" />
-                    <span style={{ marginLeft: '2px' }}>表现良好</span>
-                  </p>
-                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {reflection.whatWentWell.map((item, i) => (
-                      <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <CheckSvg color="#16a34a" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {/* Performance summary */}
+                {reflection.performanceSummary && (() => {
+                  const rid = 'reflection-summary';
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      onClick={() => onToggleRedact(rid)}
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '10px',
+                        padding: '12px',
+                        backgroundColor: '#fafafa',
+                        position: 'relative',
+                        ...getRedactStyle(isRedacted, privacyMode),
+                      }}
+                    >
+                      {privacyMode && !isRedacted && <RedactHint />}
+                      <p style={{ fontSize: '11px', fontWeight: 600, color: '#6b7280', marginBottom: '6px' }}>
+                        <NumberCircle n={1} />总体评价
+                      </p>
+                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.performanceSummary}</p>
+                    </div>
+                  );
+                })()}
 
-              {/* What could improve */}
-              {reflection.whatCouldImprove && reflection.whatCouldImprove.length > 0 && (
-                <div style={{ borderLeft: '3px solid #fca5a5', paddingLeft: '12px' }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <NumberCircle n={3} color="#dc2626" />
-                    <AlertCircleSvg color="#dc2626" />
-                    <span style={{ marginLeft: '2px' }}>可改进之处</span>
-                  </p>
-                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {reflection.whatCouldImprove.map((item, i) => (
-                      <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <ArrowRightSvg color="#dc2626" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {/* What went well */}
+                {reflection.whatWentWell && reflection.whatWentWell.length > 0 && (() => {
+                  const rid = 'reflection-well';
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      onClick={() => onToggleRedact(rid)}
+                      style={{
+                        borderLeft: '3px solid #86efac',
+                        paddingLeft: '12px',
+                        position: 'relative',
+                        ...getRedactStyle(isRedacted, privacyMode),
+                      }}
+                    >
+                      {privacyMode && !isRedacted && <RedactHint />}
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <NumberCircle n={2} color="#16a34a" />
+                        <CheckCircleSvg color="#16a34a" />
+                        <span style={{ marginLeft: '2px' }}>表现良好</span>
+                      </p>
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {reflection.whatWentWell.map((item, i) => (
+                          <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                            <CheckSvg color="#16a34a" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()}
 
-              {/* Key takeaways */}
-              {reflection.keyTakeaways && reflection.keyTakeaways.length > 0 && (
-                <div style={{
-                  backgroundColor: '#eff6ff',
-                  borderRadius: '10px',
-                  padding: '12px',
-                }}>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', marginBottom: '8px' }}>
-                    <NumberCircle n={4} color="#2563eb" /> 核心收获
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {reflection.keyTakeaways.map((item, i) => (
-                      <span key={i} style={{
-                        fontSize: '12px',
-                        padding: '3px 10px',
-                        borderRadius: '9999px',
-                        backgroundColor: '#dbeafe',
-                        color: '#1e40af',
-                      }}>
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+                {/* What could improve */}
+                {reflection.whatCouldImprove && reflection.whatCouldImprove.length > 0 && (() => {
+                  const rid = 'reflection-improve';
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      onClick={() => onToggleRedact(rid)}
+                      style={{
+                        borderLeft: '3px solid #fca5a5',
+                        paddingLeft: '12px',
+                        position: 'relative',
+                        ...getRedactStyle(isRedacted, privacyMode),
+                      }}
+                    >
+                      {privacyMode && !isRedacted && <RedactHint />}
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <NumberCircle n={3} color="#dc2626" />
+                        <AlertCircleSvg color="#dc2626" />
+                        <span style={{ marginLeft: '2px' }}>可改进之处</span>
+                      </p>
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {reflection.whatCouldImprove.map((item, i) => (
+                          <li key={i} style={{ fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                            <ArrowRightSvg color="#dc2626" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()}
 
-              {/* Interviewer vibe */}
-              {reflection.interviewerVibe && (
-                <div>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
-                    <NumberCircle n={5} /> 面试官风格
-                  </p>
-                  <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.interviewerVibe}</p>
-                </div>
-              )}
+                {/* Key takeaways */}
+                {reflection.keyTakeaways && reflection.keyTakeaways.length > 0 && (() => {
+                  const rid = 'reflection-takeaways';
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      onClick={() => onToggleRedact(rid)}
+                      style={{
+                        backgroundColor: '#eff6ff',
+                        borderRadius: '10px',
+                        padding: '12px',
+                        position: 'relative',
+                        ...getRedactStyle(isRedacted, privacyMode),
+                      }}
+                    >
+                      {privacyMode && !isRedacted && <RedactHint />}
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', marginBottom: '8px' }}>
+                        <NumberCircle n={4} color="#2563eb" /> 核心收获
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {reflection.keyTakeaways.map((item, i) => (
+                          <span key={i} style={{
+                            fontSize: '12px',
+                            padding: '3px 10px',
+                            borderRadius: '9999px',
+                            backgroundColor: '#dbeafe',
+                            color: '#1e40af',
+                          }}>
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
-              {/* Company insights */}
-              {reflection.companyInsights && (
-                <div>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
-                    <NumberCircle n={6} /> 公司洞察
-                  </p>
-                  <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.companyInsights}</p>
-                </div>
-              )}
+                {/* Interviewer vibe */}
+                {reflection.interviewerVibe && (() => {
+                  const rid = 'reflection-vibe';
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      onClick={() => onToggleRedact(rid)}
+                      style={{ position: 'relative', ...getRedactStyle(isRedacted, privacyMode) }}
+                    >
+                      {privacyMode && !isRedacted && <RedactHint />}
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
+                        <NumberCircle n={5} /> 面试官风格
+                      </p>
+                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.interviewerVibe}</p>
+                    </div>
+                  );
+                })()}
+
+                {/* Company insights */}
+                {reflection.companyInsights && (() => {
+                  const rid = 'reflection-insights';
+                  const isRedacted = redactedItems.has(rid);
+                  return (
+                    <div
+                      onClick={() => onToggleRedact(rid)}
+                      style={{ position: 'relative', ...getRedactStyle(isRedacted, privacyMode) }}
+                    >
+                      {privacyMode && !isRedacted && <RedactHint />}
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>
+                        <NumberCircle n={6} /> 公司洞察
+                      </p>
+                      <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{reflection.companyInsights}</p>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Watermark footer */}
-      <div style={{
-        borderTop: '1px solid #f3f4f6',
-        padding: '12px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#fafafa',
-      }}>
-        <img src={offermindLogo} alt="OfferMind" style={{ height: '20px', opacity: 0.5 }} />
-        <span style={{ fontSize: '11px', color: '#9ca3af' }}>由 OfferMind AI 生成 · 仅供参考</span>
+        {/* Watermark footer */}
+        <div style={{
+          borderTop: '1px solid #f3f4f6',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: '#fafafa',
+        }}>
+          <img src={offermindLogo} alt="OfferMind" style={{ height: '20px', opacity: 0.5 }} />
+          <span style={{ fontSize: '11px', color: '#9ca3af' }}>由 OfferMind AI 生成 · 仅供参考</span>
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 PosterContent.displayName = 'PosterContent';
 
 // ─── Small helper components ───
+
+function RedactHint() {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '6px',
+      right: '8px',
+      fontSize: '10px',
+      color: '#6366f1',
+      opacity: 0.7,
+      pointerEvents: 'none',
+      zIndex: 1,
+    }}>
+      点击遮挡
+    </div>
+  );
+}
 
 function PosterBadge({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return (
