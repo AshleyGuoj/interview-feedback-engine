@@ -155,16 +155,17 @@ Raw Input (面试笔记/转录/PDF)
 
 ### 4.6 如何评估模型质量（Model Quality Evaluation）
 
-**当前方法**：Human-in-the-loop 质量审计
+**当前方法**：架构内置的质量保障机制
 
-1. **Golden Set Testing**：用 10 份真实面试记录（覆盖不同质量、语言、长度）作为基准测试集，每次 prompt 迭代后回归测试
-2. **用户反馈信号**：追踪用户是否修改 AI 生成的评分/分析（修改率 = 模型不准确率的代理指标）
-3. **Schema 合规率**：监控 AI 输出的 JSON Schema 合规率，目标 > 95%
-4. **A/B Prompt 对比**：在 prompt 迭代时，对同一输入用新旧 prompt 分别生成结果，人工评审差异
+1. **Strict JSON Schema Validation**：每个 Agent 的输出必须通过前端 Schema 校验，不合规的响应直接拒绝并重试——这是线上质量的第一道防线
+2. **Evidence-Based Scoring 自验证**：评分必须附带原文引用，如果模型无法从原文中找到证据就无法给高分，从 prompt 层面约束了输出质量
+3. **Bounded Scoring Rubric**：1-5 分的评分标准明确定义了每个分数对应的行为描述，减少模型的自由裁量空间
+4. **Cross-Layer Consistency Check**：Layer 2 聚合 Layer 1 数据时，如果单轮评分与聚合趋势严重矛盾，系统会标记异常
 
 **未来方向**：
-- 构建自动化评估 pipeline（LLM-as-Judge），用更强的模型评估 Flash 模型的输出质量
-- 引入用户满意度评分（1-5 星）作为在线指标
+- 引入 LLM-as-Judge 自动评估 pipeline，用更强的模型（如 Gemini Pro）对 Flash 输出做质量打分
+- 增加用户反馈机制（修改 AI 评分 / 满意度评分），用修改率作为模型不准确率的代理指标
+- 构建 Golden Set 回归测试集，每次 prompt 迭代后自动化对比
 
 ---
 
