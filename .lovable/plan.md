@@ -1,119 +1,57 @@
 
-# Two Fixes: Smart Image Slicing + Floating Selection Toolbar
 
-## Fix 1: Selection Toolbar Follows the Mouse
+# 新增中文 Demo 工作区（保留英文 Demo）
 
-### The Problem
-The toolbar is positioned using `position: absolute` inside the scrollable preview wrapper, with coordinates calculated from `range.getBoundingClientRect()` minus `wrapperRef.getBoundingClientRect()`. When the user scrolls down inside the preview, the toolbar appears far off-screen at the top of the scroll container.
+## 概述
+在保留现有英文 Demo 账号 (`demo@offermind.app`) 的基础上，新增一个中文 Demo 账号，预填充 3 个中国本土 PM 岗位的完整面试数据。
 
-### The Fix
-Switch from `position: absolute` (scroll-relative) to `position: fixed` (viewport-relative). The toolbar will be rendered outside the scroll container using a React portal attached to `document.body`, with coordinates taken directly from `range.getBoundingClientRect()` — which always returns viewport-relative coordinates regardless of scroll position.
+## 中文 Demo 账号信息
+- **邮箱**: `demo-cn@offermind.app`
+- **密码**: `demo123456cn`
 
-**Before:**
+## 3 个中文岗位设计
+
+| 岗位 | 公司 | 状态 | 面试轮数 | 场景 |
+|------|------|------|----------|------|
+| AI 产品经理 | 字节跳动 | interviewing（面试中） | 4 轮已完成 + 1 轮已排期 | 进展顺利，有竞争 offer |
+| 商业化产品经理 | 阿里巴巴 | offer（已拿 offer） | 4 轮完成 + Offer 谈判 | 已收到 offer，正在谈薪 |
+| 策略产品经理 | 美团 | closed（已关闭） | 3 轮完成 + 终面被拒 | 终面挂了，但收获很大 |
+
+每轮面试包含 10 道中文面试题、回答摘要、反思笔记、面试官信息。
+
+## 技术实现
+
+### 1. 修改 `create-demo-user/index.ts`
+- 在现有逻辑基础上，同时检查并创建中文 Demo 用户 (`demo-cn@offermind.app`)
+- 两个账号独立，互不影响
+
+### 2. 新建 `seed-demo-data-cn/index.ts`
+- 复制 `seed-demo-data` 的结构，替换为中文内容
+- 3 个岗位的完整中文问题库（每轮 10 题）：
+  - 字节跳动：HR 筛选、技术理解、产品设计、业务终面
+  - 阿里巴巴：HR 面、产品 Sense、交叉面、HM 终面 + Offer
+  - 美团：HR 面、产品设计、策略分析、VP 终面（被拒）
+- 中文 activities 动态消息
+
+### 3. 在 `supabase/config.toml` 中注册新函数
 ```
-previewWrapperRef (overflow-y: auto)
-  └── toolbar (position: absolute, top: rect.top - wrapperRect.top - 44)
-         ← disappears when scrolled
-```
-
-**After:**
-```
-document.body
-  └── toolbar (position: fixed, top: rect.top - 44)
-         ← always floats near the selection
-```
-
-The `SelectionToolbarState` will store `clientX` / `clientY` (viewport coords) instead of wrapper-relative coords. The toolbar renders via `ReactDOM.createPortal` into `document.body`.
-
----
-
-## Fix 2: Smart Slicing — No Mid-Sentence Cuts
-
-### The Problem
-The current slicing logic cuts the full poster PNG at exact pixel multiples of `pageHeight`. Since the image is a flat bitmap at this point, there is no semantic knowledge of where paragraphs end, so sentences are cut in the middle.
-
-### The Fix: Content-Aware Cut Points
-
-Before flattening the DOM to PNG, we read the **bounding boxes of natural break elements** from the live DOM to build a list of "safe cut lines". Then, when slicing the PNG, each page boundary is snapped to the nearest safe cut line that falls below the desired cut position.
-
-#### Step-by-step:
-
-**Step 1 — Collect safe cut lines from the DOM**
-
-After `setIsCapturing(true)` and the 80ms paint delay (before `toPng`), we scan the `posterRef` for block-level elements: each question card, each reflection section, and the header/footer. We record the bottom Y of each block, multiplied by `pixelRatio: 2` to match the PNG's pixel coordinate space.
-
-```typescript
-const collectSafeCuts = (el: HTMLDivElement, pixelRatio: number): number[] => {
-  const containerRect = el.getBoundingClientRect();
-  const selectors = [
-    '[data-slice-block]',   // we add this attribute to each major block
-  ];
-  const cuts: number[] = [];
-  el.querySelectorAll('[data-slice-block]').forEach(block => {
-    const r = block.getBoundingClientRect();
-    // bottom of this block, relative to container top, scaled to PNG pixels
-    const bottomPx = (r.bottom - containerRect.top) * pixelRatio;
-    cuts.push(Math.floor(bottomPx));
-  });
-  return cuts.sort((a, b) => a - b);
-};
+[functions.seed-demo-data-cn]
+verify_jwt = false
 ```
 
-**Step 2 — Add `data-slice-block` to each major block in `PosterContent`**
+### 4. 修改 Auth 页面 (`src/pages/Auth.tsx`)
+- 现有的 "Explore Demo" 按钮保留，改为 "Explore Demo (EN)"
+- 新增 "探索中文 Demo" 按钮，调用中文 Demo 的登录流程
+- 两个按钮并排或上下排列
 
-We add `data-slice-block="true"` to each top-level content block:
-- The header `<div>`
-- Each question card `<div>`
-- Each reflection section div (summary, whatWentWell, whatCouldImprove, keyTakeaways, interviewerVibe, companyInsights)
-- The watermark footer `<div>`
+### 5. 修改 `JobsContext.tsx`
+- 在 `seedDemoData` 中判断当前用户邮箱：
+  - 如果是 `demo-cn@offermind.app` → 调用 `seed-demo-data-cn`
+  - 如果是 `demo@offermind.app` → 调用 `seed-demo-data`（现有逻辑）
+- 使用不同的 localStorage key (`offermind_demo_cn_seeded`) 防止冲突
 
-**Step 3 — Snap cut position to nearest safe cut**
+### 不需要修改的部分
+- 数据结构/类型定义不变
+- 前端渲染组件不变（已支持中文显示）
+- 英文 Demo 的所有逻辑完全不受影响
 
-```typescript
-const snapToCut = (idealY: number, safeCuts: number[], maxOverlap: number): number => {
-  // Find the largest safe cut that is <= idealY
-  // If none, fall back to idealY (plain cut)
-  const below = safeCuts.filter(c => c <= idealY);
-  if (below.length === 0) return idealY;
-  const best = below[below.length - 1];
-  // If the gap is too large (would leave huge blank), fall back
-  if (idealY - best > maxOverlap) return idealY;
-  return best;
-};
-```
-
-The `maxOverlap` is set to `pageHeight * 0.25` — if the nearest safe break is more than 25% above where we'd normally cut, we accept the plain cut rather than producing a very short page.
-
-**Step 4 — Rebuild the slicing loop with variable page heights**
-
-Instead of fixed `pageHeight` per slice, we calculate each page's actual height:
-
-```typescript
-let sliceY = 0;
-let page = 0;
-while (sliceY < fullHeight) {
-  const idealEnd = sliceY + pageHeight;
-  const snappedEnd = snapToCut(idealEnd, safeCuts, pageHeight * 0.25);
-  const actualEnd = Math.min(snappedEnd, fullHeight);
-  // draw canvas from sliceY to actualEnd
-  sliceY = actualEnd;
-  page++;
-}
-```
-
-This means pages may be slightly shorter or taller than the ideal 3:4 ratio, but they will never cut mid-sentence.
-
----
-
-## Files to Modify
-
-| File | Changes |
-|---|---|
-| `src/components/analytics/InterviewPosterModal.tsx` | Fix 1: Portal-based toolbar with `position: fixed`. Fix 2: `data-slice-block` on each block; `collectSafeCuts()` helper; smart slicing loop |
-
-## Scope
-
-- Pure frontend, no backend changes
-- Both fixes are isolated to `InterviewPosterModal.tsx`
-- The `isCapturing` flow is unchanged; safe cuts are collected during the existing 80ms paint window
-- All three download paths (长图, 小红书版, 复制) still share `generateImage()`; only the slicing loop in `handleDownloadSliced` is updated
