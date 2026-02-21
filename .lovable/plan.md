@@ -1,58 +1,96 @@
 
 
-# 使用 Remotion 创建 OfferMind 宣传短片
+# 更新文档：Backbone + Role Overlay Generator 架构
 
-## 现实情况说明
+## 概述
 
-Remotion 是一个基于 React 的视频生成框架，但它有一个核心限制：**需要本地 CLI 来渲染导出 MP4 视频**。Lovable 环境无法运行 `npx remotion render` 命令。
+将文档中的能力框架从"固定 10 维"升级为 **Backbone (8 维) + Role Overlay Generator** 双层架构。核心理念：Overlay 不是预写的岗位词典，而是从候选人面试数据中"长出来"的岗位专科检查项。
 
-因此方案分两部分：
+## 修改点（共 4 处）
 
-1. **在 Lovable 中完成**：安装 Remotion + Remotion Player，创建所有视频场景的 React 组件，并通过 `<Player>` 组件在浏览器中实时预览
-2. **用户本地完成**：将代码 clone 到本地，运行 `npx remotion render` 导出 MP4
+### 修改 1：重写「决策 1：10 维能力框架」(第 174-196 行)
 
-## 视频脚本设计（约 30 秒）
+将固定 10 维列表替换为双层结构：
 
-| 时间 | 场景 | 内容 |
+**Core Backbone（8 维，跨岗位通用）：**
+
+| 维度 | 覆盖范围 |
+|------|---------|
+| Problem Framing | 问题定义、用户洞察、需求分析 |
+| Structured Thinking | 结构化思维、框架运用、逻辑推理 |
+| Execution & Prioritization | 项目推进、优先级管理、落地能力 |
+| Data & Metrics Thinking | 数据驱动决策、指标设计、实验思维 |
+| Communication & Influence | 表达清晰度、说服力、跨团队协作 |
+| System Thinking | 系统性思维、架构意识、可扩展性 |
+| Technical Fluency | 技术理解深度、工程判断力 |
+| Strategic Judgment | 商业判断、市场分析、战略思维 |
+
+**Role Overlay Generator（从面试数据生成，非预定义）：**
+
+说明这是一个 3 步流程：
+1. **Step A - 结构化提取**：Layer 1 从每轮面试中提取 topic_tags + skill_signals + evidence
+2. **Step B - 跨轮聚合**：Layer 2 统计"高频 + 高影响"模式（面试官反复考什么、你反复暴露什么）
+3. **Step C - 生成 Overlay**：将高频模式命名为 3-7 个 Overlay 维度，附带 rubric 和证据引用
+
+加入后端岗位示例：5 轮面试后系统可能自动生成 Reliability & SLO Thinking / Data Modeling & Consistency / API Abstraction & Boundaries
+
+**3 个护栏：**
+- 数量上限：每个岗位 debrief 最多 3-7 个 Overlay
+- 强制映射：每个 Overlay 绑定 1-3 个 Core 维度（如 Reliability -> System Thinking + Technical Fluency + Execution）
+- 证据约束：Overlay 的产生必须能引用面试题/回答/JD 的证据，无证据则不生成
+
+**设计理念：** 能力 = Cognitive Skill x Domain Context。Core 用于长期趋势（Career Growth），Overlay 用于岗位精细分析（Role Debrief）。
+
+加入关于原 10 维重叠问题的承认：Technical Depth / System Design / AI Skills 在 AI PM 语境下高度交叉，这是迭代到双层架构的动因。
+
+**预置 Domain Packs（候选维度池，不是穷举）：**
+
+少量高频 Pack 作为 Overlay Generator 的候选池：
+- Engineering Pack：Reliability/SLO、API Modeling、Scalability Trade-offs、Debugging & Incident Thinking
+- Design Pack：Interaction Design、Visual Hierarchy、User Research、Design Systems
+- Data Pack：Statistical Reasoning、Pipeline Architecture、Feature Engineering
+- AI/ML Pack：Model Evaluation、Prompt Design、AI Risk & Reliability、Human-AI Experience
+
+最终 Overlay 仍由 Generator 结合 JD + 面试数据选择/改写，Pack 只提供候选池。
+
+### 修改 2：重写「Trade-off 5：通用 vs 定制框架」(第 286-295 行)
+
+展开为三方案对比：
+
+| 方案 | 优势 | 劣势 |
 |------|------|------|
-| 0-5s | 开场 | OfferMind Logo 淡入 + Slogan 动画 "每一场面试，都是你的职业资产" |
-| 5-12s | 痛点 | 文字动画展示求职痛点："面试完就忘了？""不知道哪里答得不好？""每次都犯同样的错？" |
-| 12-20s | 产品展示 | 3 个核心功能卡片依次飞入：AI 面试分析、能力雷达图、职业信号时间线 |
-| 20-27s | 数据证明 | 动态数字计数器 "10+ 面试维度分析" "3 层 AI Agent" |
-| 27-30s | CTA | "立即体验 OfferMind" + 网址 |
+| **方案 A：完全通用** | 跨岗位可对比 | 忽略岗位差异，AI PM 和 Tech PM 被"稀释" |
+| **方案 B：完全定制** | 精准贴合 JD | 跨岗位不可比，Career Growth Agent 失效 |
+| **方案 C：Backbone + Overlay** (采用) | 核心稳定 + 岗位可扩展 | 需要维护 Generator 的质量和护栏 |
 
-## 技术实现
+决策逻辑：Career Growth Agent 的核心价值在于跨岗位纵向对比，必须有一套稳定 Backbone。但纯通用又会忽略岗位差异。Overlay Generator 从面试数据中自动派生岗位维度，而非预定义几百个岗位包。
 
-### 新增依赖
-- `remotion` - 核心库
-- `@remotion/player` - 浏览器内预览播放器
-- `@remotion/cli` (devDependency) - 本地渲染用
+加入一句面试高分表达：
+> We don't attempt to predefine overlays for every role. Instead, we use a Role Overlay Generator that derives role-specific dimensions from the interview evidence, constrained by a schema and mapped back to the core backbone for comparability.
 
-### 新增文件结构
-```
-src/remotion/
-  Root.tsx              -- Remotion Composition 注册
-  Video.tsx             -- 主视频组件（串联所有场景）
-  scenes/
-    IntroScene.tsx      -- Logo + Slogan 动画
-    PainPointScene.tsx  -- 痛点文字动画
-    FeaturesScene.tsx   -- 3 个功能卡片飞入
-    StatsScene.tsx      -- 数字计数动画
-    CTAScene.tsx        -- 结尾 CTA
-  styles.ts             -- 视频专用样式常量
-src/pages/PromoVideo.tsx -- 预览页面（嵌入 Remotion Player）
-```
+加入诚实承认的局限：
+- Overlay 在样本少（仅 1 轮）时置信度低，需要 2-3 轮才稳定
+- 面试官风格差异是噪音源，用"频率 x 影响"排序 + 证据约束来缓解
+- 维度分类基于面试数据归纳，尚未做统计聚类验证
 
-### 路由
-- 新增 `/promo-video` 路由，展示 Remotion Player 预览
+### 修改 3：FAQ 新增两条 (第 400 行后)
 
-### 导出步骤（用户本地操作）
-1. Clone 项目到本地
-2. `npm install`
-3. `npx remotion render src/remotion/Root.tsx OfferMindPromo out/promo.mp4`
+**Q: Can 10 dimensions really generalize across roles?**
 
-## 局限性
-- Lovable 环境中只能**预览**，不能导出 MP4
-- 视频中的"产品截图"将使用 CSS 模拟的 UI mockup，而非真实截图
-- 如需真实截图，需手动替换图片资源
+回答要点：Core dimensions 是 transferable cognitive abilities 而非 job-specific checklists。覆盖约 80% 跨岗位信号。系统支持 Role Overlay Generator，从面试数据中自动派生岗位维度，映射回 Core 保证可比性。
+
+**Q: How do you generate role-specific overlays without predefined templates?**
+
+回答要点：三步流程（提取 -> 聚合高频模式 -> 生成命名维度）+ 三个护栏（数量上限、强制映射、证据约束）+ 预置 Domain Pack 作为候选池。Web retrieval is an optional augmentation layer, not a dependency.
+
+### 修改 4：更新 FAQ 第一条 (第 385-386 行)
+
+将 "Human-in-the-loop 质量审计" 改为与 4.6 节一致的描述：架构内置质量保障（Schema Validation + Evidence-Based Scoring + Bounded Rubric + Cross-Layer Consistency）。
+
+## 不改的部分
+
+- 三层 Agent 架构图（4.1）不变
+- 数据流设计（4.2）不变，但 Overlay 的数据流自然融入 Layer 2
+- 其他 Trade-offs（1-4、6）不变
+- Impact & Learnings 不变
 
