@@ -1,57 +1,58 @@
 
 
-# 新增中文 Demo 工作区（保留英文 Demo）
+# 使用 Remotion 创建 OfferMind 宣传短片
 
-## 概述
-在保留现有英文 Demo 账号 (`demo@offermind.app`) 的基础上，新增一个中文 Demo 账号，预填充 3 个中国本土 PM 岗位的完整面试数据。
+## 现实情况说明
 
-## 中文 Demo 账号信息
-- **邮箱**: `demo-cn@offermind.app`
-- **密码**: `demo123456cn`
+Remotion 是一个基于 React 的视频生成框架，但它有一个核心限制：**需要本地 CLI 来渲染导出 MP4 视频**。Lovable 环境无法运行 `npx remotion render` 命令。
 
-## 3 个中文岗位设计
+因此方案分两部分：
 
-| 岗位 | 公司 | 状态 | 面试轮数 | 场景 |
-|------|------|------|----------|------|
-| AI 产品经理 | 字节跳动 | interviewing（面试中） | 4 轮已完成 + 1 轮已排期 | 进展顺利，有竞争 offer |
-| 商业化产品经理 | 阿里巴巴 | offer（已拿 offer） | 4 轮完成 + Offer 谈判 | 已收到 offer，正在谈薪 |
-| 策略产品经理 | 美团 | closed（已关闭） | 3 轮完成 + 终面被拒 | 终面挂了，但收获很大 |
+1. **在 Lovable 中完成**：安装 Remotion + Remotion Player，创建所有视频场景的 React 组件，并通过 `<Player>` 组件在浏览器中实时预览
+2. **用户本地完成**：将代码 clone 到本地，运行 `npx remotion render` 导出 MP4
 
-每轮面试包含 10 道中文面试题、回答摘要、反思笔记、面试官信息。
+## 视频脚本设计（约 30 秒）
+
+| 时间 | 场景 | 内容 |
+|------|------|------|
+| 0-5s | 开场 | OfferMind Logo 淡入 + Slogan 动画 "每一场面试，都是你的职业资产" |
+| 5-12s | 痛点 | 文字动画展示求职痛点："面试完就忘了？""不知道哪里答得不好？""每次都犯同样的错？" |
+| 12-20s | 产品展示 | 3 个核心功能卡片依次飞入：AI 面试分析、能力雷达图、职业信号时间线 |
+| 20-27s | 数据证明 | 动态数字计数器 "10+ 面试维度分析" "3 层 AI Agent" |
+| 27-30s | CTA | "立即体验 OfferMind" + 网址 |
 
 ## 技术实现
 
-### 1. 修改 `create-demo-user/index.ts`
-- 在现有逻辑基础上，同时检查并创建中文 Demo 用户 (`demo-cn@offermind.app`)
-- 两个账号独立，互不影响
+### 新增依赖
+- `remotion` - 核心库
+- `@remotion/player` - 浏览器内预览播放器
+- `@remotion/cli` (devDependency) - 本地渲染用
 
-### 2. 新建 `seed-demo-data-cn/index.ts`
-- 复制 `seed-demo-data` 的结构，替换为中文内容
-- 3 个岗位的完整中文问题库（每轮 10 题）：
-  - 字节跳动：HR 筛选、技术理解、产品设计、业务终面
-  - 阿里巴巴：HR 面、产品 Sense、交叉面、HM 终面 + Offer
-  - 美团：HR 面、产品设计、策略分析、VP 终面（被拒）
-- 中文 activities 动态消息
-
-### 3. 在 `supabase/config.toml` 中注册新函数
+### 新增文件结构
 ```
-[functions.seed-demo-data-cn]
-verify_jwt = false
+src/remotion/
+  Root.tsx              -- Remotion Composition 注册
+  Video.tsx             -- 主视频组件（串联所有场景）
+  scenes/
+    IntroScene.tsx      -- Logo + Slogan 动画
+    PainPointScene.tsx  -- 痛点文字动画
+    FeaturesScene.tsx   -- 3 个功能卡片飞入
+    StatsScene.tsx      -- 数字计数动画
+    CTAScene.tsx        -- 结尾 CTA
+  styles.ts             -- 视频专用样式常量
+src/pages/PromoVideo.tsx -- 预览页面（嵌入 Remotion Player）
 ```
 
-### 4. 修改 Auth 页面 (`src/pages/Auth.tsx`)
-- 现有的 "Explore Demo" 按钮保留，改为 "Explore Demo (EN)"
-- 新增 "探索中文 Demo" 按钮，调用中文 Demo 的登录流程
-- 两个按钮并排或上下排列
+### 路由
+- 新增 `/promo-video` 路由，展示 Remotion Player 预览
 
-### 5. 修改 `JobsContext.tsx`
-- 在 `seedDemoData` 中判断当前用户邮箱：
-  - 如果是 `demo-cn@offermind.app` → 调用 `seed-demo-data-cn`
-  - 如果是 `demo@offermind.app` → 调用 `seed-demo-data`（现有逻辑）
-- 使用不同的 localStorage key (`offermind_demo_cn_seeded`) 防止冲突
+### 导出步骤（用户本地操作）
+1. Clone 项目到本地
+2. `npm install`
+3. `npx remotion render src/remotion/Root.tsx OfferMindPromo out/promo.mp4`
 
-### 不需要修改的部分
-- 数据结构/类型定义不变
-- 前端渲染组件不变（已支持中文显示）
-- 英文 Demo 的所有逻辑完全不受影响
+## 局限性
+- Lovable 环境中只能**预览**，不能导出 MP4
+- 视频中的"产品截图"将使用 CSS 模拟的 UI mockup，而非真实截图
+- 如需真实截图，需手动替换图片资源
 
