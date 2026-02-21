@@ -7,8 +7,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const DEMO_EMAIL = "demo@offermind.app";
-const DEMO_PASSWORD = "demo123456";
+const DEMO_ACCOUNTS = [
+  { email: "demo@offermind.app", password: "demo123456" },
+  { email: "demo-cn@offermind.app", password: "demo123456cn" },
+];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,28 +24,31 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Check if demo user exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const demoUser = existingUsers?.users?.find(u => u.email === DEMO_EMAIL);
+    const results: { email: string; status: string }[] = [];
 
-    if (demoUser) {
-      return new Response(
-        JSON.stringify({ success: true, message: "Demo user already exists" }),
-        { headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    for (const account of DEMO_ACCOUNTS) {
+      const exists = existingUsers?.users?.find(u => u.email === account.email);
+      if (exists) {
+        results.push({ email: account.email, status: "already_exists" });
+        continue;
+      }
+
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email: account.email,
+        password: account.password,
+        email_confirm: true,
+      });
+
+      if (error) {
+        results.push({ email: account.email, status: `error: ${error.message}` });
+      } else {
+        results.push({ email: account.email, status: "created" });
+      }
     }
 
-    // Create demo user with auto-confirm
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-      email_confirm: true,
-    });
-
-    if (error) throw error;
-
     return new Response(
-      JSON.stringify({ success: true, message: "Demo user created", userId: data.user.id }),
+      JSON.stringify({ success: true, results }),
       { headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error) {

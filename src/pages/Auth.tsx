@@ -149,6 +149,8 @@ function AuthFormPanel() {
     setIsSubmitting(false);
   };
 
+  const [isDemoCNLoading, setIsDemoCNLoading] = useState(false);
+
   const handleDemoLogin = async () => {
     setIsDemoLoading(true);
     try {
@@ -164,6 +166,24 @@ function AuthFormPanel() {
       toast.error('Demo login failed');
     } finally {
       setIsDemoLoading(false);
+    }
+  };
+
+  const handleDemoCNLogin = async () => {
+    setIsDemoCNLoading(true);
+    try {
+      localStorage.removeItem('offermind_demo_cn_seeded');
+      await supabase.functions.invoke('create-demo-user');
+      const { error } = await signIn('demo-cn@offermind.app', 'demo123456cn');
+      if (error) {
+        toast.error('中文 Demo 登录失败，请重试');
+      } else {
+        toast.success('欢迎体验 OfferMind 中文 Demo！');
+      }
+    } catch {
+      toast.error('中文 Demo 登录失败');
+    } finally {
+      setIsDemoCNLoading(false);
     }
   };
 
@@ -205,18 +225,32 @@ function AuthFormPanel() {
         {/* Card wrapper — styled on mobile, flat on desktop */}
         <div className="rounded-2xl border border-border bg-white shadow-[var(--shadow-md)] lg:border-0 lg:shadow-none p-7 lg:p-0">
           {/* Demo CTA */}
-          <button
-            onClick={handleDemoLogin}
-            disabled={isDemoLoading}
-            className="w-full h-11 rounded-xl text-[14px] font-medium text-primary-foreground transition-all
-              bg-primary hover:bg-primary/90 active:bg-primary/80
-              shadow-[0_1px_2px_hsl(232,36%,20%/0.2)] hover:shadow-[0_2px_8px_hsl(232,36%,20%/0.25)]
-              disabled:opacity-60 disabled:pointer-events-none
-              flex items-center justify-center gap-2"
-          >
-            {isDemoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-            Explore Demo
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDemoLogin}
+              disabled={isDemoLoading || isDemoCNLoading}
+              className="flex-1 h-11 rounded-xl text-[13px] font-medium text-primary-foreground transition-all
+                bg-primary hover:bg-primary/90 active:bg-primary/80
+                shadow-[0_1px_2px_hsl(232,36%,20%/0.2)] hover:shadow-[0_2px_8px_hsl(232,36%,20%/0.25)]
+                disabled:opacity-60 disabled:pointer-events-none
+                flex items-center justify-center gap-1.5"
+            >
+              {isDemoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              Demo (EN)
+            </button>
+            <button
+              onClick={handleDemoCNLogin}
+              disabled={isDemoLoading || isDemoCNLoading}
+              className="flex-1 h-11 rounded-xl text-[13px] font-medium text-primary-foreground transition-all
+                bg-primary hover:bg-primary/90 active:bg-primary/80
+                shadow-[0_1px_2px_hsl(232,36%,20%/0.2)] hover:shadow-[0_2px_8px_hsl(232,36%,20%/0.25)]
+                disabled:opacity-60 disabled:pointer-events-none
+                flex items-center justify-center gap-1.5"
+            >
+              {isDemoCNLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              中文 Demo
+            </button>
+          </div>
           <p className="text-[11px] text-center text-muted-foreground mt-2.5 mb-5">
             No signup needed — pre-loaded with sample interview data
           </p>
