@@ -148,22 +148,31 @@ export function JobsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const seedDemoData = useCallback(async () => {
-    // Don't re-seed if user previously dismissed demo data
-    if (localStorage.getItem('offermind_demo_seeded')) return;
+    if (!user) return;
+    
+    // Determine which demo function and localStorage key to use
+    const isCNDemo = user.email === 'demo-cn@offermind.app';
+    const isENDemo = user.email === 'demo@offermind.app';
+    const seedKey = isCNDemo ? 'offermind_demo_cn_seeded' : 'offermind_demo_seeded';
+    const seedFunction = isCNDemo ? 'seed-demo-data-cn' : 'seed-demo-data';
+    
+    // Don't re-seed if previously done
+    if (localStorage.getItem(seedKey)) return;
     // Prevent concurrent calls
     if (seedingInProgress) return;
     seedingInProgress = true;
     
     try {
-      const { data, error } = await supabase.functions.invoke('seed-demo-data');
+      const { data, error } = await supabase.functions.invoke(seedFunction);
       if (error) {
         console.error('Error seeding demo data:', error);
         seedingInProgress = false;
         return;
       }
       if (data?.seeded) {
-        localStorage.setItem('offermind_demo_seeded', 'true');
-        toast.success("We've set up a sample workspace for you! 🎉");
+        localStorage.setItem(seedKey, 'true');
+        const msg = isCNDemo ? '已为你创建中文示例工作区！🎉' : "We've set up a sample workspace for you! 🎉";
+        toast.success(msg);
         // Refetch to show seeded data
         const { data: jobsData } = await supabase
           .from('jobs')
@@ -172,14 +181,14 @@ export function JobsProvider({ children }: { children: ReactNode }) {
         setJobs(jobsData?.map(dbToJob) || []);
       } else {
         // Server said not seeded (already has data) — mark as done
-        localStorage.setItem('offermind_demo_seeded', 'true');
+        localStorage.setItem(seedKey, 'true');
       }
     } catch (e) {
       console.error('Error seeding demo data:', e);
     } finally {
       seedingInProgress = false;
     }
-  }, []);
+  }, [user]);
 
   const fetchJobs = useCallback(async () => {
     if (!user) {
