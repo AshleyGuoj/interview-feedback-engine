@@ -153,6 +153,45 @@ Raw Input (面试笔记/转录/PDF)
 | **Input Grounding** | 所有分析必须基于用户提供的原始文本，prompt 中明确禁止"推测未提供的信息" |
 | **Cross-Layer Validation** | Layer 2 的聚合分析可以与 Layer 1 的单轮数据交叉验证，发现不一致时标记 |
 
+#### Strict JSON Schema 实现细节
+
+每个 AI Agent 在 System Prompt 中预定义了精确的 JSON 输出结构。以 `analyze-transcript` 为例，要求模型必须返回：
+
+```json
+{
+  "questions": [{ "question": "", "category": "", "myAnswerSummary": "", "responseQuality": "", "difficulty": 0, ... }],
+  "reflection": { "overallFeeling": "", "performanceSummary": "", "whatWentWell": [], ... },
+  "metadata": { "totalQuestions": 0, "dominantCategory": "", "overallDifficulty": "", "languageDetected": "" }
+}
+```
+
+**三层验证机制：**
+
+1. **Prompt 定义结构**：System Prompt 中给出完整的 JSON 模板，字段名、类型、枚举值全部预定义，模型必须严格遵循
+2. **后端验证合规**：解析 AI 返回的 JSON 后做结构校验，不合规直接报错拒绝：
+   ```typescript
+   if (!analysisResult.questions || !analysisResult.reflection) {
+     throw new Error("Invalid response structure from AI");
+   }
+   ```
+3. **前端类型约束**：使用 TypeScript 类型（`ExtractedQuestion`, `ExtractedReflection` 等）做二次约束，字段名、类型、枚举值全部固定，不合规的数据无法通过编译
+
+> **一句话总结：Prompt 定义结构 → 后端验证合规 → 前端类型约束，三层保证输出稳定性。**
+
+#### Bounded Scoring 实现细节
+
+所有评分字段使用**有限离散值（枚举）**，而非开放式数字或自由文本：
+
+| 字段 | 枚举值 | 说明 |
+|------|--------|------|
+| `difficulty` | `1 \| 2 \| 3 \| 4 \| 5` | 整数，非浮点，模型无法输出 `3.7` |
+| `responseQuality` | `'high' \| 'medium' \| 'low'` | 三档质量评级，无法输出 `"pretty good"` |
+| `overallFeeling` | `'great' \| 'good' \| 'neutral' \| 'poor' \| 'bad'` | 五档感受评级，覆盖完整情感光谱 |
+
+每个枚举值在 Prompt 中配有**评分标准（rubric）**，明确对应行为描述。例如 `difficulty: 5` 对应"需要深度系统设计或多步推理的复杂问题"，让模型有据可依而非主观判断。
+
+> **一句话总结：Schema 控制输出结构，Bounded Scoring 控制评分精度，两者共同限制模型的自由发挥空间。**
+
 ### 4.6 如何评估模型质量（Model Quality Evaluation）
 
 **当前方法**：架构内置的质量保障机制
