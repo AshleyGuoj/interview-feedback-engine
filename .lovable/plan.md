@@ -1,37 +1,30 @@
 
 
-# 在产品核心文档中补充 Strict JSON Schema 和 Bounded Scoring 的技术实现细节
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-## 现状
+## 方案
 
-文档中 4.5 节（第 151-152 行）和 4.6 节（第 160-163 行）已经提到了这两个概念，但只是一句话概述，缺少具体的技术实现细节。用户希望把"到底怎么做的"写清楚。
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-## 修改方案
+## 实现步骤
 
-### 修改 1：扩展 4.5 节防幻觉表格中的 Strict JSON Schema 行（第 151 行）
+### 1. 创建 Edge Function `generate-workflow-image`
 
-在表格下方新增一个展开说明小节 **"Strict JSON Schema 实现细节"**，包含：
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-- 每个 AI Agent 在 System Prompt 中预定义了精确的 JSON 输出结构（举例：`analyze-transcript` 要求 `{ questions: [...], reflection: {...}, metadata: {...} }`）
-- 后端解析后做结构验证：`if (!analysisResult.questions || !analysisResult.reflection) { throw new Error(...) }`，不合规直接报错拒绝
-- 前端用 TypeScript 类型（`ExtractedQuestion`, `AnalyzedReflection` 等）做二次约束，字段名、类型、枚举值全部固定
-- 一句话总结：**Prompt 定义结构 → 后端验证合规 → 前端类型约束，三层保证输出稳定性**
+### 2. 创建前端页面或组件调用该函数
 
-### 修改 2：扩展 4.5 节防幻觉表格中的 Bounded Scoring 行（第 152 行）
-
-在上面小节之后新增 **"Bounded Scoring 实现细节"**，包含：
-
-- 具体枚举值列表：
-  - `difficulty: 1 | 2 | 3 | 4 | 5`（整数，非浮点）
-  - `responseQuality: 'high' | 'medium' | 'low'`
-  - `overallFeeling: 'great' | 'good' | 'neutral' | 'poor' | 'bad'`
-- 这些是有限离散值，模型无法输出 `3.7` 或 `"pretty good"` 这样的模糊结果
-- 每个值在 prompt 中配有评分标准（rubric），明确对应行为描述
-- 一句话总结：**Schema 控制输出结构，Bounded Scoring 控制评分精度，两者共同限制模型的自由发挥空间**
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
 ## 技术细节
 
-- 仅修改 `docs/OfferMind-Product-Core-Structure.md` 一个文件
-- 在第 154 行（表格结束后、4.6 节之前）插入两个展开说明小节
-- 不涉及代码或数据库变更
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
