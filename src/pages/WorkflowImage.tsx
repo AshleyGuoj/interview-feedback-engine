@@ -5,38 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Download, RefreshCw, Workflow } from "lucide-react";
 
-const WORKFLOW_PROMPT = `绘制 OfferMind Agent 2（Role Debrief）n8n 风格工作流图
+const WORKFLOW_PROMPT = `Draw an n8n-style workflow diagram titled "OfferMind Agent 2 — Role Debrief".
 
-请绘制一个 n8n 风格的 AI Agent 工作流图，节点和连线规则如下：
+Linear left-to-right flow with 4 nodes connected by arrows:
 
-节点定义（共 7 个）：
+1. Trigger (green) — "Generate Role Debrief". Label above: "Precondition: ≥1 completed Agent 1 analysis"
+2. Collector (gray) — "Collects all analyzed interview rounds under same job". Badge: "N rounds"
+3. Context Builder (gray) — bullet list: Company Name, Role Title, Round Count, Questions list, Reflections
+4. AI Node (dark purple, highlighted) — "generate-role-debrief", badge: "Gemini 3 Flash | Temp: 0.7", label below: "Max: 4000 Tokens"
+5. Output (dark gray) — "Return Complete Debrief object", metadata: jobId, generatedAt, sourceRoundIds
 
-1. Trigger：用户在 Analytics 页面点击"Generate Role Debrief"
-2. Collector：收集该 Job 下所有已分析的面试轮次数据（questions + reflection），来源为 Agent 1 的输出
-3. Context Builder：拼装上下文（Company Name, Role Title, Round Count, 每轮的问题列表 + 反思）
-4. AI Node: generate-role-debrief：Gemini 3 Flash Preview, Temperature 0.7, Max Tokens 4000
-5. JSON Parser：去除 markdown 代码围栏，解析 JSON
-6. Schema Validator：验证输出包含 interviewerMapping / competencyHeatmap / keyInsights / hiringLikelihood / nextBestActions / roleSummary
-7. Output：返回完整 RoleDebrief 对象（附加 jobId, generatedAt, sourceRoundIds 等元数据）
+Next to AI Node, show Output Structure box:
+• interviewerMapping: interviewer background + evaluation focus per round
+• competencyHeatmap: 10-dimension scores (1–5)
+• keyInsights: company priorities / strengths / risks
+• hiringLikelihood: Low/Medium/High + confidence
+• nextBestActions: prioritized action recommendations
 
-连线关系：
-Trigger → Collector → Context Builder → AI Node → JSON Parser → Schema Validator → Output
-
-输出结构标注（在 AI Node 旁标注）：
-- interviewerMapping: 每轮面试官背景 + 关注维度
-- competencyHeatmap: 10 维能力评分（1-5）
-- keyInsights: 公司关注点 / 优势 / 风险
-- hiringLikelihood: Low / Medium / High + 置信度
-- nextBestActions: 优先级排序的行动建议
-
-视觉要求：
-- AI Node 用醒目颜色高亮（如橙色或紫色），标注模型名"Gemini 3 Flash Preview"和温度"T=0.7"
-- Collector 节点标注"N rounds"表示多轮输入
-- 在 Trigger 上方标注前置条件："需要 ≥ 1 轮 Agent 1 分析结果"
-- 整体从左到右水平排列，线性流程，无分支
-- 使用 n8n 的标准节点样式：圆角矩形，带图标，节点间用带箭头的连线连接
-- 背景为浅色（白色或浅灰），节点有轻微阴影
-- 整体为专业的技术架构图风格`;
+Style: clean white background, rounded rectangle nodes with subtle shadows, arrow connectors, professional technical diagram.`;
 
 export default function WorkflowImage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
