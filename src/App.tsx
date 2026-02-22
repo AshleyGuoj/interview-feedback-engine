@@ -15,6 +15,7 @@ import Archive from "./pages/Archive";
 import AnalyzeInterview from "./pages/AnalyzeInterview";
 import InterviewAnalysis from "./pages/InterviewAnalysis";
 import PromoVideo from "./pages/PromoVideo";
+import WorkflowImage from "./pages/WorkflowImage";
 
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
               <Route path="/analyze" element={<ProtectedRoute><AnalyzeInterview /></ProtectedRoute>} />
               <Route path="/promo-video" element={<ProtectedRoute><PromoVideo /></ProtectedRoute>} />
+              <Route path="/workflow-image" element={<ProtectedRoute><WorkflowImage /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
