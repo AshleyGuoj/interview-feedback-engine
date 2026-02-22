@@ -1,44 +1,37 @@
 
 
-# 更新文档：明确 Overlay → Backbone 映射是动态的、证据驱动的
+# 在产品核心文档中补充 Strict JSON Schema 和 Bounded Scoring 的技术实现细节
 
-## 问题
+## 现状
 
-当前文档第 214-216 行的示例中，Overlay 的映射关系看起来像是"预设"的（如 Reliability → System Thinking + Technical Fluency + Execution），但没有解释**为什么映射到这些 Backbone 维度**、**映射逻辑是什么**。读者会产生疑问："为什么 API Abstraction 不映射 Technical Fluency？谁决定的？"
+文档中 4.5 节（第 151-152 行）和 4.6 节（第 160-163 行）已经提到了这两个概念，但只是一句话概述，缺少具体的技术实现细节。用户希望把"到底怎么做的"写清楚。
 
-## 修改内容
+## 修改方案
 
-### 修改 1：在 Step C 后新增"映射机制"说明（第 209 行之后）
+### 修改 1：扩展 4.5 节防幻觉表格中的 Strict JSON Schema 行（第 151 行）
 
-在 3 步生成流程和示例之间，插入一段专门解释映射逻辑的内容：
+在表格下方新增一个展开说明小节 **"Strict JSON Schema 实现细节"**，包含：
 
-**Step D - 动态映射（Evidence-Driven Mapping）**
+- 每个 AI Agent 在 System Prompt 中预定义了精确的 JSON 输出结构（举例：`analyze-transcript` 要求 `{ questions: [...], reflection: {...}, metadata: {...} }`）
+- 后端解析后做结构验证：`if (!analysisResult.questions || !analysisResult.reflection) { throw new Error(...) }`，不合规直接报错拒绝
+- 前端用 TypeScript 类型（`ExtractedQuestion`, `AnalyzedReflection` 等）做二次约束，字段名、类型、枚举值全部固定
+- 一句话总结：**Prompt 定义结构 → 后端验证合规 → 前端类型约束，三层保证输出稳定性**
 
-说明：
-- 映射不是预设的静态表，而是 AI Generator 基于**证据内容**动态决定的
-- 映射逻辑：分析每个 Overlay 维度下的证据片段，判断这些证据实际体现了哪些 Backbone 认知能力
-- 同一个 Overlay（如 API Abstraction）在不同候选人身上可能映射到不同的 Backbone 维度，取决于面试中实际考察的角度
+### 修改 2：扩展 4.5 节防幻觉表格中的 Bounded Scoring 行（第 152 行）
 
-给出映射判定规则：
-- 看**证据内容**，不看维度名称。"API Abstraction" 如果证据是关于模块拆分和接口契约 → Structured Thinking + Communication；如果证据是关于底层协议选择和性能权衡 → Technical Fluency + System Thinking
-- 每个映射必须附带**证据引用**（哪道题、哪段回答支撑了这个映射）
-- 映射是"一对多"（1 个 Overlay → 1-3 个 Backbone）且因人而异
+在上面小节之后新增 **"Bounded Scoring 实现细节"**，包含：
 
-### 修改 2：更新示例部分（第 211-216 行）
-
-在现有示例旁边加注释，说明映射是动态结果而非固定规则：
-
-- 强调"以下映射是基于该候选人 5 轮面试的具体证据生成的，不同候选人 / 不同面试内容可能产生不同映射"
-- 给出一个对比示例：同样是 "API Abstraction & Boundaries"，如果候选人面试中重点讨论了技术协议选择，映射会变成 Technical Fluency + System Thinking（而非 Structured Thinking + Communication）
-
-### 修改 3：更新护栏表格中的"强制映射"行（第 228 行）
-
-将描述从"每个 Overlay 必须绑定 1-3 个 Core Backbone 维度"扩展为：
-- "每个 Overlay 必须由 AI Generator 基于证据内容动态绑定 1-3 个 Core Backbone 维度，映射结果因候选人面试证据不同而不同"
+- 具体枚举值列表：
+  - `difficulty: 1 | 2 | 3 | 4 | 5`（整数，非浮点）
+  - `responseQuality: 'high' | 'medium' | 'low'`
+  - `overallFeeling: 'great' | 'good' | 'neutral' | 'poor' | 'bad'`
+- 这些是有限离散值，模型无法输出 `3.7` 或 `"pretty good"` 这样的模糊结果
+- 每个值在 prompt 中配有评分标准（rubric），明确对应行为描述
+- 一句话总结：**Schema 控制输出结构，Bounded Scoring 控制评分精度，两者共同限制模型的自由发挥空间**
 
 ## 技术细节
 
 - 仅修改 `docs/OfferMind-Product-Core-Structure.md` 一个文件
-- 3 处修改集中在第 201-230 行区域
+- 在第 154 行（表格结束后、4.6 节之前）插入两个展开说明小节
 - 不涉及代码或数据库变更
 
