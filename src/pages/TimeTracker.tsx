@@ -84,7 +84,7 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
       if (stage.scheduledTime && stage.scheduledTimezone) {
         try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
       }
-      const type: EventType = isAssessmentStage(stage.name) ? 'assessment' : 'interview';
+      const type: EventType = getEventTypeFromStage(stage);
       events.push({
         id: `stage-${j.id}-${stage.id}`,
         type,
