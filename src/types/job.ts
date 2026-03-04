@@ -129,7 +129,7 @@ export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: stri
 // STAGE CATEGORY
 // ============================================
 
-export type StageCategory = 'assessment' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
+export type StageCategory = 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
 
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
   assessment:     { label: 'Assessment',     labelZh: '测评/笔试',  icon: 'clipboard-check', color: 'purple' },
