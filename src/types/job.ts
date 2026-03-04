@@ -132,7 +132,8 @@ export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: stri
 export type StageCategory = 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
 
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
-  assessment:     { label: 'Assessment',     labelZh: '测评/笔试',  icon: 'clipboard-check', color: 'purple' },
+  assessment:     { label: 'Assessment',     labelZh: '测评',       icon: 'clipboard-check', color: 'purple' },
+  written_test:   { label: 'Written Test',   labelZh: '笔试',       icon: 'pen-line',        color: 'indigo' },
   interview:      { label: 'Interview',      labelZh: '面试',       icon: 'mic',             color: 'amber' },
   hr_chat:        { label: 'HR / Salary Talk',labelZh: 'HR沟通/谈薪', icon: 'message-circle', color: 'blue' },
   offer_call:     { label: 'Offer Call',      labelZh: 'Offer沟通',  icon: 'phone-call',     color: 'green' },
