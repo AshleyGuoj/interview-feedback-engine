@@ -184,7 +184,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     setLocalStages((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const handleAddStage = (stageName?: string) => {
+  const handleAddStage = (stageName?: string, stageCategory?: StageCategory) => {
     const nameToAdd = stageName || newStageName.trim();
     if (!nameToAdd) return;
     
@@ -198,6 +198,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
       id: `stage-${Date.now()}`,
       name: nameToAdd,
       status: 'pending',
+      category: stageCategory || detectStageCategory(nameToAdd),
     };
     setLocalStages((prev) => [...prev, newStage]);
     if (!stageName) setNewStageName('');
