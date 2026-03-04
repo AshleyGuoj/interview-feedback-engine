@@ -300,6 +300,7 @@ export default function TimeTracker() {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-blue-500" />{summary.applied} {t('timeTracker.type_applied')}</span>}
             {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-purple-500" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
+            {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
             {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}
           </div>
         )}

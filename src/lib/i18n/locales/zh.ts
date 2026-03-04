@@ -517,7 +517,8 @@ export default {
   },
   // Stage categories
   stageCategory: {
-    assessment: '测评/笔试',
+    assessment: '测评',
+    written_test: '笔试',
     interview: '面试',
     hr_chat: 'HR沟通/谈薪',
     offer_call: 'Offer沟通',
@@ -536,9 +537,11 @@ export default {
     type_applied: '投递',
     type_interview: '面试',
     type_assessment: '测评',
+    type_written_test: '笔试',
     section_applied: '投递',
     section_interview: '面试',
     section_assessment: '测评',
+    section_written_test: '笔试',
   },
 
   // Archive

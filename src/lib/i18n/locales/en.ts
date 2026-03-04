@@ -518,6 +518,7 @@ export default {
   // Stage categories
   stageCategory: {
     assessment: 'Assessment',
+    written_test: 'Written Test',
     interview: 'Interview',
     hr_chat: 'HR / Salary Talk',
     offer_call: 'Offer Call',
@@ -536,9 +537,11 @@ export default {
     type_applied: 'Applied',
     type_interview: 'Interview',
     type_assessment: 'Assessment',
+    type_written_test: 'Written Test',
     section_applied: 'Applications',
     section_interview: 'Interviews',
     section_assessment: 'Assessments',
+    section_written_test: 'Written Tests',
   },
 
   // Archive
