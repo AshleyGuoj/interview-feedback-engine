@@ -5,15 +5,14 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isWithinInter
 import { zhCN, enUS } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
-import { useActivities } from '@/hooks/useActivities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, Activity, ExternalLink, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, ExternalLink, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
 
-type EventType = 'applied' | 'interview' | 'status_change';
+type EventType = 'applied' | 'interview' | 'assessment';
 type FilterRange = 'week' | 'month' | 'all';
 
 interface TimelineEvent {
@@ -29,7 +28,14 @@ interface TimelineEvent {
   stageName?: string;
 }
 
-function extractEvents(jobs: Job[], activities: { id: string; jobId: string; type: string; message: string; createdAt: string }[]): TimelineEvent[] {
+const ASSESSMENT_KEYWORDS = ['assessment', 'take-home', 'takehome', 'oa', '测评', '笔试', 'online assessment', 'coding challenge', 'test'];
+
+function isAssessmentStage(name: string): boolean {
+  const lower = name.toLowerCase().trim();
+  return ASSESSMENT_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+function extractEvents(jobs: Job[]): TimelineEvent[] {
   const events: TimelineEvent[] = [];
 
   for (const job of jobs) {
@@ -45,7 +51,7 @@ function extractEvents(jobs: Job[], activities: { id: string; jobId: string; typ
       label: `${job.companyName} — ${job.roleTitle}`,
     });
 
-    // Extract interview/stage events from all pipelines and legacy stages
+    // Extract interview/assessment events from pipelines and legacy stages
     const allStages: { stage: InterviewStage; job: Job }[] = [];
     
     if (job.pipelines?.length) {
@@ -73,9 +79,11 @@ function extractEvents(jobs: Job[], activities: { id: string; jobId: string; typ
         }
       }
 
+      const type: EventType = isAssessmentStage(stage.name) ? 'assessment' : 'interview';
+
       events.push({
         id: `stage-${j.id}-${stage.id}`,
-        type: 'interview',
+        type,
         date: parseISO(timeStr),
         jobId: j.id,
         companyName: j.companyName,
@@ -88,23 +96,10 @@ function extractEvents(jobs: Job[], activities: { id: string; jobId: string; typ
     }
   }
 
-  // Activity events
-  for (const act of activities) {
-    const matchingJob = jobs.find(j => j.id === act.jobId);
-    events.push({
-      id: `activity-${act.id}`,
-      type: 'status_change',
-      date: parseISO(act.createdAt),
-      jobId: act.jobId,
-      companyName: matchingJob?.companyName || '',
-      roleTitle: matchingJob?.roleTitle || '',
-      jobLink: matchingJob?.jobLink,
-      label: act.message,
-    });
-  }
-
   return events;
 }
+
+const TYPE_ORDER: Record<EventType, number> = { applied: 0, assessment: 1, interview: 2 };
 
 function groupByDate(events: TimelineEvent[]): Map<string, TimelineEvent[]> {
   const map = new Map<string, TimelineEvent[]>();
@@ -113,9 +108,9 @@ function groupByDate(events: TimelineEvent[]): Map<string, TimelineEvent[]> {
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(event);
   }
-  // Sort events within each day by time descending
+  // Sort: by type order, then by time descending
   for (const [, evts] of map) {
-    evts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    evts.sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || b.date.getTime() - a.date.getTime());
   }
   return map;
 }
@@ -123,19 +118,18 @@ function groupByDate(events: TimelineEvent[]): Map<string, TimelineEvent[]> {
 const EVENT_ICONS: Record<EventType, typeof FileText> = {
   applied: FileText,
   interview: Mic,
-  status_change: Activity,
+  assessment: ClipboardCheck,
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
   applied: 'text-blue-500',
   interview: 'text-amber-500',
-  status_change: 'text-muted-foreground',
+  assessment: 'text-purple-500',
 };
 
 export default function TimeTracker() {
   const { t, i18n } = useTranslation();
   const { jobs } = useJobs();
-  const { activities } = useActivities();
   const navigate = useNavigate();
   const locale = i18n.language === 'zh' ? zhCN : enUS;
 
@@ -143,17 +137,15 @@ export default function TimeTracker() {
   const [filterRange, setFilterRange] = useState<FilterRange>('month');
   const [filterType, setFilterType] = useState<EventType | 'all'>('all');
 
-  const allEvents = useMemo(() => extractEvents(jobs, activities), [jobs, activities]);
+  const allEvents = useMemo(() => extractEvents(jobs), [jobs]);
 
   const filteredEvents = useMemo(() => {
     let filtered = allEvents;
 
-    // Filter by type
     if (filterType !== 'all') {
       filtered = filtered.filter(e => e.type === filterType);
     }
 
-    // Filter by date range
     if (filterRange === 'month') {
       const start = startOfMonth(currentMonth);
       const end = endOfMonth(currentMonth);
@@ -168,12 +160,7 @@ export default function TimeTracker() {
   }, [allEvents, filterType, filterRange, currentMonth]);
 
   const grouped = useMemo(() => groupByDate(filteredEvents), [filteredEvents]);
-
-  // Sort date keys descending
-  const sortedDates = useMemo(
-    () => [...grouped.keys()].sort((a, b) => b.localeCompare(a)),
-    [grouped]
-  );
+  const sortedDates = useMemo(() => [...grouped.keys()].sort((a, b) => b.localeCompare(a)), [grouped]);
 
   const formatDateHeader = (dateStr: string) => {
     const date = parseISO(dateStr);
@@ -184,7 +171,6 @@ export default function TimeTracker() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('timeTracker.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('timeTracker.subtitle')}</p>
@@ -192,7 +178,6 @@ export default function TimeTracker() {
 
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Month navigator */}
           <div className="flex items-center gap-1 bg-muted/50 rounded-lg px-1 py-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
               <ChevronLeft className="w-4 h-4" />
@@ -205,30 +190,17 @@ export default function TimeTracker() {
             </Button>
           </div>
 
-          {/* Range filter */}
           <div className="flex gap-1">
             {(['week', 'month', 'all'] as FilterRange[]).map(r => (
-              <Button
-                key={r}
-                variant={filterRange === r ? 'default' : 'outline'}
-                size="sm"
-                className="text-xs h-7"
-                onClick={() => setFilterRange(r)}
-              >
+              <Button key={r} variant={filterRange === r ? 'default' : 'outline'} size="sm" className="text-xs h-7" onClick={() => setFilterRange(r)}>
                 {t(`timeTracker.range_${r}`)}
               </Button>
             ))}
           </div>
 
-          {/* Type filter */}
           <div className="flex gap-1 ml-auto">
-            {(['all', 'applied', 'interview', 'status_change'] as const).map(type => (
-              <Badge
-                key={type}
-                variant={filterType === type ? 'default' : 'outline'}
-                className="cursor-pointer text-xs"
-                onClick={() => setFilterType(type)}
-              >
+            {(['all', 'applied', 'interview', 'assessment'] as const).map(type => (
+              <Badge key={type} variant={filterType === type ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setFilterType(type)}>
                 {t(`timeTracker.type_${type}`)}
               </Badge>
             ))}
@@ -247,7 +219,6 @@ export default function TimeTracker() {
               const events = grouped.get(dateStr)!;
               return (
                 <div key={dateStr}>
-                  {/* Date header */}
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-px flex-1 bg-border" />
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
@@ -256,7 +227,6 @@ export default function TimeTracker() {
                     <div className="h-px flex-1 bg-border" />
                   </div>
 
-                  {/* Events */}
                   <div className="space-y-2 pl-2">
                     {events.map(event => {
                       const Icon = EVENT_ICONS[event.type];
@@ -269,24 +239,14 @@ export default function TimeTracker() {
                           <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', EVENT_COLORS[event.type])} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-foreground truncate">
-                                {event.label}
-                              </span>
+                              <span className="text-sm font-medium text-foreground truncate">{event.label}</span>
                               {event.jobLink && (
-                                <a
-                                  href={event.jobLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
+                                <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                   <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
                                 </a>
                               )}
                             </div>
-                            {event.sublabel && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{event.sublabel}</p>
-                            )}
+                            {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.sublabel}</p>}
                           </div>
                           <Badge variant="secondary" className="text-[10px] shrink-0">
                             {t(`timeTracker.type_${event.type}`)}

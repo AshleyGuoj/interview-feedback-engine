@@ -527,7 +527,7 @@ export default {
     type_all: '全部',
     type_applied: '投递',
     type_interview: '面试',
-    type_status_change: '动态',
+    type_assessment: '测评',
   },
 
   // Archive
