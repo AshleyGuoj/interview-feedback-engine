@@ -286,7 +286,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
                     key={suggestion.key}
                     variant="outline"
                     className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-2 py-1"
-                    onClick={() => handleAddStage(suggestion.name)}
+                    onClick={() => handleAddStage(suggestion.name, suggestion.category)}
                   >
                     <Plus className="w-3 h-3 mr-1" />
                     {suggestion.name}

@@ -33,11 +33,21 @@ interface TimelineEvent {
   stageName?: string;
 }
 
+import { detectStageCategory } from '@/types/job';
+
 const ASSESSMENT_KEYWORDS = ['assessment', 'take-home', 'takehome', 'oa', '测评', '笔试', 'online assessment', 'coding challenge', 'test'];
 
-function isAssessmentStage(name: string): boolean {
-  const lower = name.toLowerCase().trim();
+function isAssessmentStage(stage: InterviewStage): boolean {
+  // Use explicit category if available, fall back to keyword matching
+  if (stage.category) return stage.category === 'assessment';
+  const lower = stage.name.toLowerCase().trim();
   return ASSESSMENT_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+function getEventTypeFromStage(stage: InterviewStage): EventType {
+  const cat = stage.category || detectStageCategory(stage.name);
+  if (cat === 'assessment') return 'assessment';
+  return 'interview';
 }
 
 function extractEvents(jobs: Job[]): TimelineEvent[] {
