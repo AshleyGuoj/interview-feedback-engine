@@ -1,30 +1,48 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## Add Stage Category to Interview Stages
 
-## 方案
+### What Changes
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+Add a `category` field to each `InterviewStage` so every round is tagged with a standardized type, independent of its custom name.
 
-## 实现步骤
+### Stage Categories
 
-### 1. 创建 Edge Function `generate-workflow-image`
+| Category | EN | ZH |
+|---|---|---|
+| `assessment` | Assessment | 测评/笔试 |
+| `interview` | Interview | 面试 |
+| `hr_chat` | HR / Salary Talk | HR沟通/谈薪 |
+| `offer_call` | Offer Call | Offer沟通 |
+| `offer_received` | Offer Received | 收到Offer |
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+### Files to Change
 
-### 2. 创建前端页面或组件调用该函数
+**1. `src/types/job.ts`**
+- Add `StageCategory` type: `'assessment' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received'`
+- Add `STAGE_CATEGORY_CONFIG` with label/icon/color for each
+- Add optional `category?: StageCategory` to `InterviewStage`
+- Update `DEFAULT_STAGES` with default categories
+- Add `detectStageCategory(name: string): StageCategory` helper using keyword matching
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
+**2. `src/components/jobs/StageEditor.tsx`**
+- Add category selector (small dropdown or chip row) when adding/editing a stage
+- Auto-detect category from stage name, allow override
+- Show category badge on each stage item in the list
+- Update `STAGE_SUGGESTIONS` to include default categories
 
-## 技术细节
+**3. `src/pages/TimeTracker.tsx`**
+- Use `stage.category` directly when available, fall back to keyword matching for legacy data without categories
 
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+**4. `src/lib/i18n/locales/en.ts` & `zh.ts`**
+- Add translation keys for each category label
+
+### Auto-Detection Logic
+- "OA", "assessment", "test", "take-home", "笔试", "测评", "coding challenge" → `assessment`
+- "HR", "screen", "recruiter" → `hr_chat`
+- "offer discussion", "offer call" → `offer_call`
+- "offer received" → `offer_received`
+- Everything else → `interview`
+
+Users can always override the auto-detected category.
 
