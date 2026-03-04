@@ -1,48 +1,30 @@
 
 
-## Time Tracker Redesign: Daily Page View
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### Current Problem
-The timeline currently shows all dates stacked vertically in a long scroll. The user wants a **single-day focused view** where today's activities are front and center, with events clearly separated by category.
+## 方案
 
-### Proposed Design
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-```text
-┌─────────────────────────────────────────────────┐
-│  Time Tracker                                   │
-│                                                 │
-│  ◀  March 4, 2026 (Today)  ▶   [Week] [Month]  │
-│                                                 │
-│  ── 投递 Applied ──────────────────────────────  │
-│  📄 Google — PM L5                         🔗   │
-│  📄 Meta — Product Analyst                 🔗   │
-│                                                 │
-│  ── 测评 Assessment ──────────────────────────   │
-│  📝 Stripe — Take-home Challenge                │
-│                                                 │
-│  ── 面试 Interview ──────────────────────────    │
-│  🎤 ByteDance — Round 2                         │
-│     10:00 AM (BJ) / 9:00 PM (ET)               │
-│                                                 │
-│  (empty category simply hidden)                 │
-└─────────────────────────────────────────────────┘
-```
+## 实现步骤
 
-### Key Changes to `TimeTracker.tsx`
+### 1. 创建 Edge Function `generate-workflow-image`
 
-1. **Single-day focus**: Replace the "show all dates" layout with a **date navigator** (◀ prev day / next day ▶). Default to today.
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-2. **Category sections**: Within the selected day, group events into three collapsible sections — Applied, Assessment, Interview — each with its own header and icon. Empty sections are hidden.
+### 2. 创建前端页面或组件调用该函数
 
-3. **Week/Month toggle**: When user selects "Week" or "Month", switch to a **multi-day view** showing each day as a card/section (similar to current layout but with category grouping within each day).
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-4. **Navigation**: 
-   - Day mode: ◀/▶ arrows step by 1 day, "Today" button jumps back
-   - Week mode: ◀/▶ step by 1 week
-   - Month mode: ◀/▶ step by 1 month (existing behavior)
+## 技术细节
 
-5. **Visual polish**: Add event count badges next to each category header (e.g., "投递 (3)"), and show a summary line at the top like "3 applications · 1 interview · 1 assessment".
-
-### i18n
-Add keys for category section headers and the daily summary line in both EN and ZH.
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
