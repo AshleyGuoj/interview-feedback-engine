@@ -83,6 +83,7 @@ export default {
     timeline: '时间线',
     analytics: '分析洞察',
     archive: '归档',
+    timeTracker: '时间追踪',
     
     signOut: '退出登录',
     expandSidebar: '展开侧边栏',
@@ -514,6 +515,21 @@ export default {
     leadership: '领导力',
     stress_resilience: '抗压能力',
   },
+  // Time Tracker
+  timeTracker: {
+    title: '时间追踪',
+    subtitle: '按日查看你的求职活动记录',
+    today: '今天',
+    noEvents: '该时段暂无活动记录',
+    range_week: '本周',
+    range_month: '本月',
+    range_all: '全部',
+    type_all: '全部',
+    type_applied: '投递',
+    type_interview: '面试',
+    type_status_change: '动态',
+  },
+
   // Archive
   archive: {
     title: '归档',

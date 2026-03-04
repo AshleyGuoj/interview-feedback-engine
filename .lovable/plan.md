@@ -1,70 +1,30 @@
 
 
-## Time Tracker — Daily Activity Log
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### What It Does
-A new `/time-tracker` page that displays a **date-grouped vertical timeline** of all your job search activities. For each day, you see what you applied to, which interviews you had, and what stages progressed — with job links clearly visible.
+## 方案
 
-### Data Source (No Schema Changes Needed)
-The existing data already contains the timestamps we need:
-- **Job applications**: `job.createdAt` (when the job was added = applied date)
-- **Interview stages**: `stage.scheduledTime`, `stage.date`, or `stage.deadline` on each `InterviewStage`
-- **Activities**: `recent_activities` table with `created_at` timestamps
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-We aggregate events from all three sources, group by calendar date, and render them.
+## 实现步骤
 
-### UI Design
+### 1. 创建 Edge Function `generate-workflow-image`
 
-```text
-┌─────────────────────────────────────────────┐
-│  Time Tracker                               │
-│  Your daily job search activity log         │
-│                                             │
-│  ◀  March 2026  ▶       [This Week ▾]       │
-│                                             │
-│  ── March 4, 2026 (Today) ─────────────     │
-│                                             │
-│  📄 Applied: Google — PM L5        🔗       │
-│  📄 Applied: Meta — Product Analyst 🔗      │
-│  🎤 Interview: ByteDance — Round 2          │
-│     10:00 AM (BJ) / 9:00 PM (ET)           │
-│  📝 Assessment: Stripe — Take-home          │
-│                                             │
-│  ── March 3, 2026 ─────────────────────     │
-│                                             │
-│  📄 Applied: Amazon — Sr. PM       🔗       │
-│  ⏳ Feedback: Airbnb — HR Screen            │
-│                                             │
-│  ── March 1, 2026 ─────────────────────     │
-│  ...                                        │
-└─────────────────────────────────────────────┘
-```
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-### Implementation Plan
+### 2. 创建前端页面或组件调用该函数
 
-1. **Create `/time-tracker` route and page** (`src/pages/TimeTracker.tsx`)
-   - Extract events from `jobs` (createdAt for applications) and `stages` (scheduledTime/date for interviews)
-   - Group all events by calendar date using `date-fns` `format()`
-   - Sort dates descending (newest first), events within each date by time
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-2. **Event types to extract**:
-   - `applied` — from `job.createdAt`, show company + role + job link
-   - `interview` — from stages with `scheduledTime` or `date`, show company + stage name + dual timezone
-   - `status_change` — from `recent_activities`, show activity message
-   - Each event card shows a clickable link to the job detail page, and the external job link (🔗) if available
+## 技术细节
 
-3. **Filter controls**:
-   - Month navigator (prev/next) 
-   - Quick filter: "This Week" / "This Month" / "All"
-   - Optional type filter chips: Applied / Interview / Assessment / All
-
-4. **Add sidebar navigation entry** — Clock icon, between Timeline and Analytics
-
-5. **Add i18n keys** for both EN and ZH
-
-### Technical Notes
-- Pure frontend computation from existing `useJobs()` data + `useActivities()` — no new database tables or Edge Functions needed
-- Uses `useMemo` to efficiently compute the grouped timeline
-- Reuses `formatDualTimezone()` for interview time display
-- Each event row is clickable → navigates to `/jobs/:id`
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
