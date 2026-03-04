@@ -221,6 +221,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     return STAGE_SUGGESTIONS.map(s => ({
       name: t(s.nameKey, s.fallback),
       key: s.nameKey,
+      category: s.category,
     }));
   };
 
