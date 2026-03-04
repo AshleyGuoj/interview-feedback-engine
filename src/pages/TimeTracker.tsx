@@ -35,7 +35,7 @@ interface TimelineEvent {
 
 import { detectStageCategory } from '@/types/job';
 
-const ASSESSMENT_KEYWORDS = ['assessment', 'take-home', 'takehome', 'oa', '测评', '笔试', 'online assessment', 'coding challenge', 'test'];
+
 
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
