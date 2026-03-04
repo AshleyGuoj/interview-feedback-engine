@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   format, parseISO, isToday, isSameDay,
   addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
-  startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   eachDayOfInterval, isWithinInterval,
 } from 'date-fns';
 import { zhCN, enUS, type Locale } from 'date-fns/locale';
@@ -12,12 +12,12 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, ExternalLink, Clock, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
 
-type EventType = 'applied' | 'interview' | 'assessment';
+type EventType = 'applied' | 'interview' | 'assessment' | 'written_test';
 type ViewMode = 'day' | 'week' | 'month';
 
 interface TimelineEvent {
@@ -35,17 +35,11 @@ interface TimelineEvent {
 
 import { detectStageCategory } from '@/types/job';
 
-const ASSESSMENT_KEYWORDS = ['assessment', 'take-home', 'takehome', 'oa', '测评', '笔试', 'online assessment', 'coding challenge', 'test'];
 
-function isAssessmentStage(stage: InterviewStage): boolean {
-  // Use explicit category if available, fall back to keyword matching
-  if (stage.category) return stage.category === 'assessment';
-  const lower = stage.name.toLowerCase().trim();
-  return ASSESSMENT_KEYWORDS.some(kw => lower.includes(kw));
-}
 
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
+  if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
   return 'interview';
 }
@@ -106,15 +100,17 @@ const EVENT_ICONS: Record<EventType, typeof FileText> = {
   applied: FileText,
   interview: Mic,
   assessment: ClipboardCheck,
+  written_test: PenLine,
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
   applied: 'text-blue-500',
   interview: 'text-amber-500',
   assessment: 'text-purple-500',
+  written_test: 'text-indigo-500',
 };
 
-const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'interview'];
+const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'interview'];
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
@@ -206,7 +202,7 @@ export default function TimeTracker() {
   // Compute date range based on view mode
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (viewMode === 'day') {
-      return { rangeStart: selectedDate, rangeEnd: selectedDate };
+      return { rangeStart: startOfDay(selectedDate), rangeEnd: endOfDay(selectedDate) };
     } else if (viewMode === 'week') {
       return { rangeStart: startOfWeek(selectedDate, { weekStartsOn: 1 }), rangeEnd: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
     } else {
@@ -234,7 +230,7 @@ export default function TimeTracker() {
 
   // Summary counts
   const summary = useMemo(() => {
-    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0 };
+    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0, written_test: 0 };
     for (const e of filteredEvents) counts[e.type]++;
     return counts;
   }, [filteredEvents]);
@@ -304,6 +300,7 @@ export default function TimeTracker() {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-blue-500" />{summary.applied} {t('timeTracker.type_applied')}</span>}
             {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-purple-500" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
+            {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
             {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}
           </div>
         )}
