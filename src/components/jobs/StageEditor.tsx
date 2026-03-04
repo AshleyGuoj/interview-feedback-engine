@@ -169,7 +169,13 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
 
   const handleEdit = (id: string, name: string) => {
     setLocalStages((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, name } : s))
+      prev.map((s) => (s.id === id ? { ...s, name, category: detectStageCategory(name) } : s))
+    );
+  };
+
+  const handleCategoryChange = (id: string, category: StageCategory) => {
+    setLocalStages((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, category } : s))
     );
   };
 
