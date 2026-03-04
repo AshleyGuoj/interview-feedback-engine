@@ -202,7 +202,7 @@ export default function TimeTracker() {
   // Compute date range based on view mode
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (viewMode === 'day') {
-      return { rangeStart: selectedDate, rangeEnd: selectedDate };
+      return { rangeStart: startOfDay(selectedDate), rangeEnd: endOfDay(selectedDate) };
     } else if (viewMode === 'week') {
       return { rangeStart: startOfWeek(selectedDate, { weekStartsOn: 1 }), rangeEnd: endOfWeek(selectedDate, { weekStartsOn: 1 }) };
     } else {
