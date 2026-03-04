@@ -7,6 +7,7 @@ import {
   Calendar, 
   BarChart3, 
   Archive,
+  Clock,
   LogOut,
   PanelLeftClose,
   PanelLeft
