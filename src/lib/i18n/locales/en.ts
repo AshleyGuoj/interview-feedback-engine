@@ -527,7 +527,7 @@ export default {
     type_all: 'All',
     type_applied: 'Applied',
     type_interview: 'Interview',
-    type_status_change: 'Updates',
+    type_assessment: 'Assessment',
   },
 
   // Archive
