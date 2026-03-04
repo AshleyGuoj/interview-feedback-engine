@@ -1,30 +1,46 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## Time Tracker Refinement: Cleaner Event Categories
 
-## 方案
+### Problem
+Currently the page shows three event types: 投递, 面试, and 动态 (status_change). The "动态" events are noisy — they duplicate information already visible from the applied/interview events (e.g., "Application submitted for X" is redundant with the 投递 event).
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+### Proposed Solution
 
-## 实现步骤
+**Remove `status_change` entirely.** Only keep events derived from job data itself:
 
-### 1. 创建 Edge Function `generate-workflow-image`
+1. **投递 (Applied)** — from `job.createdAt`, one per job
+2. **面试 (Interview)** — stages whose name matches interview patterns (HR Screen, Round 1, Final Round, etc.)
+3. **测评 (Assessment)** — stages whose name matches assessment patterns (Assessment, Take-home, OA, etc.)
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+### How to Distinguish Interview vs Assessment
 
-### 2. 创建前端页面或组件调用该函数
+Use stage name pattern matching in `extractEvents()`:
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
+```text
+Assessment keywords: assessment, take-home, oa, 测评, 笔试, online assessment
+Everything else with a scheduled time → Interview
+```
 
-## 技术细节
+### Changes
 
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+**`src/pages/TimeTracker.tsx`**:
+- Change `EventType` from `'applied' | 'interview' | 'status_change'` to `'applied' | 'interview' | 'assessment'`
+- Remove all activity-related code (no more `useActivities()` import)
+- Add stage name classification logic to split interview vs assessment
+- Update icons: Assessment gets `ClipboardCheck`, Interview keeps `Mic`
+- Update filter badges to show: 全部 / 投递 / 面试 / 测评
+
+**`src/lib/i18n/locales/en.ts` & `zh.ts`**:
+- Replace `type_status_change` with `type_assessment`
+- EN: "Assessment", ZH: "测评"
+
+### Event Grouping Per Day
+
+Within each date group, events will be visually ordered:
+1. 投递 items first (blue `FileText` icon)
+2. 面试 items (amber `Mic` icon)  
+3. 测评 items (purple `ClipboardCheck` icon)
+
+This matches the screenshot reference but removes the redundant 动态 rows, making each day's view clean and actionable.
 
