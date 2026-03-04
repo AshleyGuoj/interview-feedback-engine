@@ -307,12 +307,12 @@ export function getActiveStages(job: Job): InterviewStage[] {
 }
 
 export const DEFAULT_STAGES: Omit<InterviewStage, 'id'>[] = [
-  { name: 'Applied', status: 'completed', result: 'passed' },
-  { name: 'HR Screen', status: 'pending' },
-  { name: 'Round 1', status: 'pending' },
-  { name: 'Round 2', status: 'pending' },
-  { name: 'Final Round', status: 'pending' },
-  { name: 'Offer Discussion', status: 'pending' },
+  { name: 'Applied', status: 'completed', result: 'passed', category: 'interview' },
+  { name: 'HR Screen', status: 'pending', category: 'hr_chat' },
+  { name: 'Round 1', status: 'pending', category: 'interview' },
+  { name: 'Round 2', status: 'pending', category: 'interview' },
+  { name: 'Final Round', status: 'pending', category: 'interview' },
+  { name: 'Offer Discussion', status: 'pending', category: 'offer_call' },
 ];
 
 // Question categories for display

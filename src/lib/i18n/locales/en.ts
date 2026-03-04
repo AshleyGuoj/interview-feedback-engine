@@ -515,6 +515,15 @@ export default {
     leadership: 'Leadership',
     stress_resilience: 'Stress Resilience',
   },
+  // Stage categories
+  stageCategory: {
+    assessment: 'Assessment',
+    interview: 'Interview',
+    hr_chat: 'HR / Salary Talk',
+    offer_call: 'Offer Call',
+    offer_received: 'Offer Received',
+    label: 'Category',
+  },
   // Time Tracker
   timeTracker: {
     title: 'Time Tracker',

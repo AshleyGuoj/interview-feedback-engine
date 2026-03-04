@@ -515,6 +515,15 @@ export default {
     leadership: '领导力',
     stress_resilience: '抗压能力',
   },
+  // Stage categories
+  stageCategory: {
+    assessment: '测评/笔试',
+    interview: '面试',
+    hr_chat: 'HR沟通/谈薪',
+    offer_call: 'Offer沟通',
+    offer_received: '收到Offer',
+    label: '类别',
+  },
   // Time Tracker
   timeTracker: {
     title: '时间追踪',
