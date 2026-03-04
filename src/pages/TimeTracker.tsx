@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
 
-type EventType = 'applied' | 'interview' | 'assessment';
+type EventType = 'applied' | 'interview' | 'assessment' | 'written_test';
 type ViewMode = 'day' | 'week' | 'month';
 
 interface TimelineEvent {
