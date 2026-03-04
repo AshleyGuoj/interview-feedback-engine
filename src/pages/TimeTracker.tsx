@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   format, parseISO, isToday, isSameDay,
   addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
-  startOfWeek, endOfWeek, startOfMonth, endOfMonth,
+  startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   eachDayOfInterval, isWithinInterval,
 } from 'date-fns';
 import { zhCN, enUS, type Locale } from 'date-fns/locale';
