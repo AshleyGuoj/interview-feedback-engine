@@ -47,7 +47,7 @@ const CATEGORY_COLORS: Record<StageCategory, string> = {
   offer_received: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
 };
 
-function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) {
+function SortableStageItem({ stage, onEdit, onDelete, onCategoryChange }: SortableStageItemProps) {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(stage.name);
