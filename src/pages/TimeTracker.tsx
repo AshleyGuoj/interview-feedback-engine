@@ -7,7 +7,7 @@ import {
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   eachDayOfInterval, isWithinInterval,
 } from 'date-fns';
-import { zhCN, enUS } from 'date-fns/locale';
+import { zhCN, enUS, type Locale } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
