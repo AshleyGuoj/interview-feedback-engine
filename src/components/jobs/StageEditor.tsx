@@ -111,16 +111,25 @@ function SortableStageItem({ stage, onEdit, onDelete, onCategoryChange }: Sortab
         </div>
       ) : (
         <>
-          <span className="flex-1 text-sm">{stage.name}</span>
-          <span className={cn(
-            "text-xs px-2 py-0.5 rounded-full",
-            stage.status === 'completed' && "bg-primary/10 text-primary",
-            ['pending', 'scheduled', 'rescheduled'].includes(stage.status) && "bg-muted text-muted-foreground",
-            stage.status === 'feedback_pending' && "bg-muted text-muted-foreground",
-            ['skipped', 'withdrawn'].includes(stage.status) && "bg-muted/50 text-muted-foreground/70"
-          )}>
-            {getStatusLabel(stage.status)}
-          </span>
+          <span className="flex-1 text-sm truncate">{stage.name}</span>
+          <Select
+            value={stage.category || detectStageCategory(stage.name)}
+            onValueChange={(val) => onCategoryChange(stage.id, val as StageCategory)}
+          >
+            <SelectTrigger className={cn(
+              "h-6 w-auto min-w-[80px] max-w-[120px] text-[10px] border-0 px-2 py-0 gap-1 font-medium rounded-full",
+              CATEGORY_COLORS[stage.category || detectStageCategory(stage.name)]
+            )}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(STAGE_CATEGORY_CONFIG) as StageCategory[]).map(cat => (
+                <SelectItem key={cat} value={cat} className="text-xs">
+                  {t(`stageCategory.${cat}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
             <Pencil className="w-3 h-3" />
           </Button>
