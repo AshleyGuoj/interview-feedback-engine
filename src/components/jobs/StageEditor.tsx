@@ -266,6 +266,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
                     stage={stage}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onCategoryChange={handleCategoryChange}
                   />
                 ))}
               </div>
