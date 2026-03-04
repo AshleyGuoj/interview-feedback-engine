@@ -12,19 +12,19 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Recommended stage suggestions with i18n keys
+// Recommended stage suggestions with i18n keys and default categories
 const STAGE_SUGGESTIONS = [
-  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen' },
-  { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round' },
-  { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round' },
-  { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design' },
-  { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview' },
-  { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study' },
-  { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round' },
-  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round' },
-  { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit' },
-  { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round' },
-  { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion' },
+  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion', category: 'offer_call' as StageCategory },
 ];
 
 interface StageEditorProps {
