@@ -100,15 +100,17 @@ const EVENT_ICONS: Record<EventType, typeof FileText> = {
   applied: FileText,
   interview: Mic,
   assessment: ClipboardCheck,
+  written_test: PenLine,
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
   applied: 'text-blue-500',
   interview: 'text-amber-500',
   assessment: 'text-purple-500',
+  written_test: 'text-indigo-500',
 };
 
-const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'interview'];
+const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'interview'];
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
