@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InterviewStage } from '@/types/job';
+import { InterviewStage, StageCategory, STAGE_CATEGORY_CONFIG, detectStageCategory } from '@/types/job';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,20 +10,21 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Recommended stage suggestions with i18n keys
+// Recommended stage suggestions with i18n keys and default categories
 const STAGE_SUGGESTIONS = [
-  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen' },
-  { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round' },
-  { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round' },
-  { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design' },
-  { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview' },
-  { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study' },
-  { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round' },
-  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round' },
-  { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit' },
-  { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round' },
-  { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion' },
+  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round', category: 'interview' as StageCategory },
+  { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion', category: 'offer_call' as StageCategory },
 ];
 
 interface StageEditorProps {
@@ -35,9 +36,18 @@ interface SortableStageItemProps {
   stage: InterviewStage;
   onEdit: (id: string, name: string) => void;
   onDelete: (id: string) => void;
+  onCategoryChange: (id: string, category: StageCategory) => void;
 }
 
-function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) {
+const CATEGORY_COLORS: Record<StageCategory, string> = {
+  assessment: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  interview: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  hr_chat: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  offer_call: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  offer_received: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+};
+
+function SortableStageItem({ stage, onEdit, onDelete, onCategoryChange }: SortableStageItemProps) {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(stage.name);
@@ -101,16 +111,25 @@ function SortableStageItem({ stage, onEdit, onDelete }: SortableStageItemProps) 
         </div>
       ) : (
         <>
-          <span className="flex-1 text-sm">{stage.name}</span>
-          <span className={cn(
-            "text-xs px-2 py-0.5 rounded-full",
-            stage.status === 'completed' && "bg-primary/10 text-primary",
-            ['pending', 'scheduled', 'rescheduled'].includes(stage.status) && "bg-muted text-muted-foreground",
-            stage.status === 'feedback_pending' && "bg-muted text-muted-foreground",
-            ['skipped', 'withdrawn'].includes(stage.status) && "bg-muted/50 text-muted-foreground/70"
-          )}>
-            {getStatusLabel(stage.status)}
-          </span>
+          <span className="flex-1 text-sm truncate">{stage.name}</span>
+          <Select
+            value={stage.category || detectStageCategory(stage.name)}
+            onValueChange={(val) => onCategoryChange(stage.id, val as StageCategory)}
+          >
+            <SelectTrigger className={cn(
+              "h-6 w-auto min-w-[80px] max-w-[120px] text-[10px] border-0 px-2 py-0 gap-1 font-medium rounded-full",
+              CATEGORY_COLORS[stage.category || detectStageCategory(stage.name)]
+            )}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(STAGE_CATEGORY_CONFIG) as StageCategory[]).map(cat => (
+                <SelectItem key={cat} value={cat} className="text-xs">
+                  {t(`stageCategory.${cat}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
             <Pencil className="w-3 h-3" />
           </Button>
@@ -150,7 +169,13 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
 
   const handleEdit = (id: string, name: string) => {
     setLocalStages((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, name } : s))
+      prev.map((s) => (s.id === id ? { ...s, name, category: detectStageCategory(name) } : s))
+    );
+  };
+
+  const handleCategoryChange = (id: string, category: StageCategory) => {
+    setLocalStages((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, category } : s))
     );
   };
 
@@ -159,7 +184,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     setLocalStages((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const handleAddStage = (stageName?: string) => {
+  const handleAddStage = (stageName?: string, stageCategory?: StageCategory) => {
     const nameToAdd = stageName || newStageName.trim();
     if (!nameToAdd) return;
     
@@ -173,6 +198,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
       id: `stage-${Date.now()}`,
       name: nameToAdd,
       status: 'pending',
+      category: stageCategory || detectStageCategory(nameToAdd),
     };
     setLocalStages((prev) => [...prev, newStage]);
     if (!stageName) setNewStageName('');
@@ -195,6 +221,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
     return STAGE_SUGGESTIONS.map(s => ({
       name: t(s.nameKey, s.fallback),
       key: s.nameKey,
+      category: s.category,
     }));
   };
 
@@ -239,6 +266,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
                     stage={stage}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onCategoryChange={handleCategoryChange}
                   />
                 ))}
               </div>
@@ -258,7 +286,7 @@ export function StageEditor({ stages, onSave }: StageEditorProps) {
                     key={suggestion.key}
                     variant="outline"
                     className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-2 py-1"
-                    onClick={() => handleAddStage(suggestion.name)}
+                    onClick={() => handleAddStage(suggestion.name, suggestion.category)}
                   >
                     <Plus className="w-3 h-3 mr-1" />
                     {suggestion.name}

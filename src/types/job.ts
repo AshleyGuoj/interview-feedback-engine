@@ -125,10 +125,35 @@ export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: stri
   mixed_feedback: { label: 'Mixed Feedback', labelZh: '意见不一', icon: 'scale', color: 'amber' },
 };
 
+// ============================================
+// STAGE CATEGORY
+// ============================================
+
+export type StageCategory = 'assessment' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
+
+export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
+  assessment:     { label: 'Assessment',     labelZh: '测评/笔试',  icon: 'clipboard-check', color: 'purple' },
+  interview:      { label: 'Interview',      labelZh: '面试',       icon: 'mic',             color: 'amber' },
+  hr_chat:        { label: 'HR / Salary Talk',labelZh: 'HR沟通/谈薪', icon: 'message-circle', color: 'blue' },
+  offer_call:     { label: 'Offer Call',      labelZh: 'Offer沟通',  icon: 'phone-call',     color: 'green' },
+  offer_received: { label: 'Offer Received',  labelZh: '收到Offer',  icon: 'gift',            color: 'emerald' },
+};
+
+// Auto-detect stage category from name
+export function detectStageCategory(name: string): StageCategory {
+  const lower = name.toLowerCase().trim();
+  if (['oa', 'assessment', 'test', 'take-home', 'takehome', '笔试', '测评', 'coding challenge', 'online assessment'].some(kw => lower.includes(kw))) return 'assessment';
+  if (['offer received', '收到offer', 'offer letter'].some(kw => lower.includes(kw))) return 'offer_received';
+  if (['offer', '谈薪', 'salary', 'compensation', 'negotiat'].some(kw => lower.includes(kw))) return 'offer_call';
+  if (['hr', 'screen', 'recruiter', '人事'].some(kw => lower.includes(kw))) return 'hr_chat';
+  return 'interview';
+}
+
 // Layer 1: Interview Stage (customizable timeline)
 export interface InterviewStage {
   id: string;
   name: string;              // Customizable: "HR Screen", "Technical", etc.
+  category?: StageCategory;  // Standardized type tag
   order?: number;            // For drag-and-drop reordering
   
   // Two-dimensional state
@@ -282,12 +307,12 @@ export function getActiveStages(job: Job): InterviewStage[] {
 }
 
 export const DEFAULT_STAGES: Omit<InterviewStage, 'id'>[] = [
-  { name: 'Applied', status: 'completed', result: 'passed' },
-  { name: 'HR Screen', status: 'pending' },
-  { name: 'Round 1', status: 'pending' },
-  { name: 'Round 2', status: 'pending' },
-  { name: 'Final Round', status: 'pending' },
-  { name: 'Offer Discussion', status: 'pending' },
+  { name: 'Applied', status: 'completed', result: 'passed', category: 'interview' },
+  { name: 'HR Screen', status: 'pending', category: 'hr_chat' },
+  { name: 'Round 1', status: 'pending', category: 'interview' },
+  { name: 'Round 2', status: 'pending', category: 'interview' },
+  { name: 'Final Round', status: 'pending', category: 'interview' },
+  { name: 'Offer Discussion', status: 'pending', category: 'offer_call' },
 ];
 
 // Question categories for display
