@@ -41,6 +41,7 @@ const App = () => (
               <Route path="/timeline" element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
+              <Route path="/time-tracker" element={<ProtectedRoute><TimeTracker /></ProtectedRoute>} />
               <Route path="/analyze" element={<ProtectedRoute><AnalyzeInterview /></ProtectedRoute>} />
               <Route path="/promo-video" element={<ProtectedRoute><PromoVideo /></ProtectedRoute>} />
               <Route path="/workflow-image" element={<ProtectedRoute><WorkflowImage /></ProtectedRoute>} />

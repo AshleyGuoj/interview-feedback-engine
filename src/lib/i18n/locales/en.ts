@@ -83,6 +83,7 @@ export default {
     timeline: 'Timeline',
     analytics: 'Analytics',
     archive: 'Archive',
+    timeTracker: 'Time Tracker',
     
     signOut: 'Sign Out',
     expandSidebar: 'Expand sidebar',
