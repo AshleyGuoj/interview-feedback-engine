@@ -12,6 +12,7 @@ import JobDetail from "./pages/JobDetail";
 import Timeline from "./pages/Timeline";
 import Analytics from "./pages/Analytics";
 import Archive from "./pages/Archive";
+import TimeTracker from "./pages/TimeTracker";
 import AnalyzeInterview from "./pages/AnalyzeInterview";
 import InterviewAnalysis from "./pages/InterviewAnalysis";
 import PromoVideo from "./pages/PromoVideo";
