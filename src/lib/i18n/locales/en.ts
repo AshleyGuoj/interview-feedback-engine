@@ -514,6 +514,21 @@ export default {
     leadership: 'Leadership',
     stress_resilience: 'Stress Resilience',
   },
+  // Time Tracker
+  timeTracker: {
+    title: 'Time Tracker',
+    subtitle: 'Your daily job search activity log',
+    today: 'Today',
+    noEvents: 'No activities in this period',
+    range_week: 'This Week',
+    range_month: 'This Month',
+    range_all: 'All',
+    type_all: 'All',
+    type_applied: 'Applied',
+    type_interview: 'Interview',
+    type_status_change: 'Updates',
+  },
+
   // Archive
   archive: {
     title: 'Archive',
