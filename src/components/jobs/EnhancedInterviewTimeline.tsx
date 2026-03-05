@@ -75,6 +75,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
     setEditingStage(stage.id);
     setEditData({
       name: stage.name,
+      category: stage.category || detectStageCategory(stage.name),
       status: stage.status,
       result: stage.result,
       scheduledTime: stage.scheduledTime,
