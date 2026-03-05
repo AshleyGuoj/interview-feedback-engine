@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Job, KanbanColumnType, KANBAN_COLUMN_CONFIG, ApplicationAssessmentFilter, APPLICATION_ASSESSMENT_FILTERS, APPLICATION_ASSESSMENT_FILTER_CONFIG, deriveApplicationSubCategory } from '@/types/job';
+import { 
+  Job, KanbanColumnType, KANBAN_COLUMN_CONFIG, 
+  ApplicationAssessmentFilter, APPLICATION_ASSESSMENT_FILTERS, APPLICATION_ASSESSMENT_FILTER_CONFIG, deriveApplicationSubCategory,
+  InterviewFilter, INTERVIEW_FILTERS, INTERVIEW_FILTER_CONFIG, deriveInterviewSubCategory,
+} from '@/types/job';
 import { JobCard } from './JobCard';
 import { cn } from '@/lib/utils';
 import { Inbox } from 'lucide-react';
@@ -14,18 +18,28 @@ interface KanbanColumnProps {
 export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const { t } = useTranslation();
   const config = KANBAN_COLUMN_CONFIG[column];
-  const [activeFilter, setActiveFilter] = useState<ApplicationAssessmentFilter>('application');
+  const [activeAppFilter, setActiveAppFilter] = useState<ApplicationAssessmentFilter>('application');
+  const [activeIntFilter, setActiveIntFilter] = useState<InterviewFilter>('all_interview');
 
-  const showFilters = column === 'application_assessment';
+  const showAppFilters = column === 'application_assessment';
+  const showIntFilters = column === 'interview';
+  const hasFilters = showAppFilters || showIntFilters;
 
   const filteredJobs = useMemo(() => {
-    if (!showFilters || activeFilter === 'application') return jobs;
-    return jobs.filter(job => deriveApplicationSubCategory(job) === activeFilter);
-  }, [jobs, activeFilter, showFilters]);
+    if (showAppFilters) {
+      if (activeAppFilter === 'application') return jobs;
+      return jobs.filter(job => deriveApplicationSubCategory(job) === activeAppFilter);
+    }
+    if (showIntFilters) {
+      if (activeIntFilter === 'all_interview') return jobs;
+      return jobs.filter(job => deriveInterviewSubCategory(job) === activeIntFilter);
+    }
+    return jobs;
+  }, [jobs, activeAppFilter, activeIntFilter, showAppFilters, showIntFilters]);
 
   return (
     <div className="flex flex-col min-w-[260px] max-w-[300px] flex-1">
-      {/* Column Header */}
+      {/* Column Header — fixed height area for alignment */}
       <div className="mb-3 px-1">
         <div className="flex items-center gap-2 mb-1">
           <div className={cn('w-2 h-2 rounded-full', config.color)} />
@@ -35,16 +49,16 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
           </span>
         </div>
 
-        {/* Filter Pills for application_assessment column */}
-        {showFilters && (
-          <div className="flex flex-wrap gap-1 mt-2">
+        {/* Filter pills or spacer for alignment */}
+        {showAppFilters ? (
+          <div className="flex flex-wrap gap-1 mt-2 min-h-[28px]">
             {APPLICATION_ASSESSMENT_FILTERS.map((filter) => (
               <button
                 key={filter}
-                onClick={() => setActiveFilter(filter)}
+                onClick={() => setActiveAppFilter(filter)}
                 className={cn(
                   'px-2 py-0.5 rounded-full text-[11px] font-medium transition-all',
-                  activeFilter === filter
+                  activeAppFilter === filter
                     ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
                     : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
@@ -53,6 +67,26 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
               </button>
             ))}
           </div>
+        ) : showIntFilters ? (
+          <div className="flex flex-wrap gap-1 mt-2 min-h-[28px]">
+            {INTERVIEW_FILTERS.map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveIntFilter(filter)}
+                className={cn(
+                  'px-2 py-0.5 rounded-full text-[11px] font-medium transition-all',
+                  activeIntFilter === filter
+                    ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                {t(INTERVIEW_FILTER_CONFIG[filter].labelKey)}
+              </button>
+            ))}
+          </div>
+        ) : (
+          /* Spacer to align cards across all columns */
+          <div className="mt-2 min-h-[28px]" />
         )}
       </div>
 
