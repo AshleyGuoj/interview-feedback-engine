@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection, StageStatus, StageResult, STAGE_STATUS_CONFIG, STAGE_RESULT_CONFIG } from '@/types/job';
+import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection, StageStatus, StageResult, StageCategory, STAGE_STATUS_CONFIG, STAGE_RESULT_CONFIG, STAGE_CATEGORY_CONFIG, detectStageCategory } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
