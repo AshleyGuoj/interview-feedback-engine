@@ -49,6 +49,7 @@ function getEventTypeFromStage(stage: InterviewStage): EventType {
 function extractEvents(jobs: Job[]): TimelineEvent[] {
   const events: TimelineEvent[] = [];
   for (const job of jobs) {
+    const j_updatedAt = (job as any).updatedAt || job.createdAt;
     events.push({
       id: `applied-${job.id}`,
       type: 'applied',
