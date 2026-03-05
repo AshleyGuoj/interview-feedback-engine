@@ -65,7 +65,7 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
             {APPLICATION_ASSESSMENT_FILTERS.map((filter) => (
               <button
                 key={filter}
-                onClick={() => setActiveAppFilter(filter)}
+                onClick={() => handleAppFilter(filter)}
                 className={cn(
                   'px-2 py-0.5 rounded-full text-[11px] font-medium transition-all',
                   activeAppFilter === filter
