@@ -145,6 +145,8 @@ export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; label
 // Auto-detect stage category from name
 export function detectStageCategory(name: string): StageCategory {
   const lower = name.toLowerCase().trim();
+  if (['applied', '投递', '已申请', '已投递'].some(kw => lower === kw || lower.includes(kw))) return 'application';
+  if (['简历筛选', 'resume screen', 'resume review', '简历审核'].some(kw => lower.includes(kw))) return 'resume_screen';
   if (['笔试', 'written test', 'written exam'].some(kw => lower.includes(kw))) return 'written_test';
   if (['oa', 'assessment', 'test', 'take-home', 'takehome', '测评', 'coding challenge', 'online assessment'].some(kw => lower.includes(kw))) return 'assessment';
   if (['offer received', '收到offer', 'offer letter'].some(kw => lower.includes(kw))) return 'offer_received';
