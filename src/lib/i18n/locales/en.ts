@@ -164,6 +164,11 @@ export default {
     noJobs: 'No jobs yet. Start tracking your applications!',
     noJobsInColumn: 'No jobs yet',
     dropHere: 'Drop here',
+    filterAll: 'All',
+    filterApplication: 'Applied',
+    filterResumeScreen: 'Resume Screen',
+    filterAssessment: 'Assessment',
+    filterWrittenTest: 'Written Test',
     
     // Location options
     locationUS: 'US',

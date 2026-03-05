@@ -412,6 +412,48 @@ export function getActivePipeline(job: Job): Pipeline | null {
   return activePipelines[0];
 }
 
+// Sub-categories within the application_assessment column for filtering
+export type ApplicationAssessmentFilter = 'all' | 'application' | 'resume_screen' | 'assessment' | 'written_test';
+
+export const APPLICATION_ASSESSMENT_FILTERS: ApplicationAssessmentFilter[] = ['all', 'application', 'resume_screen', 'assessment', 'written_test'];
+
+export const APPLICATION_ASSESSMENT_FILTER_CONFIG: Record<ApplicationAssessmentFilter, { labelKey: string }> = {
+  all:            { labelKey: 'jobs.filterAll' },
+  application:    { labelKey: 'jobs.filterApplication' },
+  resume_screen:  { labelKey: 'jobs.filterResumeScreen' },
+  assessment:     { labelKey: 'jobs.filterAssessment' },
+  written_test:   { labelKey: 'jobs.filterWrittenTest' },
+};
+
+/**
+ * Derive the specific sub-category for a job within the application_assessment column.
+ * Returns the highest-priority active category that maps to this column.
+ */
+export function deriveApplicationSubCategory(job: Job): ApplicationAssessmentFilter {
+  const stages = getActiveStages(job);
+  const columnCategories: StageCategory[] = ['application', 'resume_screen', 'assessment', 'written_test', 'hr_screen'];
+  
+  let highestPriority = -1;
+  let result: ApplicationAssessmentFilter = 'application';
+  
+  for (const stage of stages) {
+    const category = stage.category || detectStageCategory(stage.name);
+    if (!columnCategories.includes(category)) continue;
+    
+    const isActive = ACTIVE_STATUSES.includes(stage.status) || 
+                     (stage.status === 'completed' && stage.result !== 'rejected');
+    const priority = CATEGORY_PRIORITY[category];
+    
+    if (isActive && priority > highestPriority) {
+      highestPriority = priority;
+      // Map hr_screen to resume_screen for filter purposes
+      result = (category === 'hr_screen' ? 'resume_screen' : category) as ApplicationAssessmentFilter;
+    }
+  }
+  
+  return result;
+}
+
 // Helper: Get all stages from active pipeline
 export function getActiveStages(job: Job): InterviewStage[] {
   const pipeline = getActivePipeline(job);
