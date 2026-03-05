@@ -1,25 +1,30 @@
 
 
-## 面试列添加筛选 pills + 各列卡片顶部对齐
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### 问题
-1. 投递/筛选列有 filter pills 占据高度，导致面试列的第一张卡片比投递列低
-2. 用户希望面试列也有子筛选：一面、二面、HR面
+## 方案
 
-### 改动
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-**`src/types/job.ts`**：
-- 新增 `InterviewFilter` 类型：`'all_interview' | 'round_1' | 'round_2' | 'hr_round'`
-- 新增 `INTERVIEW_FILTERS` 数组和 `INTERVIEW_FILTER_CONFIG` 配置
-- 新增 `deriveInterviewSubCategory(job)` 函数，基于 frontier stage 判断当前面试轮次（一面/二面/HR面），逻辑类似 `deriveApplicationSubCategory`
+## 实现步骤
 
-**`src/components/jobs/KanbanColumn.tsx`**：
-- 面试列也显示 filter pills（一面 | 二面 | HR面），默认选中"全部面试"显示所有卡片
-- 没有 filter pills 的列（offer_call、offer_received、closed）在 header 下方加一个固定高度的 spacer（与 pills 等高），确保所有列的卡片容器顶部对齐
+### 1. 创建 Edge Function `generate-workflow-image`
 
-**`src/lib/i18n/locales/zh.ts` & `en.ts`**：
-- 添加面试筛选翻译：一面/Round 1、二面/Round 2、HR面/HR Round、全部面试/All Interviews
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-### 对齐方案
-给列 header 区域设置 `min-h` 或在无 pills 的列加占位元素，确保 cards container 起始位置一致。
+### 2. 创建前端页面或组件调用该函数
+
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
+
+## 技术细节
+
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 

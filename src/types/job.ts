@@ -453,6 +453,50 @@ export function deriveApplicationSubCategory(job: Job): ApplicationAssessmentFil
   return 'application';
 }
 
+// Sub-categories within the interview column for filtering
+export type InterviewFilter = 'all_interview' | 'round_1' | 'round_2' | 'hr_round';
+
+export const INTERVIEW_FILTERS: InterviewFilter[] = ['all_interview', 'round_1', 'round_2', 'hr_round'];
+
+export const INTERVIEW_FILTER_CONFIG: Record<InterviewFilter, { labelKey: string }> = {
+  all_interview: { labelKey: 'jobs.filterAllInterview' },
+  round_1:       { labelKey: 'jobs.filterRound1' },
+  round_2:       { labelKey: 'jobs.filterRound2' },
+  hr_round:      { labelKey: 'jobs.filterHRRound' },
+};
+
+/**
+ * Derive which interview sub-filter a job belongs to.
+ * Finds the frontier interview stage (first non-passed interview).
+ */
+export function deriveInterviewSubCategory(job: Job): InterviewFilter {
+  const stages = getActiveStages(job);
+  let interviewIndex = 0;
+  
+  for (const stage of stages) {
+    const category = stage.category || detectStageCategory(stage.name);
+    if (category !== 'interview' && category !== 'hr_final') continue;
+    
+    // Skip fully passed stages
+    if (stage.status === 'completed' && stage.result === 'passed') {
+      if (category === 'interview') interviewIndex++;
+      continue;
+    }
+    if (stage.status === 'skipped' || stage.status === 'withdrawn') {
+      if (category === 'interview') interviewIndex++;
+      continue;
+    }
+    
+    // This is the frontier interview stage
+    if (category === 'hr_final') return 'hr_round';
+    if (interviewIndex === 0) return 'round_1';
+    if (interviewIndex === 1) return 'round_2';
+    return 'round_2'; // 3rd+ rounds grouped with round_2
+  }
+  
+  return 'round_1';
+}
+
 // Helper: Get all stages from active pipeline
 export function getActiveStages(job: Job): InterviewStage[] {
   const pipeline = getActivePipeline(job);
