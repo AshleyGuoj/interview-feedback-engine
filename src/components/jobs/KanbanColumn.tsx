@@ -14,12 +14,12 @@ interface KanbanColumnProps {
 export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const { t } = useTranslation();
   const config = KANBAN_COLUMN_CONFIG[column];
-  const [activeFilter, setActiveFilter] = useState<ApplicationAssessmentFilter>('all');
+  const [activeFilter, setActiveFilter] = useState<ApplicationAssessmentFilter>('application');
 
   const showFilters = column === 'application_assessment';
 
   const filteredJobs = useMemo(() => {
-    if (!showFilters || activeFilter === 'all') return jobs;
+    if (!showFilters || activeFilter === 'application') return jobs;
     return jobs.filter(job => deriveApplicationSubCategory(job) === activeFilter);
   }, [jobs, activeFilter, showFilters]);
 
