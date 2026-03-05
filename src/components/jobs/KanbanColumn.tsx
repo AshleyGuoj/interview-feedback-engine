@@ -82,7 +82,7 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
             {INTERVIEW_FILTERS.map((filter) => (
               <button
                 key={filter}
-                onClick={() => setActiveIntFilter(filter)}
+                onClick={() => handleIntFilter(filter)}
                 className={cn(
                   'px-2 py-0.5 rounded-full text-[11px] font-medium transition-all',
                   activeIntFilter === filter
