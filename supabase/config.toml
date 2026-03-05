@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.generate-workflow-image]
 verify_jwt = false
+
+[functions.fix-job-statuses]
+verify_jwt = false
