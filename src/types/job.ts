@@ -413,12 +413,11 @@ export function getActivePipeline(job: Job): Pipeline | null {
 }
 
 // Sub-categories within the application_assessment column for filtering
-export type ApplicationAssessmentFilter = 'all' | 'application' | 'resume_screen' | 'assessment' | 'written_test';
+export type ApplicationAssessmentFilter = 'application' | 'resume_screen' | 'assessment' | 'written_test';
 
-export const APPLICATION_ASSESSMENT_FILTERS: ApplicationAssessmentFilter[] = ['all', 'application', 'resume_screen', 'assessment', 'written_test'];
+export const APPLICATION_ASSESSMENT_FILTERS: ApplicationAssessmentFilter[] = ['application', 'resume_screen', 'assessment', 'written_test'];
 
 export const APPLICATION_ASSESSMENT_FILTER_CONFIG: Record<ApplicationAssessmentFilter, { labelKey: string }> = {
-  all:            { labelKey: 'jobs.filterAll' },
   application:    { labelKey: 'jobs.filterApplication' },
   resume_screen:  { labelKey: 'jobs.filterResumeScreen' },
   assessment:     { labelKey: 'jobs.filterAssessment' },

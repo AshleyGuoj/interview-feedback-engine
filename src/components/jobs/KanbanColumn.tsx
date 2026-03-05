@@ -19,7 +19,7 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const showFilters = column === 'application_assessment';
 
   const filteredJobs = useMemo(() => {
-    if (!showFilters || activeFilter === 'all') return jobs;
+    if (!showFilters || activeFilter === 'application') return jobs;
     return jobs.filter(job => deriveApplicationSubCategory(job) === activeFilter);
   }, [jobs, activeFilter, showFilters]);
 
