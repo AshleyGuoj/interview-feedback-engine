@@ -135,7 +135,7 @@ export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'wr
 // KANBAN COLUMN (derived from stage categories)
 // ============================================
 
-export type KanbanColumnType = 'application_assessment' | 'interview' | 'hr_final' | 'offer_call' | 'offer_received' | 'closed';
+export type KanbanColumnType = 'application_assessment' | 'interview' | 'offer_call' | 'offer_received' | 'closed';
 
 // Priority order for deriving which column a job belongs to (higher index = higher priority)
 const CATEGORY_PRIORITY: Record<StageCategory, number> = {
