@@ -1,30 +1,26 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## 调整筛选逻辑：删除"全部"，"投递"作为默认全量筛选
 
-## 方案
+用户希望：
+- 删除"全部"filter，用"投递"替代（投递 = 显示该列所有卡片）
+- 简历筛选/测评/笔试：只显示有对应 pending/active stage 的 job
+- 即 filters 变为：`投递 | 简历筛选 | 测评 | 笔试`，其中"投递"等同于原来的"全部"
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+### 改动
 
-## 实现步骤
+**`src/types/job.ts`**：
+1. 从 `ApplicationAssessmentFilter` 类型中删除 `'all'`
+2. `APPLICATION_ASSESSMENT_FILTERS` 数组删除 `'all'`
+3. `APPLICATION_ASSESSMENT_FILTER_CONFIG` 删除 `all` 条目
+4. 默认 filter 改为 `'application'`
 
-### 1. 创建 Edge Function `generate-workflow-image`
+**`src/components/jobs/KanbanColumn.tsx`**：
+- 默认 `activeFilter` 改为 `'application'`
+- `filteredJobs` 逻辑：当 `activeFilter === 'application'` 时返回全部 jobs（等同原来的 all），其他 filter 按 `deriveApplicationSubCategory` 匹配
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+**`src/lib/i18n/locales/en.ts` & `zh.ts`**：
+- 删除 `filterAll` 翻译 key
 
-### 2. 创建前端页面或组件调用该函数
-
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
-
-## 技术细节
-
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+共改 4 个文件，逻辑简化。
 
