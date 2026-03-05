@@ -129,38 +129,6 @@ function jobToDb(job: Partial<Job>, userId: string) {
   return result;
 }
 
-/**
- * Derive job status from interview stages
- * Priority: closed (manual) > offer (from stages) > interviewing > applied
- */
-export function deriveJobStatusFromStages(stages: InterviewStage[], currentStatus: JobStatus): JobStatus {
-  // Closed is a terminal state, only changeable manually
-  if (currentStatus === 'closed') {
-    return 'closed';
-  }
-
-  // Always derive from stages for consistency (workflow is the source of truth)
-  const normalized = stages.map(s => ({
-    ...s,
-    _name: (s.name || '').toLowerCase().trim(),
-  }));
-
-  // Offer: any "offer" stage completed
-  const offerStageCompleted = normalized.some(
-    s => s.status === 'completed' && s._name.includes('offer')
-  );
-  if (offerStageCompleted) return 'offer';
-
-  // Interviewing: must have an 'interview' category stage with real activity
-  const interviewActiveStatuses = ['scheduled', 'rescheduled', 'completed', 'feedback_pending'];
-  const hasRealInterview = normalized.some(
-    s => (s as any).category === 'interview' && interviewActiveStatuses.includes(s.status)
-  );
-  if (hasRealInterview) return 'interviewing';
-
-  // Default
-  return 'applied';
-}
 
 interface JobsContextType {
   jobs: Job[];
