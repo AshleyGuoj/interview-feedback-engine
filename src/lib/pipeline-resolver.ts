@@ -195,7 +195,7 @@ export function resolvePipeline(job: Job): PipelineResolution {
     
     if (stage.result === 'on_hold') {
       onHoldStage = stage;
-      // Don't break - there might be more stages, but this is the blocker
+      break; // On hold is a blocker — stop processing further stages
     }
     
     if (stage.status === 'withdrawn') {

@@ -484,7 +484,7 @@ export function deriveInterviewSubCategory(job: Job): InterviewFilter {
       continue;
     }
     if (stage.status === 'skipped' || stage.status === 'withdrawn') {
-      if (category === 'interview') interviewIndex++;
+      // Don't increment interviewIndex — skipped rounds shouldn't count
       continue;
     }
     

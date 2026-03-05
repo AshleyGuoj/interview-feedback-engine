@@ -16,9 +16,9 @@ interface PipelineStatusProps {
  * Displays the resolved pipeline status for a job
  * Uses the Pipeline Resolver to determine the current state
  */
-export function PipelineStatus({ job, compact = false }: PipelineStatusProps) {
+export function PipelineStatus({ job, compact = false, resolution: externalResolution }: PipelineStatusProps) {
   const { t } = useTranslation();
-  const resolution = resolvePipeline(job);
+  const resolution = externalResolution ?? resolvePipeline(job);
   const { state } = resolution;
   const displayConfig = getStateDisplayConfig(state);
 

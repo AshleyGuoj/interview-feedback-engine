@@ -30,7 +30,7 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
 
   const filteredJobs = useMemo(() => {
     let result = jobs;
-    if (showAppFilters && activeAppFilter !== 'application') {
+    if (showAppFilters && activeAppFilter !== 'all_application') {
       result = jobs.filter(job => deriveApplicationSubCategory(job) === activeAppFilter);
     } else if (showIntFilters && activeIntFilter !== 'all_interview') {
       result = jobs.filter(job => deriveInterviewSubCategory(job) === activeIntFilter);
