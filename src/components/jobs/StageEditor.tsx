@@ -21,7 +21,7 @@ const STAGE_SUGGESTIONS = [
   { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round', category: 'interview' as StageCategory },
-  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round', category: 'hr_screen' as StageCategory },
   { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion', category: 'offer_call' as StageCategory },
