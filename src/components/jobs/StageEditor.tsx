@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // Recommended stage suggestions with i18n keys and default categories
 const STAGE_SUGGESTIONS = [
-  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen', category: 'hr_screen' as StageCategory },
   { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design', category: 'interview' as StageCategory },
