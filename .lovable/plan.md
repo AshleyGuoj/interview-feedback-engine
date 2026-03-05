@@ -1,30 +1,29 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## 为"投递/筛选"列添加子分类筛选
 
-## 方案
+在 `application_assessment` 列的列头添加筛选 pills，允许用户按 4 个子分类过滤卡片：投递、简历筛选、测评、笔试。
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+### 改动
 
-## 实现步骤
+**`src/components/jobs/KanbanColumn.tsx`**：
+- 当 `column === 'application_assessment'` 时，在列头下方渲染一组 filter pills（全部 / 投递 / 简历筛选 / 测评 / 笔试）
+- 维护 `activeFilter` state，默认 `'all'`
+- 根据 filter 对 jobs 做二次过滤：取每个 job 的最高优先级活跃 category，与 filter 匹配
+- 其他列不受影响
 
-### 1. 创建 Edge Function `generate-workflow-image`
+**`src/components/jobs/KanbanBoard.tsx`**：
+- 传递每个 job 的 derived category 给 KanbanColumn，供筛选使用（或在 KanbanColumn 内部自行计算）
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+**`src/types/job.ts`**：
+- 导出一个 `deriveJobStageCategory(job)` 辅助函数，返回 job 在 application_assessment 列中的具体 category（application / resume_screen / assessment / written_test），供 filter 使用
 
-### 2. 创建前端页面或组件调用该函数
+**`src/lib/i18n/locales/zh.ts` & `en.ts`**：
+- 添加 filter label 翻译 keys
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
-
-## 技术细节
-
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+### 交互设计
+- Filter pills 使用紧凑的 chip 样式，放在列标题下方
+- 默认选中"全部"，点击切换单选
+- 筛选后计数随之更新
+- 样式与 Analytics 页面的 filter pills 一致（`bg-muted/50` 背景 + active 时 `bg-background shadow-sm`）
 
