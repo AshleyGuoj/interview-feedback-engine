@@ -14,7 +14,7 @@ interface KanbanColumnProps {
 export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const { t } = useTranslation();
   const config = KANBAN_COLUMN_CONFIG[column];
-  const [activeFilter, setActiveFilter] = useState<ApplicationAssessmentFilter>('all');
+  const [activeFilter, setActiveFilter] = useState<ApplicationAssessmentFilter>('application');
 
   const showFilters = column === 'application_assessment';
 
