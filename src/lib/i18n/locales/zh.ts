@@ -164,6 +164,11 @@ export default {
     noJobs: '暂无职位，开始跟踪您的求职申请吧！',
     noJobsInColumn: '暂无职位',
     dropHere: '拖放到这里',
+    filterAll: '全部',
+    filterApplication: '投递',
+    filterResumeScreen: '简历筛选',
+    filterAssessment: '测评',
+    filterWrittenTest: '笔试',
     
     // Location options
     locationUS: '美国',
