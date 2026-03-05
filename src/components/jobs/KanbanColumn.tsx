@@ -29,16 +29,23 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const hasFilters = showAppFilters || showIntFilters;
 
   const filteredJobs = useMemo(() => {
-    if (showAppFilters) {
-      if (activeAppFilter === 'application') return jobs;
-      return jobs.filter(job => deriveApplicationSubCategory(job) === activeAppFilter);
+    let result = jobs;
+    if (showAppFilters && activeAppFilter !== 'application') {
+      result = jobs.filter(job => deriveApplicationSubCategory(job) === activeAppFilter);
+    } else if (showIntFilters && activeIntFilter !== 'all_interview') {
+      result = jobs.filter(job => deriveInterviewSubCategory(job) === activeIntFilter);
     }
-    if (showIntFilters) {
-      if (activeIntFilter === 'all_interview') return jobs;
-      return jobs.filter(job => deriveInterviewSubCategory(job) === activeIntFilter);
-    }
-    return jobs;
+    // Sort by createdAt descending (newest first)
+    return [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [jobs, activeAppFilter, activeIntFilter, showAppFilters, showIntFilters]);
+
+  const hasMore = filteredJobs.length > MAX_VISIBLE;
+  const visibleJobs = expanded ? filteredJobs : filteredJobs.slice(0, MAX_VISIBLE);
+  const hiddenCount = filteredJobs.length - MAX_VISIBLE;
+
+  // Reset expanded when filter changes
+  const handleAppFilter = (f: ApplicationAssessmentFilter) => { setActiveAppFilter(f); setExpanded(false); };
+  const handleIntFilter = (f: InterviewFilter) => { setActiveIntFilter(f); setExpanded(false); };
 
   return (
     <div className="flex flex-col min-w-[260px] max-w-[300px] flex-1">
