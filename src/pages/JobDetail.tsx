@@ -236,9 +236,14 @@ export default function JobDetail() {
       updates = { ...updates, completedAt: new Date().toISOString() };
     }
     
-    const updatedStages = activeStages.map(s => 
-      s.id === stageId ? { ...s, ...updates } : s
-    );
+    const updatedStages = activeStages.map(s => {
+      const merged = s.id === stageId ? { ...s, ...updates } : s;
+      // Backfill completedAt for legacy completed stages missing the field
+      if (merged.status === 'completed' && !merged.completedAt) {
+        return { ...merged, completedAt: new Date().toISOString() };
+      }
+      return merged;
+    });
     
     // Update the active pipeline's stages
     if (activePipeline && job.pipelines?.length > 0) {

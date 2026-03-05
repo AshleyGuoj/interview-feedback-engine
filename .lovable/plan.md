@@ -1,25 +1,30 @@
 
 
-## Problem: Missing `completedAt` on Previously Completed Stages
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-The TCL Assessment was marked "completed" **before** the `completedAt` auto-timestamping code was added. The PATCH request confirms the stage has `"status": "completed"` but no `completedAt` field. The Time Tracker requires `completedAt` to show completion events.
+## 方案
 
-### Root Cause
-The `completedAt` logic in `performStageUpdate` only fires on **new** status transitions (`oldStatus !== 'completed'` → `'completed'`). Stages that were already completed before this feature was deployed never got a `completedAt` value.
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-### Fix: Backfill `completedAt` for Legacy Completed Stages
+## 实现步骤
 
-**File: `src/pages/TimeTracker.tsx`** — Update `extractEvents` to handle completed stages without `completedAt`:
+### 1. 创建 Edge Function `generate-workflow-image`
 
-- If `stage.status === 'completed'` but `stage.completedAt` is missing, fall back to `job.updatedAt` (or `job.createdAt`) as the completion date
-- This ensures all historically completed stages appear in the Time Tracker immediately
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-**File: `src/pages/JobDetail.tsx`** — Add a one-time migration in `performStageUpdate`:
+### 2. 创建前端页面或组件调用该函数
 
-- When saving stages, scan all stages: if any has `status === 'completed'` but no `completedAt`, backfill with `job.updatedAt` or current time
-- This gradually patches legacy data as users interact with their jobs
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-### Changes Summary
-1. **TimeTracker.tsx**: In the completion event extraction block, if `stage.completedAt` is missing but status is `completed`, use `job.updatedAt` as fallback date
-2. **JobDetail.tsx**: In `performStageUpdate`, iterate all stages and backfill missing `completedAt` for any already-completed stage
+## 技术细节
+
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
