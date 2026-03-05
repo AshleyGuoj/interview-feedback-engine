@@ -129,9 +129,11 @@ export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: stri
 // STAGE CATEGORY
 // ============================================
 
-export type StageCategory = 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
+export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
 
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
+  application:    { label: 'Application',    labelZh: '投递',       icon: 'file-text',       color: 'blue' },
+  resume_screen:  { label: 'Resume Screen',  labelZh: '简历筛选',    icon: 'file-search',     color: 'cyan' },
   assessment:     { label: 'Assessment',     labelZh: '测评',       icon: 'clipboard-check', color: 'purple' },
   written_test:   { label: 'Written Test',   labelZh: '笔试',       icon: 'pen-line',        color: 'indigo' },
   interview:      { label: 'Interview',      labelZh: '面试',       icon: 'mic',             color: 'amber' },
@@ -143,6 +145,8 @@ export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; label
 // Auto-detect stage category from name
 export function detectStageCategory(name: string): StageCategory {
   const lower = name.toLowerCase().trim();
+  if (['applied', '投递', '已申请', '已投递'].some(kw => lower === kw || lower.includes(kw))) return 'application';
+  if (['简历筛选', 'resume screen', 'resume review', '简历审核'].some(kw => lower.includes(kw))) return 'resume_screen';
   if (['笔试', 'written test', 'written exam'].some(kw => lower.includes(kw))) return 'written_test';
   if (['oa', 'assessment', 'test', 'take-home', 'takehome', '测评', 'coding challenge', 'online assessment'].some(kw => lower.includes(kw))) return 'assessment';
   if (['offer received', '收到offer', 'offer letter'].some(kw => lower.includes(kw))) return 'offer_received';
@@ -312,7 +316,7 @@ export function getActiveStages(job: Job): InterviewStage[] {
 }
 
 export const DEFAULT_STAGES: Omit<InterviewStage, 'id'>[] = [
-  { name: 'Applied', status: 'completed', result: 'passed', category: 'hr_chat' },
+  { name: 'Applied', status: 'completed', result: 'passed', category: 'application' },
   { name: 'HR Screen', status: 'pending', category: 'hr_chat' },
   { name: 'Round 1', status: 'pending', category: 'interview' },
   { name: 'Round 2', status: 'pending', category: 'interview' },

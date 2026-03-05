@@ -12,13 +12,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, FileSearch, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
 import { CheckCircle2 } from 'lucide-react';
 
-type EventType = 'applied' | 'interview' | 'assessment' | 'written_test';
+type EventType = 'applied' | 'resume_screen' | 'interview' | 'assessment' | 'written_test';
 type ViewMode = 'day' | 'week' | 'month';
 
 interface TimelineEvent {
@@ -41,6 +41,8 @@ import { detectStageCategory } from '@/types/job';
 
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
+  if (cat === 'application') return 'applied';
+  if (cat === 'resume_screen') return 'resume_screen';
   if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
   return 'interview';
@@ -124,6 +126,7 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
 
 const EVENT_ICONS: Record<EventType, typeof FileText> = {
   applied: FileText,
+  resume_screen: FileSearch,
   interview: Mic,
   assessment: ClipboardCheck,
   written_test: PenLine,
@@ -131,12 +134,13 @@ const EVENT_ICONS: Record<EventType, typeof FileText> = {
 
 const EVENT_COLORS: Record<EventType, string> = {
   applied: 'text-blue-500',
+  resume_screen: 'text-cyan-500',
   interview: 'text-amber-500',
   assessment: 'text-purple-500',
   written_test: 'text-indigo-500',
 };
 
-const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'interview'];
+const CATEGORY_ORDER: EventType[] = ['applied', 'resume_screen', 'assessment', 'written_test', 'interview'];
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
@@ -257,7 +261,7 @@ export default function TimeTracker() {
 
   // Summary counts
   const summary = useMemo(() => {
-    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0, written_test: 0 };
+    const counts: Record<EventType, number> = { applied: 0, resume_screen: 0, interview: 0, assessment: 0, written_test: 0 };
     for (const e of filteredEvents) counts[e.type]++;
     return counts;
   }, [filteredEvents]);
@@ -326,6 +330,7 @@ export default function TimeTracker() {
         {filteredEvents.length > 0 && (
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-blue-500" />{summary.applied} {t('timeTracker.type_applied')}</span>}
+            {summary.resume_screen > 0 && <span className="flex items-center gap-1"><FileSearch className="w-3.5 h-3.5 text-cyan-500" />{summary.resume_screen} {t('timeTracker.type_resume_screen')}</span>}
             {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-purple-500" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
             {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
             {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}

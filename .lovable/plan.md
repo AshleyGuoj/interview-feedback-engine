@@ -1,44 +1,30 @@
 
 
-## 添加「投递」和「简历筛选」Category，完善 Time Tracker 分类
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### 当前情况
+## 方案
 
-**Category 体系** (`StageCategory`): `assessment | written_test | interview | hr_chat | offer_call | offer_received`
-- 没有 `application`（投递）category
-- 没有 `resume_screen`（简历筛选）category
-- "Applied" 阶段被临时设为 `hr_chat`，不太对
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-**Time Tracker EventType**: `applied | interview | assessment | written_test`
-- `applied` 事件不是基于 category，而是直接从 `job.createdAt` 硬编码生成的（每创建一个 job 就自动产生一个 applied 事件）
-- 所以"已投递"的判断逻辑 = 创建了 Job 就等于已投递
+## 实现步骤
 
-### 改动计划
+### 1. 创建 Edge Function `generate-workflow-image`
 
-**1. `src/types/job.ts`** — 扩展 StageCategory
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-```ts
-export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
-```
+### 2. 创建前端页面或组件调用该函数
 
-- 添加 `application`（投递）和 `resume_screen`（简历筛选）
-- 更新 `STAGE_CATEGORY_CONFIG` 加入对应显示配置
-- 更新 `detectStageCategory` 加入关键词匹配（`applied`, `投递` → `application`；`简历`, `resume screen` → `resume_screen`）
-- `DEFAULT_STAGES` 中 "Applied" 改为 `category: 'application'`
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-**2. `src/pages/TimeTracker.tsx`** — 扩展 EventType
+## 技术细节
 
-- `EventType` 增加 `resume_screen`
-- `getEventTypeFromStage`: `application` category 映射到 `applied` EventType；`resume_screen` 映射到新的 `resume_screen`
-- `EVENT_ICONS` / `EVENT_COLORS` 增加 `resume_screen` 配置
-- `CATEGORY_ORDER` 更新为 `['applied', 'resume_screen', 'assessment', 'written_test', 'interview']`
-
-**3. `src/lib/i18n/locales/en.ts` & `zh.ts`** — 添加翻译
-
-- `timeTracker.type_resume_screen`: "Resume Screen" / "简历筛选"
-- `timeTracker.section_resume_screen`: "Resume Screening" / "简历筛选"
-
-### 回答你的问题
-
-目前「已投递」的判断方式：**创建 Job 就自动生成一个 applied 事件**，用 `job.createdAt` 作为日期。它不依赖任何 stage 的 category，是硬编码在 `extractEvents` 里的。这个逻辑保持不变，因为投递确实等于创建 Job。
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
