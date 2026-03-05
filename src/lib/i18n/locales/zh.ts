@@ -168,6 +168,10 @@ export default {
     filterResumeScreen: '简历筛选',
     filterAssessment: '测评',
     filterWrittenTest: '笔试',
+    filterAllInterview: '全部',
+    filterRound1: '一面',
+    filterRound2: '二面+',
+    filterHRRound: 'HR面',
     
     // Location options
     locationUS: '美国',

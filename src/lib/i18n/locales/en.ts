@@ -168,6 +168,10 @@ export default {
     filterResumeScreen: 'Resume Screen',
     filterAssessment: 'Assessment',
     filterWrittenTest: 'Written Test',
+    filterAllInterview: 'All',
+    filterRound1: 'Round 1',
+    filterRound2: 'Round 2+',
+    filterHRRound: 'HR Round',
     
     // Location options
     locationUS: 'US',

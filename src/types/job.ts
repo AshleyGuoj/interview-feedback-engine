@@ -488,7 +488,7 @@ export function deriveInterviewSubCategory(job: Job): InterviewFilter {
     }
     
     // This is the frontier interview stage
-    if (category === 'hr_chat') return 'hr_round';
+    if (category === 'hr_final') return 'hr_round';
     if (interviewIndex === 0) return 'round_1';
     if (interviewIndex === 1) return 'round_2';
     return 'round_2'; // 3rd+ rounds grouped with round_2
