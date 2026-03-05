@@ -1,38 +1,30 @@
 
 
-## 两项改动：编辑面板加 Category 选择器 + 面试状态判断逻辑优化
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### 问题
+## 方案
 
-1. **编辑信息缺少 Category 字段**：在 EnhancedInterviewTimeline 的"编辑信息"面板中，只有阶段名称、状态、结果、时间，没有 category 选择器。用户无法手动修改 category。
-2. **"面试中"状态判断过于宽泛**：当前 `deriveJobStatusFromStages` 逻辑是"只要有任何非 Applied 阶段处于 active 状态就算 interviewing"，导致 HR Screen、Assessment 等阶段也触发"面试中"。
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-### 改动
+## 实现步骤
 
-**1. `src/components/jobs/EnhancedInterviewTimeline.tsx`**
+### 1. 创建 Edge Function `generate-workflow-image`
 
-- `startEditing` 中加载 `category` 到 `editData`
-- 编辑表单中，在阶段名称和状态之间（或名称下方）添加 Category 下拉选择器，复用 `STAGE_CATEGORY_CONFIG` 的所有选项
-- 当用户修改阶段名称时，自动用 `detectStageCategory` 更新 category 建议（但不覆盖已手动选择的值）
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-**2. `src/contexts/JobsContext.tsx` — `deriveJobStatusFromStages`**
+### 2. 创建前端页面或组件调用该函数
 
-修改 "interviewing" 的判断逻辑：
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-```
-当前逻辑：任何非 Applied 阶段有活动 → interviewing
-新逻辑：必须有 category='interview' 的阶段处于非 pending 状态（scheduled/completed/feedback_pending 等）→ interviewing
-```
+## 技术细节
 
-具体实现：
-```ts
-// Interviewing: must have an 'interview' category stage with real activity
-const interviewActiveStatuses = ['scheduled', 'rescheduled', 'completed', 'feedback_pending'];
-const hasRealInterview = normalized.some(
-  s => (s.category === 'interview') && interviewActiveStatuses.includes(s.status)
-);
-if (hasRealInterview) return 'interviewing';
-```
-
-这样，HR Screen (hr_chat)、Assessment (assessment) 等阶段的活动不会触发 "interviewing" 状态，只有真正的面试轮次进入 scheduled 或更后面的状态才会。
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 

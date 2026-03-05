@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection, StageStatus, StageResult, STAGE_STATUS_CONFIG, STAGE_RESULT_CONFIG } from '@/types/job';
+import { InterviewStage, InterviewFormat, InterviewQuestion, InterviewReflection, StageStatus, StageResult, StageCategory, STAGE_STATUS_CONFIG, STAGE_RESULT_CONFIG, STAGE_CATEGORY_CONFIG, detectStageCategory } from '@/types/job';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +75,7 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
     setEditingStage(stage.id);
     setEditData({
       name: stage.name,
+      category: stage.category || detectStageCategory(stage.name),
       status: stage.status,
       result: stage.result,
       scheduledTime: stage.scheduledTime,
@@ -286,8 +287,37 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                               <Label>{t('jobs.stageName')}</Label>
                               <Input
                                 value={editData.name || ''}
-                                onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                                onChange={(e) => {
+                                  const newName = e.target.value;
+                                  setEditData(prev => ({
+                                    ...prev,
+                                    name: newName,
+                                    // Auto-suggest category when name changes (only if user hasn't manually picked one different from auto)
+                                    category: detectStageCategory(newName),
+                                  }));
+                                }}
                               />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('jobs.stageCategory', 'Category')}</Label>
+                              <Select
+                                value={editData.category || 'interview'}
+                                onValueChange={(value) => setEditData(prev => ({ 
+                                  ...prev, 
+                                  category: value as StageCategory 
+                                }))}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(STAGE_CATEGORY_CONFIG).map(([key, config]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {config.labelZh} / {config.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                             <div className="space-y-2">
                               <Label>{t('jobs.stageStatus')}</Label>
