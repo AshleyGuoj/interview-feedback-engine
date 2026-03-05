@@ -1,85 +1,46 @@
 import { useTranslation } from 'react-i18next';
-import { Job, JobStatus } from '@/types/job';
-import { DraggableJobCard } from './DraggableJobCard';
-import { InsightStrip } from './InsightStrip';
+import { Job, KanbanColumnType, KANBAN_COLUMN_CONFIG } from '@/types/job';
+import { JobCard } from './JobCard';
 import { cn } from '@/lib/utils';
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Inbox } from 'lucide-react';
+
 interface KanbanColumnProps {
-  status: JobStatus;
+  column: KanbanColumnType;
   jobs: Job[];
   onJobClick: (job: Job) => void;
 }
 
-const columnConfig: Record<JobStatus, { labelKey: string; color: string }> = {
-  applied: { 
-    labelKey: 'jobs.applied', 
-    color: 'bg-primary/40' 
-  },
-  interviewing: { 
-    labelKey: 'jobs.interviewing', 
-    color: 'bg-primary/70' 
-  },
-  offer: { 
-    labelKey: 'jobs.offer', 
-    color: 'bg-primary' 
-  },
-  closed: { 
-    labelKey: 'jobs.closed', 
-    color: 'bg-muted-foreground/40' 
-  },
-};
-
-export function KanbanColumn({ status, jobs, onJobClick }: KanbanColumnProps) {
+export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const { t } = useTranslation();
-  const config = columnConfig[status];
-  
-  const { setNodeRef, isOver } = useDroppable({
-    id: status,
-  });
+  const config = KANBAN_COLUMN_CONFIG[column];
 
   return (
-    <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1">
+    <div className="flex flex-col min-w-[260px] max-w-[300px] flex-1">
       {/* Column Header */}
       <div className="mb-3 px-1">
         <div className="flex items-center gap-2 mb-1">
           <div className={cn('w-2 h-2 rounded-full', config.color)} />
-          <h3 className="font-medium text-foreground">{t(config.labelKey)}</h3>
-          <span className="text-sm text-muted-foreground ml-auto">
+          <h3 className="font-medium text-foreground text-sm">{t(config.labelKey)}</h3>
+          <span className="text-xs text-muted-foreground ml-auto">
             {jobs.length}
           </span>
         </div>
-        
-        {/* Insight Strip - sub-status breakdown */}
-        <InsightStrip status={status} jobs={jobs} />
       </div>
 
       {/* Cards Container */}
-      <div 
-        ref={setNodeRef}
-        className={cn(
-          "flex-1 space-y-3 overflow-y-auto pb-4 p-2 -m-2 rounded-lg transition-colors",
-          isOver && "bg-primary/5 ring-2 ring-primary/20"
-        )}
-      >
-        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
-          {jobs.map((job) => (
-            <DraggableJobCard 
-              key={job.id} 
-              job={job} 
-              onClick={() => onJobClick(job)} 
-            />
-          ))}
-        </SortableContext>
+      <div className="flex-1 space-y-2.5 overflow-y-auto pb-4 p-1.5 -m-1.5 rounded-lg">
+        {jobs.map((job) => (
+          <JobCard 
+            key={job.id} 
+            job={job} 
+            onClick={() => onJobClick(job)} 
+          />
+        ))}
         
         {jobs.length === 0 && (
-          <div className={cn(
-            "flex flex-col items-center justify-center gap-2 py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg transition-colors",
-            isOver && "border-primary/50 bg-primary/10"
-          )}>
-            <Inbox className="w-6 h-6 text-muted-foreground/30" />
-            <span>{isOver ? t('jobs.dropHere') : t('jobs.noJobsInColumn')}</span>
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg">
+            <Inbox className="w-5 h-5 text-muted-foreground/30" />
+            <span className="text-xs">{t('jobs.noJobsInColumn')}</span>
           </div>
         )}
       </div>
