@@ -102,13 +102,32 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
 
       {/* Cards Container */}
       <div className="flex-1 space-y-2.5 overflow-y-auto pb-4 p-1.5 -m-1.5 rounded-lg">
-        {filteredJobs.map((job) => (
+        {visibleJobs.map((job) => (
           <JobCard 
             key={job.id} 
             job={job} 
             onClick={() => onJobClick(job)} 
           />
         ))}
+
+        {hasMore && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50"
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="w-3.5 h-3.5" />
+                {t('jobs.showLess')}
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-3.5 h-3.5" />
+                {t('jobs.showMore', { count: hiddenCount })}
+              </>
+            )}
+          </button>
+        )}
         
         {filteredJobs.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-sm text-muted-foreground border-2 border-dashed border-muted rounded-lg">
