@@ -16,6 +16,7 @@ import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, Exte
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
+import { CheckCircle2 } from 'lucide-react';
 
 type EventType = 'applied' | 'interview' | 'assessment' | 'written_test';
 type ViewMode = 'day' | 'week' | 'month';
