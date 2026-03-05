@@ -153,8 +153,7 @@ export default {
     offer: '已获Offer',
     closed: '已关闭',
     // Kanban columns
-    colApplicationAssessment: '投递/测评',
-    colScreening: '筛选',
+    colApplicationAssessment: '投递/筛选',
     colInterview: '面试',
     colHrFinal: 'HR谈薪',
     colOfferCall: 'Offer沟通',

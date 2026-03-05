@@ -153,8 +153,7 @@ export default {
     offer: 'Offer',
     closed: 'Closed',
     // Kanban columns
-    colApplicationAssessment: 'Applied / Assessment',
-    colScreening: 'Screening',
+    colApplicationAssessment: 'Applied / Screening',
     colInterview: 'Interview',
     colHrFinal: 'HR / Salary',
     colOfferCall: 'Offer Call',
