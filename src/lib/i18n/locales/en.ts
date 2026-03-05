@@ -155,7 +155,6 @@ export default {
     // Kanban columns
     colApplicationAssessment: 'Applied / Screening',
     colInterview: 'Interview',
-    colHrFinal: 'HR / Salary',
     colOfferCall: 'Offer Call',
     colOfferReceived: 'Offer Received',
     colClosed: 'Closed',
