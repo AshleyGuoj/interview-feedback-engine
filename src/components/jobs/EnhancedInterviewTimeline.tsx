@@ -342,30 +342,28 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                                 </SelectContent>
                               </Select>
                             </div>
-                            {/* Result - only shown when completed */}
-                            {(editData.status === 'completed' || editData.status === 'feedback_pending') && (
-                              <div className="space-y-2">
-                                <Label>{t('jobs.result')}</Label>
-                                <Select
-                                  value={editData.result || '_none'}
-                                  onValueChange={(value) => setEditData(prev => ({ 
-                                    ...prev, 
-                                    result: value === '_none' ? undefined : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
-                                  }))}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder={t('jobs.resultPending')} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="_none">🔄 {t('jobs.resultPending')}</SelectItem>
-                                    <SelectItem value="passed">🎉 {t('jobs.resultPassed')}</SelectItem>
-                                    <SelectItem value="rejected">❌ {t('jobs.resultRejected')}</SelectItem>
-                                    <SelectItem value="on_hold">🧊 {t('jobs.resultOnHold')}</SelectItem>
-                                    <SelectItem value="mixed_feedback">⚖️ {t('jobs.resultMixed')}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
+                            {/* Result - always visible */}
+                            <div className="space-y-2">
+                              <Label>{t('jobs.result')}</Label>
+                              <Select
+                                value={editData.result || '_none'}
+                                onValueChange={(value) => setEditData(prev => ({ 
+                                  ...prev, 
+                                  result: value === '_none' ? undefined : value as 'passed' | 'rejected' | 'on_hold' | 'mixed_feedback'
+                                }))}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('jobs.resultPending')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="_none">🔄 {t('jobs.resultPending')}</SelectItem>
+                                  <SelectItem value="passed">🎉 {t('jobs.resultPassed')}</SelectItem>
+                                  <SelectItem value="rejected">❌ {t('jobs.resultRejected')}</SelectItem>
+                                  <SelectItem value="on_hold">🧊 {t('jobs.resultOnHold')}</SelectItem>
+                                  <SelectItem value="mixed_feedback">⚖️ {t('jobs.resultMixed')}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
