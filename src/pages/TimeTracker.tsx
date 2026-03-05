@@ -96,13 +96,14 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
         });
       }
 
-      // Completion event (new)
-      if (stage.status === 'completed' && stage.completedAt) {
+      // Completion event (new) — fallback to job.updatedAt for legacy data
+      if (stage.status === 'completed') {
+        const completionDate = stage.completedAt || j.updatedAt || j.createdAt;
         const type: EventType = getEventTypeFromStage(stage);
         events.push({
           id: `completed-${j.id}-${stage.id}`,
           type,
-          date: parseISO(stage.completedAt),
+          date: parseISO(completionDate),
           jobId: j.id,
           companyName: j.companyName,
           roleTitle: j.roleTitle,
