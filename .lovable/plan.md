@@ -1,30 +1,32 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## 卡片折叠：默认显示最新 5 张，可展开查看全部
 
-## 方案
+### 改动
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+**`src/components/jobs/KanbanColumn.tsx`**：
 
-## 实现步骤
+1. 添加 `expanded` state（默认 `false`）
+2. 将 `filteredJobs` 按 `createdAt` 降序排序（最新在前）
+3. 默认只显示前 5 张卡片；当 `expanded` 为 `true` 时显示全部
+4. 如果卡片超过 5 张，在底部显示一个"展开更多 (N)"按钮；展开后显示"收起"按钮
+5. 切换 filter 时重置 `expanded` 为 `false`
 
-### 1. 创建 Edge Function `generate-workflow-image`
+### UI 效果
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+```text
+┌─ 投递/筛选 ──────────┐
+│ [投递] [简历筛选] ... │
+│ Card 1 (newest)      │
+│ Card 2               │
+│ Card 3               │
+│ Card 4               │
+│ Card 5               │
+│ ▼ 展开更多 (12)      │
+└──────────────────────┘
+```
 
-### 2. 创建前端页面或组件调用该函数
+点击后展开所有卡片，按钮变为"▲ 收起"。
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
-
-## 技术细节
-
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+只改 `KanbanColumn.tsx` 一个文件，加 2 个翻译 key（`jobs.showMore` / `jobs.showLess`）到 `en.ts` 和 `zh.ts`。
 
