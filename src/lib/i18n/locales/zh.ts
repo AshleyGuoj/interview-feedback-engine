@@ -152,6 +152,13 @@ export default {
     interviewing: '面试中',
     offer: '已获Offer',
     closed: '已关闭',
+    // Kanban columns
+    colApplicationScreening: '投递/筛选',
+    colAssessmentTest: '测评/笔试',
+    colInterview: '面试',
+    colHrChat: 'HR沟通',
+    colOffer: 'Offer',
+    colClosed: '已关闭',
     nextAction: '下一步行动',
     stages: '阶段',
     noJobs: '暂无职位，开始跟踪您的求职申请吧！',

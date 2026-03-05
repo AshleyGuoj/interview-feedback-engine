@@ -152,6 +152,13 @@ export default {
     interviewing: 'Interviewing',
     offer: 'Offer',
     closed: 'Closed',
+    // Kanban columns
+    colApplicationScreening: 'Applied / Screening',
+    colAssessmentTest: 'Assessment / Test',
+    colInterview: 'Interview',
+    colHrChat: 'HR Chat',
+    colOffer: 'Offer',
+    colClosed: 'Closed',
     nextAction: 'Next Action',
     stages: 'Stages',
     noJobs: 'No jobs yet. Start tracking your applications!',

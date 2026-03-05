@@ -131,6 +131,101 @@ export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: stri
 
 export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
 
+// ============================================
+// KANBAN COLUMN (derived from stage categories)
+// ============================================
+
+export type KanbanColumnType = 'application_screening' | 'assessment_test' | 'interview' | 'hr_chat' | 'offer' | 'closed';
+
+// Priority order for deriving which column a job belongs to (higher index = higher priority)
+const CATEGORY_PRIORITY: Record<StageCategory, number> = {
+  application: 0,
+  resume_screen: 1,
+  assessment: 2,
+  written_test: 3,
+  interview: 4,
+  hr_chat: 5,
+  offer_call: 6,
+  offer_received: 7,
+};
+
+// Map stage category to kanban column
+function categoryToColumn(category: StageCategory): KanbanColumnType {
+  switch (category) {
+    case 'application':
+    case 'resume_screen':
+      return 'application_screening';
+    case 'assessment':
+    case 'written_test':
+      return 'assessment_test';
+    case 'interview':
+      return 'interview';
+    case 'hr_chat':
+      return 'hr_chat';
+    case 'offer_call':
+    case 'offer_received':
+      return 'offer';
+  }
+}
+
+// Active statuses that indicate real progress
+const ACTIVE_STATUSES: StageStatus[] = ['scheduled', 'rescheduled', 'completed', 'feedback_pending'];
+
+/**
+ * Derive which Kanban column a job belongs to based on its highest-priority active stage category.
+ */
+export function deriveKanbanColumn(job: Job): KanbanColumnType {
+  // If job is explicitly closed, always show in closed column
+  if (job.status === 'closed') return 'closed';
+  
+  // Check if all pipelines are terminal
+  if (job.pipelines && job.pipelines.length > 0) {
+    const allTerminal = job.pipelines.every(p => 
+      p.status === 'closed' || p.status === 'completed' || isPipelineTerminal(p)
+    );
+    if (allTerminal) return 'closed';
+  }
+  
+  // Get all stages from active pipeline or legacy stages
+  const stages = getActiveStages(job);
+  
+  // Find the highest-priority active stage
+  let highestPriority = -1;
+  let highestCategory: StageCategory | null = null;
+  
+  for (const stage of stages) {
+    const category = stage.category || detectStageCategory(stage.name);
+    const priority = CATEGORY_PRIORITY[category];
+    
+    // Check if this stage is "active" (has meaningful progress)
+    const isActive = ACTIVE_STATUSES.includes(stage.status) || 
+                     (stage.status === 'completed' && stage.result !== 'rejected');
+    
+    if (isActive && priority > highestPriority) {
+      highestPriority = priority;
+      highestCategory = category;
+    }
+  }
+  
+  if (highestCategory) {
+    return categoryToColumn(highestCategory);
+  }
+  
+  // Default: application/screening
+  return 'application_screening';
+}
+
+export const KANBAN_COLUMN_CONFIG: Record<KanbanColumnType, { labelKey: string; labelZhKey: string; color: string; icon: string }> = {
+  application_screening: { labelKey: 'jobs.colApplicationScreening', labelZhKey: '投递/筛选', color: 'bg-blue-500/60', icon: 'file-text' },
+  assessment_test:       { labelKey: 'jobs.colAssessmentTest',       labelZhKey: '测评/笔试', color: 'bg-purple-500/60', icon: 'clipboard-check' },
+  interview:             { labelKey: 'jobs.colInterview',            labelZhKey: '面试',      color: 'bg-amber-500/70', icon: 'mic' },
+  hr_chat:               { labelKey: 'jobs.colHrChat',              labelZhKey: 'HR沟通',    color: 'bg-cyan-500/60', icon: 'message-circle' },
+  offer:                 { labelKey: 'jobs.colOffer',               labelZhKey: 'Offer',     color: 'bg-green-500/70', icon: 'gift' },
+  closed:                { labelKey: 'jobs.colClosed',              labelZhKey: '已关闭',     color: 'bg-muted-foreground/40', icon: 'archive' },
+};
+
+export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_screening', 'assessment_test', 'interview', 'hr_chat', 'offer', 'closed'];
+
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
   application:    { label: 'Application',    labelZh: '投递',       icon: 'file-text',       color: 'blue' },
   resume_screen:  { label: 'Resume Screen',  labelZh: '简历筛选',    icon: 'file-search',     color: 'cyan' },
