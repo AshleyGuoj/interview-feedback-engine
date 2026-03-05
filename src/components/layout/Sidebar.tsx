@@ -33,10 +33,10 @@ export function Sidebar() {
   const navItems = [
     { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
     { to: '/jobs', icon: Briefcase, labelKey: 'nav.jobs' },
-    { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
     { to: '/time-tracker', icon: Clock, labelKey: 'nav.timeTracker' },
     { to: '/analytics', icon: BarChart3, labelKey: 'nav.analytics' },
     { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
+    { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
   ];
 
   useEffect(() => {
