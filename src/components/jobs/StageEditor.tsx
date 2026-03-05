@@ -14,14 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // Recommended stage suggestions with i18n keys and default categories
 const STAGE_SUGGESTIONS = [
-  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stagePhoneScreen', fallback: 'Phone Screen', category: 'hr_screen' as StageCategory },
   { nameKey: 'jobs.stageTechnicalRound', fallback: 'Technical Round', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageBehavioralRound', fallback: 'Behavioral Round', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageSystemDesign', fallback: 'System Design', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageCodingInterview', fallback: 'Coding Interview', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageCaseStudy', fallback: 'Case Study', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageManagerRound', fallback: 'Manager Round', category: 'interview' as StageCategory },
-  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round', category: 'hr_chat' as StageCategory },
+  { nameKey: 'jobs.stageHrRound', fallback: 'HR Round', category: 'hr_screen' as StageCategory },
   { nameKey: 'jobs.stageTeamFit', fallback: 'Team Fit', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageFinalRound', fallback: 'Final Round', category: 'interview' as StageCategory },
   { nameKey: 'jobs.stageOfferDiscussion', fallback: 'Offer Discussion', category: 'offer_call' as StageCategory },
@@ -45,7 +45,8 @@ const CATEGORY_COLORS: Record<StageCategory, string> = {
   assessment: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   written_test: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
   interview: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  hr_chat: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  hr_screen: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+  hr_final: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   offer_call: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   offer_received: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
 };
