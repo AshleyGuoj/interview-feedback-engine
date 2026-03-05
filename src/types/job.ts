@@ -162,6 +162,9 @@ export interface InterviewStage {
   status: StageStatus;       // Behavioral: what's happening
   result?: StageResult;      // Decision: what was the outcome (only after completed)
   
+  // Completion tracking
+  completedAt?: string;        // ISO timestamp when marked completed
+  
   // Scheduling
   scheduledTime?: string;
   scheduledTimezone?: string;

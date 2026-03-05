@@ -1,48 +1,30 @@
 
 
-## Capture Completion Events in Time Tracker
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### Problem
-The Time Tracker only shows events with a `scheduledTime`, `date`, or `deadline`. When you mark a stage as "completed" in Job Detail, there's no completion timestamp stored on the stage, so it never appears in the Time Tracker.
+## 方案
 
-### Solution: Add `completedAt` to InterviewStage
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-When a stage status changes to `completed`, record `completedAt: new Date().toISOString()` on the stage. Then the Time Tracker extracts **two types of events per stage**:
+## 实现步骤
 
-1. **Scheduled event** (existing) — shown on the day it was scheduled
-2. **Completed event** (new) — shown on the day it was marked complete, with a "✓ Completed" visual treatment
+### 1. 创建 Edge Function `generate-workflow-image`
 
-```text
-── 测评 Assessment ──────────────────────
-  ✓ Stripe — Take-home Challenge (已完成)     ← completedAt = today
-  🎤 ByteDance — Round 2                      ← scheduledTime = today
-```
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-### Files to Change
+### 2. 创建前端页面或组件调用该函数
 
-**1. `src/types/job.ts`**
-- Add `completedAt?: string` to `InterviewStage` interface
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-**2. `src/pages/JobDetail.tsx`**
-- In the stage update handler (~line 230), when `updates.status === 'completed'`, auto-set `completedAt: new Date().toISOString()` on the stage
+## 技术细节
 
-**3. `src/pages/TimeTracker.tsx`**
-- Update `extractEvents` to also emit a completion event for stages where `stage.status === 'completed'` and `stage.completedAt` exists
-- These events use the stage's category but get a distinct visual: a check-mark icon overlay and "(已完成)" / "(Completed)" suffix in the label
-- Completion events are grouped under their original category (e.g., assessment completion shows under "测评")
-
-**4. `src/lib/i18n/locales/en.ts` & `zh.ts`**
-- Add `timeTracker.completed_suffix`: "Completed" / "已完成"
-
-### Event Extraction Logic (updated)
-
-For each stage:
-- If `scheduledTime || date || deadline` exists → emit scheduled event (as before)
-- If `status === 'completed' && completedAt` exists → emit completion event dated at `completedAt`
-- Both can coexist (scheduled on Monday, completed on Wednesday → appears on both days)
-
-### Visual Treatment for Completion Events
-- Same category icon but with a subtle check overlay or green tint
-- Label: `Company — Stage Name (已完成)`
-- Badge: category type + "✓"
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 

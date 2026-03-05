@@ -230,6 +230,12 @@ export default function JobDetail() {
   // Separated update logic for reuse
   const performStageUpdate = async (stageId: string, updates: Partial<InterviewStage>) => {
     const oldStage = activeStages.find(s => s.id === stageId);
+    
+    // Auto-set completedAt when status transitions to 'completed'
+    if (updates.status === 'completed' && oldStage?.status !== 'completed') {
+      updates = { ...updates, completedAt: new Date().toISOString() };
+    }
+    
     const updatedStages = activeStages.map(s => 
       s.id === stageId ? { ...s, ...updates } : s
     );

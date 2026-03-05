@@ -16,6 +16,7 @@ import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, Exte
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
+import { CheckCircle2 } from 'lucide-react';
 
 type EventType = 'applied' | 'interview' | 'assessment' | 'written_test';
 type ViewMode = 'day' | 'week' | 'month';
@@ -31,6 +32,7 @@ interface TimelineEvent {
   label: string;
   sublabel?: string;
   stageName?: string;
+  isCompleted?: boolean; // completion event flag
 }
 
 import { detectStageCategory } from '@/types/job';
@@ -72,25 +74,44 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
     }
 
     for (const { stage, job: j } of allStages) {
+      // Scheduled event (existing)
       const timeStr = stage.scheduledTime || stage.date || stage.deadline;
-      if (!timeStr) continue;
-      let sublabel: string | undefined;
-      if (stage.scheduledTime && stage.scheduledTimezone) {
-        try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
+      if (timeStr) {
+        let sublabel: string | undefined;
+        if (stage.scheduledTime && stage.scheduledTimezone) {
+          try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
+        }
+        const type: EventType = getEventTypeFromStage(stage);
+        events.push({
+          id: `stage-${j.id}-${stage.id}`,
+          type,
+          date: parseISO(timeStr),
+          jobId: j.id,
+          companyName: j.companyName,
+          roleTitle: j.roleTitle,
+          jobLink: j.jobLink,
+          label: `${j.companyName} — ${stage.name}`,
+          sublabel,
+          stageName: stage.name,
+        });
       }
-      const type: EventType = getEventTypeFromStage(stage);
-      events.push({
-        id: `stage-${j.id}-${stage.id}`,
-        type,
-        date: parseISO(timeStr),
-        jobId: j.id,
-        companyName: j.companyName,
-        roleTitle: j.roleTitle,
-        jobLink: j.jobLink,
-        label: `${j.companyName} — ${stage.name}`,
-        sublabel,
-        stageName: stage.name,
-      });
+
+      // Completion event (new)
+      if (stage.status === 'completed' && stage.completedAt) {
+        const type: EventType = getEventTypeFromStage(stage);
+        events.push({
+          id: `completed-${j.id}-${stage.id}`,
+          type,
+          date: parseISO(stage.completedAt),
+          jobId: j.id,
+          companyName: j.companyName,
+          roleTitle: j.roleTitle,
+          jobLink: j.jobLink,
+          label: `${j.companyName} — ${stage.name}`,
+          stageName: stage.name,
+          isCompleted: true,
+        });
+      }
     }
   }
   return events;
@@ -114,16 +135,17 @@ const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'i
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
-  const Icon = EVENT_ICONS[event.type];
+  const Icon = event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
+  const completedSuffix = event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
   return (
     <div
       className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
       onClick={() => navigate(`/jobs/${event.jobId}`)}
     >
-      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', EVENT_COLORS[event.type])} />
+      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type])} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">{event.label}</span>
+          <span className="text-sm font-medium text-foreground truncate">{event.label}{completedSuffix}</span>
           {event.jobLink && (
             <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
@@ -133,7 +155,7 @@ function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: 
         {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.sublabel}</p>}
       </div>
       <Badge variant="secondary" className="text-[10px] shrink-0">
-        {t(`timeTracker.type_${event.type}`)}
+        {event.isCompleted ? `✓ ${t(`timeTracker.type_${event.type}`)}` : t(`timeTracker.type_${event.type}`)}
       </Badge>
     </div>
   );
