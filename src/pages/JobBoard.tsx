@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { KanbanBoard } from '@/components/jobs/KanbanBoard';
 import { AddJobDialog } from '@/components/jobs/AddJobDialog';
-import { Job, JobStatus } from '@/types/job';
+import { Job } from '@/types/job';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useJobs } from '@/contexts/JobsContext';
@@ -13,7 +13,7 @@ import { useActivities } from '@/hooks/useActivities';
 export default function JobBoard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { jobs, addJob, updateJob, refetch, getJob } = useJobs();
+  const { jobs, addJob } = useJobs();
   const { addActivity } = useActivities();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -25,7 +25,6 @@ export default function JobBoard() {
   const handleAddJob = async (newJob: Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => {
     const job = await addJob(newJob);
     if (job) {
-      // Log activity for new application
       await addActivity({
         jobId: job.id,
         type: 'status_changed',
@@ -37,30 +36,6 @@ export default function JobBoard() {
 
   const handleJobClick = (job: Job) => {
     navigate(`/jobs/${job.id}`);
-  };
-
-  const handleJobStatusChange = async (jobId: string, newStatus: JobStatus) => {
-    const job = getJob(jobId);
-    const oldStatus = job?.status;
-    
-    await updateJob(jobId, { status: newStatus });
-    
-    if (job && oldStatus !== newStatus) {
-      // Log activity for status change
-      const statusMessages: Record<JobStatus, string> = {
-        applied: 'Application submitted',
-        interviewing: 'Moved to interviewing',
-        offer: 'Received offer',
-        closed: 'Position closed',
-      };
-      
-      await addActivity({
-        jobId,
-        type: newStatus === 'offer' ? 'offer_received' : 'status_changed',
-        message: `${job.companyName} — ${statusMessages[newStatus]}`,
-        metadata: { oldStatus, newStatus }
-      });
-    }
   };
 
   return (
@@ -89,11 +64,10 @@ export default function JobBoard() {
           />
         </div>
 
-        {/* Kanban Board */}
+        {/* Kanban Board - data-driven by stage categories */}
         <KanbanBoard 
           jobs={filteredJobs} 
           onJobClick={handleJobClick} 
-          onJobStatusChange={handleJobStatusChange}
         />
       </div>
     </DashboardLayout>
