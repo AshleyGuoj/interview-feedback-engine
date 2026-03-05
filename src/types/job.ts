@@ -161,9 +161,8 @@ function categoryToColumn(category: StageCategory): KanbanColumnType {
     case 'hr_screen':
       return 'application_assessment';
     case 'interview':
-      return 'interview';
     case 'hr_final':
-      return 'hr_final';
+      return 'interview';
     case 'offer_call':
       return 'offer_call';
     case 'offer_received':
