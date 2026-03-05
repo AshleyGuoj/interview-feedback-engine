@@ -1,32 +1,30 @@
 
 
-## Bug: "Applied" Stage Completion Events Miscategorized as "面试"
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-### Root Cause
+## 方案
 
-Two issues combine to create this bug:
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-1. **`DEFAULT_STAGES`** sets the "Applied" stage with `category: 'interview'` — this is incorrect
-2. **Completion event extraction** generates a completion event for every `completed` stage, including "Applied". Since the Applied stage has `category: 'interview'`, `getEventTypeFromStage` returns `'interview'`, so these events land under the "面试" section
+## 实现步骤
 
-The screenshot shows 6 items under "面试" that are all `Applied (已完成)` — these are completion events from the Applied stage being misclassified.
+### 1. 创建 Edge Function `generate-workflow-image`
 
-### Fix
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-**1. `src/types/job.ts`** — Change the default "Applied" stage category from `'interview'` to something more appropriate. Actually, "Applied" isn't an interview/assessment/etc — it represents the application itself. Best approach: skip completion events for it entirely.
+### 2. 创建前端页面或组件调用该函数
 
-**2. `src/pages/TimeTracker.tsx`** — In the completion event block, skip stages whose name matches "Applied" (case-insensitive, including Chinese variants). The application event is already captured by the dedicated `applied` event at line 53-62 — generating a second completion event for it is redundant and creates the duplicates seen in the screenshot.
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-```ts
-// Skip completion events for "Applied" stages — already covered by the applied event
-if (stage.status === 'completed') {
-  const lowerName = stage.name.toLowerCase();
-  if (lowerName === 'applied' || lowerName === '投递') {
-    continue; // skip — redundant with the applied event
-  }
-  // ... rest of completion event logic
-}
-```
+## 技术细节
 
-This is a minimal, targeted fix: only 2 lines added to filter out the redundant events.
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
