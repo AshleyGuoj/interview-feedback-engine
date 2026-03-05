@@ -1,30 +1,31 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## 问题根因
 
-## 方案
+从数据库看到两个数据问题导致岗位被错误归入"面试"列：
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+1. **"Applied" 阶段的 category 是 `interview`**：携程、韶音科技等岗位的 "Applied" 阶段存储了 `category: interview`，而不是 `category: application`。因为 Applied 是 `completed + passed`，被算作一个活跃的 interview 阶段，优先级最高，所以归入了面试列。
 
-## 实现步骤
+2. **旧的 `hr_chat` 还在数据库中**：上次拆分 `hr_chat` → `hr_screen`/`hr_final` 后，数据库里的 stages 没有同步更新。
 
-### 1. 创建 Edge Function `generate-workflow-image`
+### 修复方案
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+**第一步：代码防御** — 在 `deriveKanbanColumn` 的逻辑中加入回退映射：
+- 遇到 `category: hr_chat` 时，根据名字自动归为 `hr_screen` 或 `hr_final`
+- 依赖 `stage.category` 之前，先用 `detectStageCategory(stage.name)` 做二次校验——如果 stage.name 明显是 "Applied" 但 category 标记为 `interview`，以名字检测结果为准
 
-### 2. 创建前端页面或组件调用该函数
+**第二步：数据修复** — 写一个数据库迁移/edge function，遍历所有 jobs 的 stages：
+- 将 `category: hr_chat` 根据阶段名称和位置重新映射为 `hr_screen` 或 `hr_final`
+- 将名为 "Applied"/"已投递" 但 `category: interview` 的阶段修正为 `category: application`
+- 对所有阶段用 `detectStageCategory(name)` 重新计算 category，覆盖错误值
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
+**第三步：防止未来出现同样问题** — 在创建/更新阶段时，确保 `detectStageCategory` 始终被调用来设置默认 category，用户手动选择的 category 才会覆盖默认值。
 
-## 技术细节
+### 文件改动
 
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+| 文件 | 改动 |
+|---|---|
+| `src/types/job.ts` | `deriveKanbanColumn` 中增加 category 校验逻辑，将 `hr_chat` 回退映射 |
+| Edge Function (临时) | 遍历所有 jobs，修正 stages 中错误的 category 值 |
+| `src/contexts/JobsContext.tsx` | 保存 stage 时确保 category 经过 `detectStageCategory` 校验 |
 
