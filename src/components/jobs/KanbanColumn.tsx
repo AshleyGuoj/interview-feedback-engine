@@ -20,7 +20,7 @@ const MAX_VISIBLE = 5;
 export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const { t } = useTranslation();
   const config = KANBAN_COLUMN_CONFIG[column];
-  const [activeAppFilter, setActiveAppFilter] = useState<ApplicationAssessmentFilter>('application');
+  const [activeAppFilter, setActiveAppFilter] = useState<ApplicationAssessmentFilter>('all_application');
   const [activeIntFilter, setActiveIntFilter] = useState<InterviewFilter>('all_interview');
   const [expanded, setExpanded] = useState(false);
 
@@ -30,7 +30,7 @@ export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
 
   const filteredJobs = useMemo(() => {
     let result = jobs;
-    if (showAppFilters && activeAppFilter !== 'application') {
+    if (showAppFilters && activeAppFilter !== 'all_application') {
       result = jobs.filter(job => deriveApplicationSubCategory(job) === activeAppFilter);
     } else if (showIntFilters && activeIntFilter !== 'all_interview') {
       result = jobs.filter(job => deriveInterviewSubCategory(job) === activeIntFilter);

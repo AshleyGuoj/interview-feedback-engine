@@ -47,7 +47,7 @@ export function JobCard({ job, onClick }: JobCardProps) {
           </Badge>
         </div>
 
-        <PipelineStatus job={job} />
+        <PipelineStatus job={job} resolution={resolution} />
       </div>
     </Card>
   );
