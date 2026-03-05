@@ -542,6 +542,7 @@ export default {
     section_interview: '面试',
     section_assessment: '测评',
     section_written_test: '笔试',
+    completed_suffix: '已完成',
   },
 
   // Archive

@@ -135,16 +135,17 @@ const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'i
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
-  const Icon = EVENT_ICONS[event.type];
+  const Icon = event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
+  const completedSuffix = event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
   return (
     <div
       className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
       onClick={() => navigate(`/jobs/${event.jobId}`)}
     >
-      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', EVENT_COLORS[event.type])} />
+      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type])} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">{event.label}</span>
+          <span className="text-sm font-medium text-foreground truncate">{event.label}{completedSuffix}</span>
           {event.jobLink && (
             <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
@@ -154,7 +155,7 @@ function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: 
         {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.sublabel}</p>}
       </div>
       <Badge variant="secondary" className="text-[10px] shrink-0">
-        {t(`timeTracker.type_${event.type}`)}
+        {event.isCompleted ? `✓ ${t(`timeTracker.type_${event.type}`)}` : t(`timeTracker.type_${event.type}`)}
       </Badge>
     </div>
   );

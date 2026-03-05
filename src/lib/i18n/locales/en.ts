@@ -542,6 +542,7 @@ export default {
     section_interview: 'Interviews',
     section_assessment: 'Assessments',
     section_written_test: 'Written Tests',
+    completed_suffix: 'Completed',
   },
 
   // Archive
