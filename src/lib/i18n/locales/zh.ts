@@ -155,7 +155,6 @@ export default {
     // Kanban columns
     colApplicationAssessment: '投递/筛选',
     colInterview: '面试',
-    colHrFinal: 'HR谈薪',
     colOfferCall: 'Offer沟通',
     colOfferReceived: '收到Offer',
     colClosed: '已关闭',

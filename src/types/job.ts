@@ -225,7 +225,7 @@ export const KANBAN_COLUMN_CONFIG: Record<KanbanColumnType, { labelKey: string; 
   closed:                 { labelKey: 'jobs.colClosed',              labelZhKey: '已关闭',     color: 'bg-muted-foreground/40', icon: 'archive' },
 };
 
-export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_assessment', 'interview', 'hr_final', 'offer_call', 'offer_received', 'closed'];
+export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_assessment', 'interview', 'offer_call', 'offer_received', 'closed'];
 
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
   application:    { label: 'Application',      labelZh: '投递',        icon: 'file-text',       color: 'blue' },
