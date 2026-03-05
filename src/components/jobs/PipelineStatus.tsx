@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 interface PipelineStatusProps {
   job: Job;
   compact?: boolean;
+  resolution?: ReturnType<typeof resolvePipeline>;
 }
 
 /**
