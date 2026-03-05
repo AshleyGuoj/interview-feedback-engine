@@ -74,25 +74,44 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
     }
 
     for (const { stage, job: j } of allStages) {
+      // Scheduled event (existing)
       const timeStr = stage.scheduledTime || stage.date || stage.deadline;
-      if (!timeStr) continue;
-      let sublabel: string | undefined;
-      if (stage.scheduledTime && stage.scheduledTimezone) {
-        try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
+      if (timeStr) {
+        let sublabel: string | undefined;
+        if (stage.scheduledTime && stage.scheduledTimezone) {
+          try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
+        }
+        const type: EventType = getEventTypeFromStage(stage);
+        events.push({
+          id: `stage-${j.id}-${stage.id}`,
+          type,
+          date: parseISO(timeStr),
+          jobId: j.id,
+          companyName: j.companyName,
+          roleTitle: j.roleTitle,
+          jobLink: j.jobLink,
+          label: `${j.companyName} — ${stage.name}`,
+          sublabel,
+          stageName: stage.name,
+        });
       }
-      const type: EventType = getEventTypeFromStage(stage);
-      events.push({
-        id: `stage-${j.id}-${stage.id}`,
-        type,
-        date: parseISO(timeStr),
-        jobId: j.id,
-        companyName: j.companyName,
-        roleTitle: j.roleTitle,
-        jobLink: j.jobLink,
-        label: `${j.companyName} — ${stage.name}`,
-        sublabel,
-        stageName: stage.name,
-      });
+
+      // Completion event (new)
+      if (stage.status === 'completed' && stage.completedAt) {
+        const type: EventType = getEventTypeFromStage(stage);
+        events.push({
+          id: `completed-${j.id}-${stage.id}`,
+          type,
+          date: parseISO(stage.completedAt),
+          jobId: j.id,
+          companyName: j.companyName,
+          roleTitle: j.roleTitle,
+          jobLink: j.jobLink,
+          label: `${j.companyName} — ${stage.name}`,
+          stageName: stage.name,
+          isCompleted: true,
+        });
+      }
     }
   }
   return events;
