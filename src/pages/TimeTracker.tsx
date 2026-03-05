@@ -41,6 +41,8 @@ import { detectStageCategory } from '@/types/job';
 
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
+  if (cat === 'application') return 'applied';
+  if (cat === 'resume_screen') return 'resume_screen';
   if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
   return 'interview';
