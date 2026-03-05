@@ -430,27 +430,27 @@ export const APPLICATION_ASSESSMENT_FILTER_CONFIG: Record<ApplicationAssessmentF
  */
 export function deriveApplicationSubCategory(job: Job): ApplicationAssessmentFilter {
   const stages = getActiveStages(job);
-  const columnCategories: StageCategory[] = ['application', 'resume_screen', 'assessment', 'written_test', 'hr_screen'];
   
-  let highestPriority = -1;
-  let result: ApplicationAssessmentFilter = 'application';
-  
+  // Find the frontier stage: first stage that isn't fully passed
   for (const stage of stages) {
     const category = stage.category || detectStageCategory(stage.name);
-    if (!columnCategories.includes(category)) continue;
     
-    const isActive = ACTIVE_STATUSES.includes(stage.status) || 
-                     (stage.status === 'completed' && stage.result !== 'rejected');
-    const priority = CATEGORY_PRIORITY[category];
+    // Skip stages that are fully passed (completed + passed)
+    if (stage.status === 'completed' && stage.result === 'passed') continue;
+    // Skip skipped/withdrawn stages
+    if (stage.status === 'skipped' || stage.status === 'withdrawn') continue;
     
-    if (isActive && priority > highestPriority) {
-      highestPriority = priority;
-      // Map hr_screen to resume_screen for filter purposes
-      result = (category === 'hr_screen' ? 'resume_screen' : category) as ApplicationAssessmentFilter;
+    // This is the current frontier stage
+    const columnCategories = ['application', 'resume_screen', 'assessment', 'written_test', 'hr_screen'];
+    if (columnCategories.includes(category)) {
+      return (category === 'hr_screen' ? 'resume_screen' : category) as ApplicationAssessmentFilter;
     }
+    
+    // Frontier is outside this column's scope → default to application
+    return 'application';
   }
   
-  return result;
+  return 'application';
 }
 
 // Helper: Get all stages from active pipeline
