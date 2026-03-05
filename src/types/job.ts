@@ -159,7 +159,7 @@ function categoryToColumn(category: StageCategory): KanbanColumnType {
       return 'application_assessment';
     case 'resume_screen':
     case 'hr_screen':
-      return 'screening';
+      return 'application_assessment';
     case 'interview':
       return 'interview';
     case 'hr_final':
