@@ -172,6 +172,8 @@ export default {
     filterRound1: 'Round 1',
     filterRound2: 'Round 2+',
     filterHRRound: 'HR Round',
+    showMore: 'Show more ({{count}})',
+    showLess: 'Show less',
     
     // Location options
     locationUS: 'US',

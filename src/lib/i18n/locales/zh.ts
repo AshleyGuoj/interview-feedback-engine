@@ -172,6 +172,8 @@ export default {
     filterRound1: '一面',
     filterRound2: '二面+',
     filterHRRound: 'HR面',
+    showMore: '展开更多 ({{count}})',
+    showLess: '收起',
     
     // Location options
     locationUS: '美国',
