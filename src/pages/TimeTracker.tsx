@@ -18,7 +18,7 @@ import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
 import { CheckCircle2 } from 'lucide-react';
 
-type EventType = 'applied' | 'interview' | 'assessment' | 'written_test';
+type EventType = 'applied' | 'resume_screen' | 'interview' | 'assessment' | 'written_test';
 type ViewMode = 'day' | 'week' | 'month';
 
 interface TimelineEvent {
