@@ -7,7 +7,7 @@ import {
 } from '@/types/job';
 import { JobCard } from './JobCard';
 import { cn } from '@/lib/utils';
-import { Inbox } from 'lucide-react';
+import { Inbox, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface KanbanColumnProps {
   column: KanbanColumnType;
