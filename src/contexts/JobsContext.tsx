@@ -5,13 +5,44 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolvePipeline } from '@/lib/pipeline-resolver';
 
+/**
+ * Derive job status from interview stages
+ * Priority: closed (manual) > offer (from stages) > interviewing > applied
+ */
+export function deriveJobStatusFromStages(stages: InterviewStage[], currentStatus: JobStatus): JobStatus {
+  // Closed is a terminal state, only changeable manually
+  if (currentStatus === 'closed') {
+    return 'closed';
+  }
+
+  const normalized = stages.map(s => ({
+    ...s,
+    _name: (s.name || '').toLowerCase().trim(),
+  }));
+
+  // Offer: any "offer" stage completed
+  const offerStageCompleted = normalized.some(
+    s => s.status === 'completed' && s._name.includes('offer')
+  );
+  if (offerStageCompleted) return 'offer';
+
+  // Interviewing: must have an 'interview' category stage with real activity
+  const interviewActiveStatuses = ['scheduled', 'rescheduled', 'completed', 'feedback_pending'];
+  const hasRealInterview = normalized.some(
+    s => (s as any).category === 'interview' && interviewActiveStatuses.includes(s.status)
+  );
+  if (hasRealInterview) return 'interviewing';
+
+  // Default
+  return 'applied';
+}
+
 // Transform database row to Job type
 function dbToJob(row: any): Job {
   // Parse stages JSON which may contain extended fields
   const stagesData = row.stages || [];
   
   // Extract extended fields from stages metadata if stored there
-  // (for backward compatibility with existing data structure)
   const metadata = stagesData._metadata || {};
   
   // Parse pipelines from metadata or create from legacy stages
@@ -20,7 +51,6 @@ function dbToJob(row: any): Job {
   if (metadata.pipelines && Array.isArray(metadata.pipelines)) {
     pipelines = metadata.pipelines;
   } else if (Array.isArray(stagesData) && stagesData.length > 0) {
-    // Migrate legacy single pipeline: convert stages to a primary pipeline
     pipelines = [{
       id: 'legacy-primary',
       type: 'primary' as const,
@@ -31,23 +61,28 @@ function dbToJob(row: any): Job {
     }];
   }
   
+  const stages = Array.isArray(stagesData) ? stagesData as InterviewStage[] : (stagesData.list || []) as InterviewStage[];
+  const rawStatus = row.status as JobStatus;
+  
+  // Auto-correct status based on stage data
+  const correctedStatus = deriveJobStatusFromStages(stages, rawStatus);
+  
   return {
     id: row.id,
     companyName: row.company_name,
     roleTitle: row.role_title,
     location: row.location as Job['location'],
-    status: row.status as Job['status'],
+    status: correctedStatus,
     jobLink: row.job_link || undefined,
     source: row.source as Job['source'],
     interestLevel: row.interest_level as Job['interestLevel'],
     careerFitNotes: row.career_fit_notes || undefined,
     currentStage: row.current_stage || undefined,
     nextAction: row.next_action || undefined,
-    stages: Array.isArray(stagesData) ? stagesData as InterviewStage[] : (stagesData.list || []) as InterviewStage[],
+    stages,
     pipelines,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    // Extended fields from metadata
     subStatus: metadata.subStatus as InterviewingSubStatus | OfferSubStatus | undefined,
     closedReason: metadata.closedReason as ClosedReason | undefined,
     riskTags: metadata.riskTags as RiskTag[] | undefined,
