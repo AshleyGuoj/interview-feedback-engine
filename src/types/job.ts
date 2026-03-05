@@ -475,7 +475,7 @@ export function deriveInterviewSubCategory(job: Job): InterviewFilter {
   
   for (const stage of stages) {
     const category = stage.category || detectStageCategory(stage.name);
-    if (category !== 'interview' && category !== 'hr_chat') continue;
+    if (category !== 'interview' && category !== 'hr_final') continue;
     
     // Skip fully passed stages
     if (stage.status === 'completed' && stage.result === 'passed') {
