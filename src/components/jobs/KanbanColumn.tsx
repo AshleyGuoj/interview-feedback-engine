@@ -15,11 +15,14 @@ interface KanbanColumnProps {
   onJobClick: (job: Job) => void;
 }
 
+const MAX_VISIBLE = 5;
+
 export function KanbanColumn({ column, jobs, onJobClick }: KanbanColumnProps) {
   const { t } = useTranslation();
   const config = KANBAN_COLUMN_CONFIG[column];
   const [activeAppFilter, setActiveAppFilter] = useState<ApplicationAssessmentFilter>('application');
   const [activeIntFilter, setActiveIntFilter] = useState<InterviewFilter>('all_interview');
+  const [expanded, setExpanded] = useState(false);
 
   const showAppFilters = column === 'application_assessment';
   const showIntFilters = column === 'interview';
