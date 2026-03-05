@@ -129,42 +129,45 @@ export const STAGE_RESULT_CONFIG: Record<NonNullable<StageResult>, { label: stri
 // STAGE CATEGORY
 // ============================================
 
-export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'written_test' | 'interview' | 'hr_chat' | 'offer_call' | 'offer_received';
+export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'written_test' | 'interview' | 'hr_screen' | 'hr_final' | 'offer_call' | 'offer_received';
 
 // ============================================
 // KANBAN COLUMN (derived from stage categories)
 // ============================================
 
-export type KanbanColumnType = 'application_screening' | 'assessment_test' | 'interview' | 'hr_chat' | 'offer' | 'closed';
+export type KanbanColumnType = 'application_assessment' | 'screening' | 'interview' | 'hr_final' | 'offer_call' | 'offer_received' | 'closed';
 
 // Priority order for deriving which column a job belongs to (higher index = higher priority)
 const CATEGORY_PRIORITY: Record<StageCategory, number> = {
   application: 0,
-  resume_screen: 1,
-  assessment: 2,
-  written_test: 3,
-  interview: 4,
-  hr_chat: 5,
-  offer_call: 6,
-  offer_received: 7,
+  assessment: 1,
+  written_test: 2,
+  resume_screen: 3,
+  hr_screen: 4,
+  interview: 5,
+  hr_final: 6,
+  offer_call: 7,
+  offer_received: 8,
 };
 
 // Map stage category to kanban column
 function categoryToColumn(category: StageCategory): KanbanColumnType {
   switch (category) {
     case 'application':
-    case 'resume_screen':
-      return 'application_screening';
     case 'assessment':
     case 'written_test':
-      return 'assessment_test';
+      return 'application_assessment';
+    case 'resume_screen':
+    case 'hr_screen':
+      return 'screening';
     case 'interview':
       return 'interview';
-    case 'hr_chat':
-      return 'hr_chat';
+    case 'hr_final':
+      return 'hr_final';
     case 'offer_call':
+      return 'offer_call';
     case 'offer_received':
-      return 'offer';
+      return 'offer_received';
   }
 }
 
@@ -211,30 +214,32 @@ export function deriveKanbanColumn(job: Job): KanbanColumnType {
     return categoryToColumn(highestCategory);
   }
   
-  // Default: application/screening
-  return 'application_screening';
+  // Default: application/assessment
+  return 'application_assessment';
 }
 
 export const KANBAN_COLUMN_CONFIG: Record<KanbanColumnType, { labelKey: string; labelZhKey: string; color: string; icon: string }> = {
-  application_screening: { labelKey: 'jobs.colApplicationScreening', labelZhKey: '投递/筛选', color: 'bg-blue-500/60', icon: 'file-text' },
-  assessment_test:       { labelKey: 'jobs.colAssessmentTest',       labelZhKey: '测评/笔试', color: 'bg-purple-500/60', icon: 'clipboard-check' },
-  interview:             { labelKey: 'jobs.colInterview',            labelZhKey: '面试',      color: 'bg-amber-500/70', icon: 'mic' },
-  hr_chat:               { labelKey: 'jobs.colHrChat',              labelZhKey: 'HR沟通',    color: 'bg-cyan-500/60', icon: 'message-circle' },
-  offer:                 { labelKey: 'jobs.colOffer',               labelZhKey: 'Offer',     color: 'bg-green-500/70', icon: 'gift' },
-  closed:                { labelKey: 'jobs.colClosed',              labelZhKey: '已关闭',     color: 'bg-muted-foreground/40', icon: 'archive' },
+  application_assessment: { labelKey: 'jobs.colApplicationAssessment', labelZhKey: '投递/测评', color: 'bg-blue-500/60', icon: 'file-text' },
+  screening:              { labelKey: 'jobs.colScreening',            labelZhKey: '筛选',      color: 'bg-cyan-500/60', icon: 'file-search' },
+  interview:              { labelKey: 'jobs.colInterview',            labelZhKey: '面试',      color: 'bg-amber-500/70', icon: 'mic' },
+  hr_final:               { labelKey: 'jobs.colHrFinal',             labelZhKey: 'HR谈薪',    color: 'bg-purple-500/60', icon: 'message-circle' },
+  offer_call:             { labelKey: 'jobs.colOfferCall',           labelZhKey: 'Offer沟通',  color: 'bg-green-500/60', icon: 'phone-call' },
+  offer_received:         { labelKey: 'jobs.colOfferReceived',       labelZhKey: '收到Offer',  color: 'bg-emerald-500/70', icon: 'gift' },
+  closed:                 { labelKey: 'jobs.colClosed',              labelZhKey: '已关闭',     color: 'bg-muted-foreground/40', icon: 'archive' },
 };
 
-export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_screening', 'assessment_test', 'interview', 'hr_chat', 'offer', 'closed'];
+export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_assessment', 'screening', 'interview', 'hr_final', 'offer_call', 'offer_received', 'closed'];
 
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
-  application:    { label: 'Application',    labelZh: '投递',       icon: 'file-text',       color: 'blue' },
-  resume_screen:  { label: 'Resume Screen',  labelZh: '简历筛选',    icon: 'file-search',     color: 'cyan' },
-  assessment:     { label: 'Assessment',     labelZh: '测评',       icon: 'clipboard-check', color: 'purple' },
-  written_test:   { label: 'Written Test',   labelZh: '笔试',       icon: 'pen-line',        color: 'indigo' },
-  interview:      { label: 'Interview',      labelZh: '面试',       icon: 'mic',             color: 'amber' },
-  hr_chat:        { label: 'HR / Salary Talk',labelZh: 'HR沟通/谈薪', icon: 'message-circle', color: 'blue' },
-  offer_call:     { label: 'Offer Call',      labelZh: 'Offer沟通',  icon: 'phone-call',     color: 'green' },
-  offer_received: { label: 'Offer Received',  labelZh: '收到Offer',  icon: 'gift',            color: 'emerald' },
+  application:    { label: 'Application',      labelZh: '投递',        icon: 'file-text',       color: 'blue' },
+  resume_screen:  { label: 'Resume Screen',    labelZh: '简历筛选',     icon: 'file-search',     color: 'cyan' },
+  assessment:     { label: 'Assessment',       labelZh: '测评',        icon: 'clipboard-check', color: 'purple' },
+  written_test:   { label: 'Written Test',     labelZh: '笔试',        icon: 'pen-line',        color: 'indigo' },
+  interview:      { label: 'Interview',        labelZh: '面试',        icon: 'mic',             color: 'amber' },
+  hr_screen:      { label: 'HR Screen',        labelZh: 'HR初筛',      icon: 'user-search',     color: 'cyan' },
+  hr_final:       { label: 'HR Final / Salary',labelZh: 'HR谈薪',      icon: 'message-circle',  color: 'purple' },
+  offer_call:     { label: 'Offer Call',       labelZh: 'Offer沟通',   icon: 'phone-call',      color: 'green' },
+  offer_received: { label: 'Offer Received',   labelZh: '收到Offer',   icon: 'gift',            color: 'emerald' },
 };
 
 // Auto-detect stage category from name
@@ -245,8 +250,14 @@ export function detectStageCategory(name: string): StageCategory {
   if (['笔试', 'written test', 'written exam'].some(kw => lower.includes(kw))) return 'written_test';
   if (['oa', 'assessment', 'test', 'take-home', 'takehome', '测评', 'coding challenge', 'online assessment'].some(kw => lower.includes(kw))) return 'assessment';
   if (['offer received', '收到offer', 'offer letter'].some(kw => lower.includes(kw))) return 'offer_received';
-  if (['offer', '谈薪', 'salary', 'compensation', 'negotiat'].some(kw => lower.includes(kw))) return 'offer_call';
-  if (['hr', 'screen', 'recruiter', '人事'].some(kw => lower.includes(kw))) return 'hr_chat';
+  if (['offer', 'offer call', 'offer沟通'].some(kw => lower.includes(kw))) return 'offer_call';
+  // HR final: salary/negotiation related, or explicitly "hr final"
+  if (['谈薪', 'salary', 'compensation', 'negotiat', 'hr final', 'hr谈薪', '谈心'].some(kw => lower.includes(kw))) return 'hr_final';
+  // HR screen: early HR contact, recruiter call
+  if (['hr初筛', 'hr screen', 'recruiter call', 'recruiter screen'].some(kw => lower.includes(kw))) return 'hr_screen';
+  // Legacy hr_chat fallback: generic "hr" or "recruiter" → hr_screen (early stage default)
+  if (['hr', 'recruiter', '人事'].some(kw => lower.includes(kw))) return 'hr_screen';
+  if (['screen', '筛选'].some(kw => lower.includes(kw))) return 'resume_screen';
   return 'interview';
 }
 
