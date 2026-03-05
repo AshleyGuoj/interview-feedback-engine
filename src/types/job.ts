@@ -135,7 +135,7 @@ export type StageCategory = 'application' | 'resume_screen' | 'assessment' | 'wr
 // KANBAN COLUMN (derived from stage categories)
 // ============================================
 
-export type KanbanColumnType = 'application_assessment' | 'screening' | 'interview' | 'hr_final' | 'offer_call' | 'offer_received' | 'closed';
+export type KanbanColumnType = 'application_assessment' | 'interview' | 'hr_final' | 'offer_call' | 'offer_received' | 'closed';
 
 // Priority order for deriving which column a job belongs to (higher index = higher priority)
 const CATEGORY_PRIORITY: Record<StageCategory, number> = {
@@ -159,7 +159,7 @@ function categoryToColumn(category: StageCategory): KanbanColumnType {
       return 'application_assessment';
     case 'resume_screen':
     case 'hr_screen':
-      return 'screening';
+      return 'application_assessment';
     case 'interview':
       return 'interview';
     case 'hr_final':
@@ -219,8 +219,7 @@ export function deriveKanbanColumn(job: Job): KanbanColumnType {
 }
 
 export const KANBAN_COLUMN_CONFIG: Record<KanbanColumnType, { labelKey: string; labelZhKey: string; color: string; icon: string }> = {
-  application_assessment: { labelKey: 'jobs.colApplicationAssessment', labelZhKey: '投递/测评', color: 'bg-blue-500/60', icon: 'file-text' },
-  screening:              { labelKey: 'jobs.colScreening',            labelZhKey: '筛选',      color: 'bg-cyan-500/60', icon: 'file-search' },
+  application_assessment: { labelKey: 'jobs.colApplicationAssessment', labelZhKey: '投递/筛选', color: 'bg-blue-500/60', icon: 'file-text' },
   interview:              { labelKey: 'jobs.colInterview',            labelZhKey: '面试',      color: 'bg-amber-500/70', icon: 'mic' },
   hr_final:               { labelKey: 'jobs.colHrFinal',             labelZhKey: 'HR谈薪',    color: 'bg-purple-500/60', icon: 'message-circle' },
   offer_call:             { labelKey: 'jobs.colOfferCall',           labelZhKey: 'Offer沟通',  color: 'bg-green-500/60', icon: 'phone-call' },
@@ -228,7 +227,7 @@ export const KANBAN_COLUMN_CONFIG: Record<KanbanColumnType, { labelKey: string; 
   closed:                 { labelKey: 'jobs.colClosed',              labelZhKey: '已关闭',     color: 'bg-muted-foreground/40', icon: 'archive' },
 };
 
-export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_assessment', 'screening', 'interview', 'hr_final', 'offer_call', 'offer_received', 'closed'];
+export const KANBAN_COLUMNS: KanbanColumnType[] = ['application_assessment', 'interview', 'hr_final', 'offer_call', 'offer_received', 'closed'];
 
 export const STAGE_CATEGORY_CONFIG: Record<StageCategory, { label: string; labelZh: string; icon: string; color: string }> = {
   application:    { label: 'Application',      labelZh: '投递',        icon: 'file-text',       color: 'blue' },
