@@ -219,8 +219,7 @@ export function deriveKanbanColumn(job: Job): KanbanColumnType {
 }
 
 export const KANBAN_COLUMN_CONFIG: Record<KanbanColumnType, { labelKey: string; labelZhKey: string; color: string; icon: string }> = {
-  application_assessment: { labelKey: 'jobs.colApplicationAssessment', labelZhKey: '投递/测评', color: 'bg-blue-500/60', icon: 'file-text' },
-  screening:              { labelKey: 'jobs.colScreening',            labelZhKey: '筛选',      color: 'bg-cyan-500/60', icon: 'file-search' },
+  application_assessment: { labelKey: 'jobs.colApplicationAssessment', labelZhKey: '投递/筛选', color: 'bg-blue-500/60', icon: 'file-text' },
   interview:              { labelKey: 'jobs.colInterview',            labelZhKey: '面试',      color: 'bg-amber-500/70', icon: 'mic' },
   hr_final:               { labelKey: 'jobs.colHrFinal',             labelZhKey: 'HR谈薪',    color: 'bg-purple-500/60', icon: 'message-circle' },
   offer_call:             { labelKey: 'jobs.colOfferCall',           labelZhKey: 'Offer沟通',  color: 'bg-green-500/60', icon: 'phone-call' },
