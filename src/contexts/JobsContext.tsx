@@ -116,12 +116,12 @@ export function deriveJobStatusFromStages(stages: InterviewStage[], currentStatu
   );
   if (offerStageCompleted) return 'offer';
 
-  // Interviewing: any non-applied stage has activity
-  const activeStatuses = ['pending', 'scheduled', 'rescheduled', 'completed', 'feedback_pending'];
-  const hasInterviewActivity = normalized.some(
-    s => activeStatuses.includes(s.status) && s._name !== 'applied'
+  // Interviewing: must have an 'interview' category stage with real activity
+  const interviewActiveStatuses = ['scheduled', 'rescheduled', 'completed', 'feedback_pending'];
+  const hasRealInterview = normalized.some(
+    s => (s as any).category === 'interview' && interviewActiveStatuses.includes(s.status)
   );
-  if (hasInterviewActivity) return 'interviewing';
+  if (hasRealInterview) return 'interviewing';
 
   // Default
   return 'applied';

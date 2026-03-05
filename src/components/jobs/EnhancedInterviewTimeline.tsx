@@ -287,8 +287,37 @@ export function EnhancedInterviewTimeline({ stages, onStageUpdate, onAIAction, j
                               <Label>{t('jobs.stageName')}</Label>
                               <Input
                                 value={editData.name || ''}
-                                onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                                onChange={(e) => {
+                                  const newName = e.target.value;
+                                  setEditData(prev => ({
+                                    ...prev,
+                                    name: newName,
+                                    // Auto-suggest category when name changes (only if user hasn't manually picked one different from auto)
+                                    category: detectStageCategory(newName),
+                                  }));
+                                }}
                               />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('jobs.stageCategory', 'Category')}</Label>
+                              <Select
+                                value={editData.category || 'interview'}
+                                onValueChange={(value) => setEditData(prev => ({ 
+                                  ...prev, 
+                                  category: value as StageCategory 
+                                }))}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(STAGE_CATEGORY_CONFIG).map(([key, config]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {config.labelZh} / {config.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                             <div className="space-y-2">
                               <Label>{t('jobs.stageStatus')}</Label>
