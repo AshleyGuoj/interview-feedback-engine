@@ -168,6 +168,7 @@ export default {
     filterResumeScreen: '简历筛选',
     filterAssessment: '测评',
     filterWrittenTest: '笔试',
+    filterAllApplication: '全部',
     filterAllInterview: '全部',
     filterRound1: '一面',
     filterRound2: '二面+',
