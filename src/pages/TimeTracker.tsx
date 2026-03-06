@@ -390,11 +390,11 @@ export default function TimeTracker() {
         {/* Summary strip */}
         {filteredEvents.length > 0 && (
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-blue-500" />{summary.applied} {t('timeTracker.type_applied')}</span>}
-            {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-purple-500" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
-            {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
-            {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}
-            {summary.offer > 0 && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-emerald-500" />{summary.offer} {t('timeTracker.type_offer')}</span>}
+            {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-[hsl(210,30%,50%)]" />{summary.applied} {t('timeTracker.type_applied')}</span>}
+            {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-[hsl(232,36%,36%)]" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
+            {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-[hsl(260,25%,52%)]" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
+            {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-[hsl(32,45%,46%)]" />{summary.interview} {t('timeTracker.type_interview')}</span>}
+            {summary.offer > 0 && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-[hsl(158,25%,42%)]" />{summary.offer} {t('timeTracker.type_offer')}</span>}
             {summary.other > 0 && <span className="flex items-center gap-1"><Circle className="w-3.5 h-3.5 text-muted-foreground" />{summary.other} {t('timeTracker.type_other')}</span>}
           </div>
         )}
