@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useAdminRole } from '@/hooks/useAdminRole';
 import offermindIcon from '@/assets/offermind-icon.png';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
