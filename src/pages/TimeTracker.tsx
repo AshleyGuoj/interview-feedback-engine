@@ -132,7 +132,6 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
        if (stage.status === 'scheduled' && (stage.scheduledTime || stage.date)) {
          const scheduledDate = stage.scheduledTime || stage.date!;
          const actionDate = j.updatedAt || j.createdAt;
-         const type: EventType = getEventTypeFromStage(stage);
          const scheduledLabel = format(parseISO(scheduledDate), lang === 'zh' ? 'M月d日 HH:mm' : 'MMM d, HH:mm');
          events.push({
            id: `scheduling-${j.id}-${stage.id}`,
