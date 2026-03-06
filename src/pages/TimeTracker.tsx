@@ -209,10 +209,10 @@ function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: 
     ? ` (${t('timeTracker.scheduled_suffix')})`
     : event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
   const iconColor = event.isDeadline
-    ? 'text-red-500'
+    ? 'text-[hsl(350,30%,52%)]'
     : event.isSchedulingAction
-    ? 'text-teal-500'
-    : event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type];
+    ? 'text-[hsl(210,30%,50%)]'
+    : event.isCompleted ? 'text-[hsl(158,30%,38%)]' : EVENT_COLORS[event.type];
   return (
     <div
       className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
