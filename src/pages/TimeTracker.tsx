@@ -104,6 +104,9 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
     }
 
     for (const { stage, job: j } of allStages) {
+      const type: EventType = getEventTypeFromStage(stage);
+      // Skip resume_screen events entirely
+      if (type === 'applied') continue;
       // Scheduled event (existing)
       const timeStr = stage.scheduledTime || stage.date || stage.deadline;
       if (timeStr) {
