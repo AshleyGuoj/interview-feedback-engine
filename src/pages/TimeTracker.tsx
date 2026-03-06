@@ -5,20 +5,20 @@ import {
   format, parseISO, isToday, isSameDay,
   addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
-  eachDayOfInterval, isWithinInterval,
+  isWithinInterval,
 } from 'date-fns';
 import { zhCN, enUS, type Locale } from 'date-fns/locale';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays, CalendarPlus, Gift } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays, CalendarPlus, Gift, Circle, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
-import { Job, InterviewStage } from '@/types/job';
+import { Job, InterviewStage, detectStageCategory } from '@/types/job';
 import { CheckCircle2 } from 'lucide-react';
 
-type EventType = 'applied' | 'interview' | 'assessment' | 'written_test' | 'offer';
+type EventType = 'applied' | 'interview' | 'assessment' | 'written_test' | 'offer' | 'other';
 type ViewMode = 'day' | 'week' | 'month';
 
 interface TimelineEvent {
@@ -34,17 +34,8 @@ interface TimelineEvent {
   stageName?: string;
   isCompleted?: boolean;
   isSchedulingAction?: boolean;
+  isDeadline?: boolean;
 }
-
-import { detectStageCategory } from '@/types/job';
-
-
-
-const STAGE_PRIORITY: Record<string, number> = {
-  application: 0, resume_screen: 1, hr_screen: 2,
-  assessment: 3, written_test: 4, interview: 5,
-  hr_final: 6, offer_call: 7, offer_received: 8,
-};
 
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
@@ -52,45 +43,15 @@ function getEventTypeFromStage(stage: InterviewStage): EventType {
   if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
   if (cat === 'hr_final' || cat === 'offer_call' || cat === 'offer_received') return 'offer';
-  return 'interview';
-}
-
-function getHighestStagePriority(job: Job): number {
-  let max = 0;
-  const allStages: InterviewStage[] = [];
-  if (job.pipelines?.length) {
-    for (const p of job.pipelines) allStages.push(...p.stages);
-  } else if (job.stages?.length) {
-    allStages.push(...job.stages);
-  }
-  for (const s of allStages) {
-    if (s.status !== 'completed' && s.status !== 'scheduled') continue;
-    const cat = s.category || detectStageCategory(s.name);
-    const p = STAGE_PRIORITY[cat] ?? 5;
-    if (p > max) max = p;
-  }
-  return max;
+  if (cat === 'interview') return 'interview';
+  return 'other';
 }
 
 function extractEvents(jobs: Job[]): TimelineEvent[] {
   const lang = typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en';
   const events: TimelineEvent[] = [];
-  for (const job of jobs) {
-    const highestPriority = getHighestStagePriority(job);
-    // Only show "applied" event if job hasn't progressed beyond resume_screen
-    if (highestPriority <= 2) {
-      events.push({
-        id: `applied-${job.id}`,
-        type: 'applied',
-        date: parseISO(job.createdAt),
-        jobId: job.id,
-        companyName: job.companyName,
-        roleTitle: job.roleTitle,
-        jobLink: job.jobLink,
-        label: `${job.companyName} — ${job.roleTitle}`,
-      });
-    }
 
+  for (const job of jobs) {
     const allStages: { stage: InterviewStage; job: Job }[] = [];
     if (job.pipelines?.length) {
       for (const pipeline of job.pipelines) {
@@ -104,13 +65,43 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
       }
     }
 
+    // 改动 1: Applied Event — 只要存在任意 applied 类 completed stage 就生成
+    const hasCompletedApplied = allStages.some(({ stage }) => {
+      const cat = stage.category || detectStageCategory(stage.name);
+      return ['application', 'resume_screen', 'hr_screen'].includes(cat) && stage.status === 'completed';
+    });
+    if (hasCompletedApplied) {
+      events.push({
+        id: `applied-${job.id}`,
+        type: 'applied',
+        date: parseISO(job.createdAt),
+        jobId: job.id,
+        companyName: job.companyName,
+        roleTitle: job.roleTitle,
+        jobLink: job.jobLink,
+        label: `${job.companyName} — ${job.roleTitle}`,
+      });
+    }
+
+    // Process individual stage events
     for (const { stage, job: j } of allStages) {
+      const cat = stage.category || detectStageCategory(stage.name);
       const type: EventType = getEventTypeFromStage(stage);
-      // Skip resume_screen events entirely
-      if (type === 'applied') continue;
-      // Scheduled event (existing)
-      const timeStr = stage.scheduledTime || stage.date || stage.deadline;
-      if (timeStr) {
+
+      // 改动 2: 只跳过 application 类别本身，resume_screen/hr_screen 正常生成事件
+      if (cat === 'application') continue;
+
+      // 改动 5: 分离 scheduledTime/date 和 deadline
+      const eventTime = stage.scheduledTime || stage.date;
+      const deadlineTime = stage.deadline;
+
+      // 改动 4: 同阶段同日 scheduled + completed 合并
+      const isCompletedSameDay = stage.status === 'completed'
+        && stage.completedAt && eventTime
+        && isSameDay(parseISO(stage.completedAt), parseISO(eventTime));
+
+      // Scheduled event (only if not completed on the same day)
+      if (eventTime && !isCompletedSameDay) {
         let sublabel: string | undefined;
         if (stage.scheduledTime && stage.scheduledTimezone) {
           try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
@@ -118,7 +109,7 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
         events.push({
           id: `stage-${j.id}-${stage.id}`,
           type,
-          date: parseISO(timeStr),
+          date: parseISO(eventTime),
           jobId: j.id,
           companyName: j.companyName,
           roleTitle: j.roleTitle,
@@ -127,33 +118,50 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
           sublabel,
           stageName: stage.name,
         });
-       }
+      }
 
-       // Scheduling action event — shows on the day the user scheduled it
-       if (stage.status === 'scheduled' && (stage.scheduledTime || stage.date)) {
-         const scheduledDate = stage.scheduledTime || stage.date!;
-         const actionDate = j.updatedAt || j.createdAt;
-         const scheduledLabel = format(parseISO(scheduledDate), lang === 'zh' ? 'M月d日 HH:mm' : 'MMM d, HH:mm');
-         events.push({
-           id: `scheduling-${j.id}-${stage.id}`,
-           type,
-           date: parseISO(actionDate),
-           jobId: j.id,
-           companyName: j.companyName,
-           roleTitle: j.roleTitle,
-           jobLink: j.jobLink,
-           label: `${j.companyName} — ${stage.name}`,
-           sublabel: scheduledLabel,
-           stageName: stage.name,
-           isSchedulingAction: true,
-         });
-       }
-      // Completion event — fallback to job.updatedAt for legacy data
-      // Skip "Applied" stages — already captured by the dedicated applied event above
+      // 改动 5: Deadline event — separate from scheduled
+      if (deadlineTime && deadlineTime !== eventTime) {
+        events.push({
+          id: `deadline-${j.id}-${stage.id}`,
+          type,
+          date: parseISO(deadlineTime),
+          jobId: j.id,
+          companyName: j.companyName,
+          roleTitle: j.roleTitle,
+          jobLink: j.jobLink,
+          label: `${j.companyName} — ${stage.name}`,
+          stageName: stage.name,
+          isDeadline: true,
+        });
+      }
+
+      // Scheduling action event
+      if (stage.status === 'scheduled' && (stage.scheduledTime || stage.date)) {
+        const scheduledDate = stage.scheduledTime || stage.date!;
+        const actionDate = j.updatedAt || j.createdAt;
+        const scheduledLabel = format(parseISO(scheduledDate), lang === 'zh' ? 'M月d日 HH:mm' : 'MMM d, HH:mm');
+        events.push({
+          id: `scheduling-${j.id}-${stage.id}`,
+          type,
+          date: parseISO(actionDate),
+          jobId: j.id,
+          companyName: j.companyName,
+          roleTitle: j.roleTitle,
+          jobLink: j.jobLink,
+          label: `${j.companyName} — ${stage.name}`,
+          sublabel: scheduledLabel,
+          stageName: stage.name,
+          isSchedulingAction: true,
+        });
+      }
+
+      // 改动 3: Completion event — 收紧 fallback，不用 job.updatedAt
       if (stage.status === 'completed') {
         const lowerName = stage.name.toLowerCase();
         if (lowerName === 'applied' || lowerName === '投递') continue;
-        const completionDate = stage.completedAt || j.updatedAt || j.createdAt;
+        const completionDate = stage.completedAt || (stage as any).updatedAt;
+        if (!completionDate) continue; // 没有可靠时间，不生成
         events.push({
           id: `completed-${j.id}-${stage.id}`,
           type,
@@ -178,6 +186,7 @@ const EVENT_ICONS: Record<EventType, typeof FileText> = {
   assessment: ClipboardCheck,
   written_test: PenLine,
   offer: Gift,
+  other: Circle,
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
@@ -186,17 +195,22 @@ const EVENT_COLORS: Record<EventType, string> = {
   assessment: 'text-purple-500',
   written_test: 'text-indigo-500',
   offer: 'text-emerald-500',
+  other: 'text-muted-foreground',
 };
 
-const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'interview', 'offer'];
+const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'interview', 'offer', 'other'];
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
-  const Icon = event.isSchedulingAction ? CalendarPlus : event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
-  const suffix = event.isSchedulingAction
+  const Icon = event.isDeadline ? Timer : event.isSchedulingAction ? CalendarPlus : event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
+  const suffix = event.isDeadline
+    ? ` (${t('timeTracker.deadline_suffix')})`
+    : event.isSchedulingAction
     ? ` (${t('timeTracker.scheduled_suffix')})`
     : event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
-  const iconColor = event.isSchedulingAction
+  const iconColor = event.isDeadline
+    ? 'text-red-500'
+    : event.isSchedulingAction
     ? 'text-teal-500'
     : event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type];
   return (
@@ -283,7 +297,6 @@ export default function TimeTracker() {
 
   const allEvents = useMemo(() => extractEvents(jobs), [jobs]);
 
-  // Compute date range based on view mode
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (viewMode === 'day') {
       return { rangeStart: startOfDay(selectedDate), rangeEnd: endOfDay(selectedDate) };
@@ -299,7 +312,6 @@ export default function TimeTracker() {
     [allEvents, rangeStart, rangeEnd]
   );
 
-  // Group by date
   const grouped = useMemo(() => {
     const map = new Map<string, TimelineEvent[]>();
     for (const e of filteredEvents) {
@@ -312,9 +324,8 @@ export default function TimeTracker() {
 
   const sortedDates = useMemo(() => [...grouped.keys()].sort((a, b) => b.localeCompare(a)), [grouped]);
 
-  // Summary counts
   const summary = useMemo(() => {
-    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0, written_test: 0, offer: 0 };
+    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0, written_test: 0, offer: 0, other: 0 };
     for (const e of filteredEvents) counts[e.type]++;
     return counts;
   }, [filteredEvents]);
@@ -348,7 +359,6 @@ export default function TimeTracker() {
 
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Date navigator */}
           <div className="flex items-center gap-1 bg-muted/50 rounded-lg px-1 py-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate_(-1)}>
               <ChevronLeft className="w-4 h-4" />
@@ -361,7 +371,6 @@ export default function TimeTracker() {
             </Button>
           </div>
 
-          {/* Today button */}
           {!isToday(selectedDate) && (
             <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setSelectedDate(new Date())}>
               <CalendarDays className="w-3.5 h-3.5 mr-1" />
@@ -369,7 +378,6 @@ export default function TimeTracker() {
             </Button>
           )}
 
-          {/* View mode toggle */}
           <div className="flex gap-1 ml-auto">
             {(['day', 'week', 'month'] as ViewMode[]).map(m => (
               <Button key={m} variant={viewMode === m ? 'default' : 'outline'} size="sm" className="text-xs h-7" onClick={() => setViewMode(m)}>
@@ -387,6 +395,7 @@ export default function TimeTracker() {
             {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
             {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}
             {summary.offer > 0 && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-emerald-500" />{summary.offer} {t('timeTracker.type_offer')}</span>}
+            {summary.other > 0 && <span className="flex items-center gap-1"><Circle className="w-3.5 h-3.5 text-muted-foreground" />{summary.other} {t('timeTracker.type_other')}</span>}
           </div>
         )}
 
