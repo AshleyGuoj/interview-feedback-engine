@@ -1,10 +1,24 @@
 // Interview Transcript Analysis Edge Function
-// Extracts structured questions and generates reflections from raw interview transcripts
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+async function authenticateRequest(req: Request): Promise<string> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) throw new Error("UNAUTHORIZED");
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  if (error || !data?.claims) throw new Error("UNAUTHORIZED");
+  return data.claims.sub as string;
+}
 
 const getSystemPrompt = (language: string) => {
   const isEnglish = language === 'en';
@@ -109,35 +123,44 @@ Be thorough but concise. Focus on actionable insights over generic observations.
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Authenticate
+    let userId: string;
+    try {
+      userId = await authenticateRequest(req);
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { transcript, context, language = 'en' } = await req.json();
 
-    if (!transcript || transcript.trim().length < 50) {
+    // Input validation
+    if (!transcript || typeof transcript !== 'string' || transcript.trim().length < 50) {
       return new Response(
         JSON.stringify({ error: "Transcript is too short or empty. Please provide a detailed interview transcript." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    if (transcript.length > 100000) {
+      return new Response(
+        JSON.stringify({ error: "Transcript too long (max 100000 chars)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    console.log("Analyzing transcript, length:", transcript.length, "language:", language);
+    console.log("Analyzing transcript, length:", transcript.length, "user:", userId, "language:", language);
 
-    // Build user prompt with context
     let userPrompt = `Analyze this interview transcript and extract structured data:\n\n`;
     
-    if (context?.company) {
-      userPrompt += `**Company:** ${context.company}\n`;
-    }
-    if (context?.role) {
-      userPrompt += `**Role:** ${context.role}\n`;
-    }
-    if (context?.stage) {
-      userPrompt += `**Interview Stage:** ${context.stage}\n`;
-    }
+    if (context?.company) userPrompt += `**Company:** ${String(context.company).slice(0, 200)}\n`;
+    if (context?.role) userPrompt += `**Role:** ${String(context.role).slice(0, 200)}\n`;
+    if (context?.stage) userPrompt += `**Interview Stage:** ${String(context.stage).slice(0, 200)}\n`;
     
     const outputLanguage = language === 'en' ? 'English' : '中文';
     const langEnforcement = language === 'en'
@@ -147,9 +170,7 @@ Deno.serve(async (req) => {
     userPrompt += `Analyze the above transcript and return your analysis in the exact JSON format specified. Ensure the response is valid JSON only, with no additional text.\n\n🔒 LANGUAGE REQUIREMENT: Output language is ${outputLanguage}. ${langEnforcement}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -163,7 +184,7 @@ Deno.serve(async (req) => {
           { role: "system", content: getSystemPrompt(language) },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3, // Lower temperature for more consistent structured output
+        temperature: 0.3,
         max_tokens: 8000,
       }),
     });
@@ -171,47 +192,28 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI API error:", response.status, errorText);
-      
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      
       throw new Error(`AI API error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
     const content = aiResponse.choices?.[0]?.message?.content;
+    if (!content) throw new Error("No content in AI response");
 
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
-
-    console.log("Raw AI response length:", content.length);
-
-    // Parse the JSON response, handling markdown code blocks
     let jsonContent = content.trim();
-    if (jsonContent.startsWith("```json")) {
-      jsonContent = jsonContent.slice(7);
-    } else if (jsonContent.startsWith("```")) {
-      jsonContent = jsonContent.slice(3);
-    }
-    if (jsonContent.endsWith("```")) {
-      jsonContent = jsonContent.slice(0, -3);
-    }
+    if (jsonContent.startsWith("```json")) jsonContent = jsonContent.slice(7);
+    else if (jsonContent.startsWith("```")) jsonContent = jsonContent.slice(3);
+    if (jsonContent.endsWith("```")) jsonContent = jsonContent.slice(0, -3);
     jsonContent = jsonContent.trim();
 
     const analysisResult = JSON.parse(jsonContent);
-
-    // Validate the response structure
     if (!analysisResult.questions || !analysisResult.reflection) {
       throw new Error("Invalid response structure from AI");
     }
@@ -224,13 +226,8 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Error in analyze-transcript function:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "An unexpected error occurred" 
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : "An unexpected error occurred" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
