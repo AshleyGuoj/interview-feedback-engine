@@ -190,11 +190,11 @@ const EVENT_ICONS: Record<EventType, typeof FileText> = {
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
-  applied: 'text-blue-500',
-  interview: 'text-amber-500',
-  assessment: 'text-purple-500',
-  written_test: 'text-indigo-500',
-  offer: 'text-emerald-500',
+  applied: 'text-[hsl(210,30%,50%)]',
+  interview: 'text-[hsl(32,45%,46%)]',
+  assessment: 'text-[hsl(232,36%,36%)]',
+  written_test: 'text-[hsl(260,25%,52%)]',
+  offer: 'text-[hsl(158,25%,42%)]',
   other: 'text-muted-foreground',
 };
 
