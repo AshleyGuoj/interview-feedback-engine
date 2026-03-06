@@ -190,11 +190,11 @@ const EVENT_ICONS: Record<EventType, typeof FileText> = {
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
-  applied: 'text-blue-500',
-  interview: 'text-amber-500',
-  assessment: 'text-purple-500',
-  written_test: 'text-indigo-500',
-  offer: 'text-emerald-500',
+  applied: 'text-[hsl(210,30%,50%)]',
+  interview: 'text-[hsl(32,45%,46%)]',
+  assessment: 'text-[hsl(232,36%,36%)]',
+  written_test: 'text-[hsl(260,25%,52%)]',
+  offer: 'text-[hsl(158,25%,42%)]',
   other: 'text-muted-foreground',
 };
 
@@ -209,10 +209,10 @@ function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: 
     ? ` (${t('timeTracker.scheduled_suffix')})`
     : event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
   const iconColor = event.isDeadline
-    ? 'text-red-500'
+    ? 'text-[hsl(350,30%,52%)]'
     : event.isSchedulingAction
-    ? 'text-teal-500'
-    : event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type];
+    ? 'text-[hsl(210,30%,50%)]'
+    : event.isCompleted ? 'text-[hsl(158,30%,38%)]' : EVENT_COLORS[event.type];
   return (
     <div
       className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
@@ -221,7 +221,7 @@ function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: 
       <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', iconColor)} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn('text-sm font-medium truncate', event.isSchedulingAction ? 'text-muted-foreground' : 'text-foreground')}>{event.label}{suffix}</span>
+          <span className={cn('text-sm font-medium truncate', event.isSchedulingAction ? 'text-foreground/75' : 'text-foreground')}>{event.label}{suffix}</span>
           {event.jobLink && (
             <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
@@ -390,11 +390,11 @@ export default function TimeTracker() {
         {/* Summary strip */}
         {filteredEvents.length > 0 && (
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-blue-500" />{summary.applied} {t('timeTracker.type_applied')}</span>}
-            {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-purple-500" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
-            {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
-            {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}
-            {summary.offer > 0 && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-emerald-500" />{summary.offer} {t('timeTracker.type_offer')}</span>}
+            {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-[hsl(210,30%,50%)]" />{summary.applied} {t('timeTracker.type_applied')}</span>}
+            {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-[hsl(232,36%,36%)]" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
+            {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-[hsl(260,25%,52%)]" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
+            {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-[hsl(32,45%,46%)]" />{summary.interview} {t('timeTracker.type_interview')}</span>}
+            {summary.offer > 0 && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-[hsl(158,25%,42%)]" />{summary.offer} {t('timeTracker.type_offer')}</span>}
             {summary.other > 0 && <span className="flex items-center gap-1"><Circle className="w-3.5 h-3.5 text-muted-foreground" />{summary.other} {t('timeTracker.type_other')}</span>}
           </div>
         )}
