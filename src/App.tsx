@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { JobsProvider } from "@/contexts/JobsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/admin/AdminRoute";
 import Dashboard from "./pages/Dashboard";
+import Admin from "./pages/Admin";
 import JobBoard from "./pages/JobBoard";
 import JobDetail from "./pages/JobDetail";
 import Timeline from "./pages/Timeline";
@@ -45,6 +47,7 @@ const App = () => (
               <Route path="/analyze" element={<ProtectedRoute><AnalyzeInterview /></ProtectedRoute>} />
               <Route path="/promo-video" element={<ProtectedRoute><PromoVideo /></ProtectedRoute>} />
               <Route path="/workflow-image" element={<ProtectedRoute><WorkflowImage /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

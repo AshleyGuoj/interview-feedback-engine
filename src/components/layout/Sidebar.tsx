@@ -10,13 +10,15 @@ import {
   Clock,
   LogOut,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useAdminRole } from '@/hooks/useAdminRole';
 import offermindIcon from '@/assets/offermind-icon.png';
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
@@ -29,6 +31,7 @@ export function Sidebar() {
   });
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { isAdmin } = useAdminRole();
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -37,6 +40,7 @@ export function Sidebar() {
     { to: '/analytics', icon: BarChart3, labelKey: 'nav.analytics' },
     { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
     { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
+    ...(isAdmin ? [{ to: '/admin', icon: Shield, labelKey: 'nav.admin' as const }] : []),
   ];
 
   useEffect(() => {

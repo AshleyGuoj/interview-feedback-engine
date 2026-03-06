@@ -84,6 +84,7 @@ export default {
     analytics: '分析洞察',
     archive: '归档',
     timeTracker: '时间追踪',
+    admin: '运营管理',
     
     signOut: '退出登录',
     expandSidebar: '展开侧边栏',
