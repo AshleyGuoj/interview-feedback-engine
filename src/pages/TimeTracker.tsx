@@ -313,7 +313,7 @@ export default function TimeTracker() {
 
   // Summary counts
   const summary = useMemo(() => {
-    const counts: Record<EventType, number> = { applied: 0, resume_screen: 0, interview: 0, assessment: 0, written_test: 0 };
+    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0, written_test: 0, offer: 0 };
     for (const e of filteredEvents) counts[e.type]++;
     return counts;
   }, [filteredEvents]);
