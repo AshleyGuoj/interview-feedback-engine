@@ -31,6 +31,7 @@ export function Sidebar() {
   });
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { isAdmin } = useAdminRole();
 
   const navItems = [
     { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -39,6 +40,7 @@ export function Sidebar() {
     { to: '/analytics', icon: BarChart3, labelKey: 'nav.analytics' },
     { to: '/archive', icon: Archive, labelKey: 'nav.archive' },
     { to: '/timeline', icon: Calendar, labelKey: 'nav.timeline' },
+    ...(isAdmin ? [{ to: '/admin', icon: Shield, labelKey: 'nav.admin' as const }] : []),
   ];
 
   useEffect(() => {
