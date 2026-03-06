@@ -7,10 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const DEMO_ACCOUNTS = [
-  { email: "demo@offermind.app", password: "demo123456" },
-  { email: "demo-cn@offermind.app", password: "demo123456cn" },
-];
+// Demo credentials from environment secrets
+const DEMO_EMAIL = "demo@offermind.app";
+const DEMO_EMAIL_CN = "demo-cn@offermind.app";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,6 +17,14 @@ serve(async (req) => {
   }
 
   try {
+    const DEMO_PASSWORD = Deno.env.get("DEMO_PASSWORD") || "demo123456";
+    const DEMO_PASSWORD_CN = Deno.env.get("DEMO_PASSWORD_CN") || "demo123456cn";
+
+    const DEMO_ACCOUNTS = [
+      { email: DEMO_EMAIL, password: DEMO_PASSWORD },
+      { email: DEMO_EMAIL_CN, password: DEMO_PASSWORD_CN },
+    ];
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -54,7 +61,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }

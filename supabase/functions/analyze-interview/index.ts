@@ -1,9 +1,26 @@
 // Interview Analysis Edge Function
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+async function authenticateRequest(req: Request): Promise<string> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    throw new Error("UNAUTHORIZED");
+  }
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  if (error || !data?.claims) throw new Error("UNAUTHORIZED");
+  return data.claims.sub as string;
+}
 
 const getSystemPrompt = (language: string) => {
   const isEnglish = language === 'en';
@@ -53,15 +70,53 @@ Guidelines:
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { company, role, round, interviewDate, interviewType, interviewContent, jobDescription, resume, language = 'en' } = await req.json();
+    // Authenticate
+    let userId: string;
+    try {
+      userId = await authenticateRequest(req);
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    console.log("Analyzing interview for:", company, role, "in language:", language);
+    const body = await req.json();
+    const { company, role, round, interviewDate, interviewType, interviewContent, jobDescription, resume, language = 'en' } = body;
+
+    // Input validation
+    if (!company || typeof company !== 'string' || company.length > 200) {
+      return new Response(JSON.stringify({ error: "Invalid company name" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!role || typeof role !== 'string' || role.length > 200) {
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!interviewContent || typeof interviewContent !== 'string' || interviewContent.length > 50000) {
+      return new Response(JSON.stringify({ error: "Invalid or too long interview content (max 50000 chars)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (jobDescription && (typeof jobDescription !== 'string' || jobDescription.length > 30000)) {
+      return new Response(JSON.stringify({ error: "Job description too long (max 30000 chars)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (resume && (typeof resume !== 'string' || resume.length > 30000)) {
+      return new Response(JSON.stringify({ error: "Resume too long (max 30000 chars)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Analyzing interview for:", company, role, "user:", userId, "language:", language);
 
     // Build the user prompt with all available context
     let userPrompt = `Analyze this interview:\n\n`;
@@ -122,10 +177,7 @@ Deno.serve(async (req) => {
       throw new Error("No content in AI response");
     }
 
-    console.log("Raw AI response:", content);
-
     // Parse the JSON response
-    // Handle potential markdown code blocks
     let jsonContent = content.trim();
     if (jsonContent.startsWith("```json")) {
       jsonContent = jsonContent.slice(7);
@@ -138,8 +190,6 @@ Deno.serve(async (req) => {
     jsonContent = jsonContent.trim();
 
     const analysisResult = JSON.parse(jsonContent);
-
-    console.log("Analysis complete for:", company);
 
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
