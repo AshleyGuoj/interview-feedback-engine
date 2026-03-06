@@ -12,13 +12,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, FileText, FileSearch, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays, CalendarPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays, CalendarPlus, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
 import { CheckCircle2 } from 'lucide-react';
 
-type EventType = 'applied' | 'resume_screen' | 'interview' | 'assessment' | 'written_test';
+type EventType = 'applied' | 'interview' | 'assessment' | 'written_test' | 'offer';
 type ViewMode = 'day' | 'week' | 'month';
 
 interface TimelineEvent {
@@ -40,30 +40,55 @@ import { detectStageCategory } from '@/types/job';
 
 
 
+const STAGE_PRIORITY: Record<string, number> = {
+  application: 0, resume_screen: 1, hr_screen: 2,
+  assessment: 3, written_test: 4, interview: 5,
+  hr_final: 6, offer_call: 7, offer_received: 8,
+};
+
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
   if (cat === 'application') return 'applied';
-  if (cat === 'resume_screen') return 'resume_screen';
   if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
+  if (cat === 'hr_final' || cat === 'offer_call' || cat === 'offer_received') return 'offer';
   return 'interview';
+}
+
+function getHighestStagePriority(job: Job): number {
+  let max = 0;
+  const allStages: InterviewStage[] = [];
+  if (job.pipelines?.length) {
+    for (const p of job.pipelines) allStages.push(...p.stages);
+  } else if (job.stages?.length) {
+    allStages.push(...job.stages);
+  }
+  for (const s of allStages) {
+    const cat = s.category || detectStageCategory(s.name);
+    const p = STAGE_PRIORITY[cat] ?? 5;
+    if (p > max) max = p;
+  }
+  return max;
 }
 
 function extractEvents(jobs: Job[]): TimelineEvent[] {
   const lang = typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en';
   const events: TimelineEvent[] = [];
   for (const job of jobs) {
-    const j_updatedAt = (job as any).updatedAt || job.createdAt;
-    events.push({
-      id: `applied-${job.id}`,
-      type: 'applied',
-      date: parseISO(job.createdAt),
-      jobId: job.id,
-      companyName: job.companyName,
-      roleTitle: job.roleTitle,
-      jobLink: job.jobLink,
-      label: `${job.companyName} — ${job.roleTitle}`,
-    });
+    const highestPriority = getHighestStagePriority(job);
+    // Only show "applied" event if job hasn't progressed beyond resume_screen
+    if (highestPriority <= 1) {
+      events.push({
+        id: `applied-${job.id}`,
+        type: 'applied',
+        date: parseISO(job.createdAt),
+        jobId: job.id,
+        companyName: job.companyName,
+        roleTitle: job.roleTitle,
+        jobLink: job.jobLink,
+        label: `${job.companyName} — ${job.roleTitle}`,
+      });
+    }
 
     const allStages: { stage: InterviewStage; job: Job }[] = [];
     if (job.pipelines?.length) {
@@ -79,6 +104,9 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
     }
 
     for (const { stage, job: j } of allStages) {
+      const type: EventType = getEventTypeFromStage(stage);
+      // Skip resume_screen events entirely
+      if (type === 'applied') continue;
       // Scheduled event (existing)
       const timeStr = stage.scheduledTime || stage.date || stage.deadline;
       if (timeStr) {
@@ -86,7 +114,6 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
         if (stage.scheduledTime && stage.scheduledTimezone) {
           try { sublabel = formatDualTimezone(stage.scheduledTime, stage.scheduledTimezone); } catch { /* ignore */ }
         }
-        const type: EventType = getEventTypeFromStage(stage);
         events.push({
           id: `stage-${j.id}-${stage.id}`,
           type,
@@ -105,7 +132,6 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
        if (stage.status === 'scheduled' && (stage.scheduledTime || stage.date)) {
          const scheduledDate = stage.scheduledTime || stage.date!;
          const actionDate = j.updatedAt || j.createdAt;
-         const type: EventType = getEventTypeFromStage(stage);
          const scheduledLabel = format(parseISO(scheduledDate), lang === 'zh' ? 'M月d日 HH:mm' : 'MMM d, HH:mm');
          events.push({
            id: `scheduling-${j.id}-${stage.id}`,
@@ -121,13 +147,12 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
            isSchedulingAction: true,
          });
        }
-      // Completion event (new) — fallback to job.updatedAt for legacy data
+      // Completion event — fallback to job.updatedAt for legacy data
       // Skip "Applied" stages — already captured by the dedicated applied event above
       if (stage.status === 'completed') {
         const lowerName = stage.name.toLowerCase();
         if (lowerName === 'applied' || lowerName === '投递') continue;
         const completionDate = stage.completedAt || j.updatedAt || j.createdAt;
-        const type: EventType = getEventTypeFromStage(stage);
         events.push({
           id: `completed-${j.id}-${stage.id}`,
           type,
@@ -148,21 +173,21 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
 
 const EVENT_ICONS: Record<EventType, typeof FileText> = {
   applied: FileText,
-  resume_screen: FileSearch,
   interview: Mic,
   assessment: ClipboardCheck,
   written_test: PenLine,
+  offer: Gift,
 };
 
 const EVENT_COLORS: Record<EventType, string> = {
   applied: 'text-blue-500',
-  resume_screen: 'text-cyan-500',
   interview: 'text-amber-500',
   assessment: 'text-purple-500',
   written_test: 'text-indigo-500',
+  offer: 'text-emerald-500',
 };
 
-const CATEGORY_ORDER: EventType[] = ['applied', 'resume_screen', 'assessment', 'written_test', 'interview'];
+const CATEGORY_ORDER: EventType[] = ['applied', 'assessment', 'written_test', 'interview', 'offer'];
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
@@ -288,7 +313,7 @@ export default function TimeTracker() {
 
   // Summary counts
   const summary = useMemo(() => {
-    const counts: Record<EventType, number> = { applied: 0, resume_screen: 0, interview: 0, assessment: 0, written_test: 0 };
+    const counts: Record<EventType, number> = { applied: 0, interview: 0, assessment: 0, written_test: 0, offer: 0 };
     for (const e of filteredEvents) counts[e.type]++;
     return counts;
   }, [filteredEvents]);
@@ -357,10 +382,10 @@ export default function TimeTracker() {
         {filteredEvents.length > 0 && (
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {summary.applied > 0 && <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-blue-500" />{summary.applied} {t('timeTracker.type_applied')}</span>}
-            {summary.resume_screen > 0 && <span className="flex items-center gap-1"><FileSearch className="w-3.5 h-3.5 text-cyan-500" />{summary.resume_screen} {t('timeTracker.type_resume_screen')}</span>}
             {summary.assessment > 0 && <span className="flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-purple-500" />{summary.assessment} {t('timeTracker.type_assessment')}</span>}
             {summary.written_test > 0 && <span className="flex items-center gap-1"><PenLine className="w-3.5 h-3.5 text-indigo-500" />{summary.written_test} {t('timeTracker.type_written_test')}</span>}
             {summary.interview > 0 && <span className="flex items-center gap-1"><Mic className="w-3.5 h-3.5 text-amber-500" />{summary.interview} {t('timeTracker.type_interview')}</span>}
+            {summary.offer > 0 && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-emerald-500" />{summary.offer} {t('timeTracker.type_offer')}</span>}
           </div>
         )}
 
