@@ -12,7 +12,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useJobs } from '@/contexts/JobsContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, FileText, FileSearch, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, FileSearch, Mic, ClipboardCheck, PenLine, ExternalLink, Clock, CalendarDays, CalendarPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDualTimezone } from '@/lib/timezone';
 import { Job, InterviewStage } from '@/types/job';
@@ -32,7 +32,8 @@ interface TimelineEvent {
   label: string;
   sublabel?: string;
   stageName?: string;
-  isCompleted?: boolean; // completion event flag
+  isCompleted?: boolean;
+  isSchedulingAction?: boolean;
 }
 
 import { detectStageCategory } from '@/types/job';
@@ -49,6 +50,7 @@ function getEventTypeFromStage(stage: InterviewStage): EventType {
 }
 
 function extractEvents(jobs: Job[]): TimelineEvent[] {
+  const lang = typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en';
   const events: TimelineEvent[] = [];
   for (const job of jobs) {
     const j_updatedAt = (job as any).updatedAt || job.createdAt;
@@ -97,8 +99,28 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
           sublabel,
           stageName: stage.name,
         });
-      }
+       }
 
+       // Scheduling action event — shows on the day the user scheduled it
+       if (stage.status === 'scheduled' && (stage.scheduledTime || stage.date)) {
+         const scheduledDate = stage.scheduledTime || stage.date!;
+         const actionDate = j.updatedAt || j.createdAt;
+         const type: EventType = getEventTypeFromStage(stage);
+         const scheduledLabel = format(parseISO(scheduledDate), lang === 'zh' ? 'M月d日 HH:mm' : 'MMM d, HH:mm');
+         events.push({
+           id: `scheduling-${j.id}-${stage.id}`,
+           type,
+           date: parseISO(actionDate),
+           jobId: j.id,
+           companyName: j.companyName,
+           roleTitle: j.roleTitle,
+           jobLink: j.jobLink,
+           label: `${j.companyName} — ${stage.name}`,
+           sublabel: scheduledLabel,
+           stageName: stage.name,
+           isSchedulingAction: true,
+         });
+       }
       // Completion event (new) — fallback to job.updatedAt for legacy data
       // Skip "Applied" stages — already captured by the dedicated applied event above
       if (stage.status === 'completed') {
@@ -144,24 +166,29 @@ const CATEGORY_ORDER: EventType[] = ['applied', 'resume_screen', 'assessment', '
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
-  const Icon = event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
-  const completedSuffix = event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
+  const Icon = event.isSchedulingAction ? CalendarPlus : event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
+  const suffix = event.isSchedulingAction
+    ? ` (${t('timeTracker.scheduled_suffix')})`
+    : event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
+  const iconColor = event.isSchedulingAction
+    ? 'text-teal-500'
+    : event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type];
   return (
     <div
       className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
       onClick={() => navigate(`/jobs/${event.jobId}`)}
     >
-      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type])} />
+      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', iconColor)} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">{event.label}{completedSuffix}</span>
+          <span className={cn('text-sm font-medium truncate', event.isSchedulingAction ? 'text-muted-foreground' : 'text-foreground')}>{event.label}{suffix}</span>
           {event.jobLink && (
             <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
             </a>
           )}
         </div>
-        {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.sublabel}</p>}
+        {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.isSchedulingAction ? `📅 ${event.sublabel}` : event.sublabel}</p>}
       </div>
       <Badge variant="secondary" className="text-[10px] shrink-0">
         {event.isCompleted ? `✓ ${t(`timeTracker.type_${event.type}`)}` : t(`timeTracker.type_${event.type}`)}

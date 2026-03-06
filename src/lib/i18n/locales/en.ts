@@ -565,6 +565,8 @@ export default {
     section_assessment: 'Assessments',
     section_written_test: 'Written Tests',
     completed_suffix: 'Completed',
+    scheduled_suffix: 'Scheduled',
+    scheduled_for: 'Scheduled for {{date}}',
   },
 
   // Archive

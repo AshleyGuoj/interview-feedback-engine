@@ -565,6 +565,8 @@ export default {
     section_assessment: '测评',
     section_written_test: '笔试',
     completed_suffix: '已完成',
+    scheduled_suffix: '已安排',
+    scheduled_for: '安排在 {{date}}',
   },
 
   // Archive
