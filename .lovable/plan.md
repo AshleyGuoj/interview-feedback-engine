@@ -1,30 +1,77 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## Internal Operations Dashboard
 
-## 方案
+### Overview
+Create a `/admin` page with role-based access control using a `user_roles` table. The dashboard will have three sections: **User Management**, **Invitation Codes**, and **User Activity Analytics**.
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+### Database Changes
 
-## 实现步骤
+1. **Create `app_role` enum and `user_roles` table**:
+   - Enum: `admin`, `user`
+   - Table: `user_roles(id, user_id, role)` with RLS via `has_role()` security definer function
+   - RLS policy: only admins can read `user_roles`
 
-### 1. 创建 Edge Function `generate-workflow-image`
+2. **Create `admin-stats` edge function**:
+   - Fetches user list from `auth.admin.listUsers()` using service role key
+   - Returns: total users, registration dates, last sign-in, email, per-user job counts
+   - Protected: checks caller has admin role before returning data
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+3. **Seed your account as admin** via insert tool after migration
 
-### 2. 创建前端页面或组件调用该函数
+### New Files
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
+| File | Purpose |
+|------|---------|
+| `src/pages/Admin.tsx` | Main admin dashboard page with 3 tabs |
+| `src/components/admin/UserTable.tsx` | User list with email, join date, last active, job count |
+| `src/components/admin/InvitationCodesPanel.tsx` | View/create/toggle invitation codes |
+| `src/components/admin/UserActivityPanel.tsx` | Per-user activity: jobs created, interviews analyzed, active days |
+| `supabase/functions/admin-stats/index.ts` | Edge function to fetch auth.users + aggregated stats |
 
-## 技术细节
+### UI Layout
 
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+```text
+┌─────────────────────────────────────────────┐
+│  Operations Dashboard                       │
+├──────────┬──────────────┬───────────────────┤
+│ Users(10)│ Invite Codes │ User Activity     │
+├──────────┴──────────────┴───────────────────┤
+│                                             │
+│  [Selected Tab Content]                     │
+│                                             │
+│  Users Tab:                                 │
+│  ┌─────────────────────────────────────┐    │
+│  │ KPI Cards: Total / Today / Active   │    │
+│  ├─────────────────────────────────────┤    │
+│  │ Table: Email | Joined | Last Active │    │
+│  │        | Jobs | Status              │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+│  Invite Codes Tab:                          │
+│  ┌─────────────────────────────────────┐    │
+│  │ [+ Create Code]                     │    │
+│  │ Table: Code | Used/Max | Status     │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+│  User Activity Tab:                         │
+│  ┌─────────────────────────────────────┐    │
+│  │ Per-user: jobs, interviews analyzed,│    │
+│  │ recent_activities count, last action│    │
+│  └─────────────────────────────────────┘    │
+└─────────────────────────────────────────────┘
+```
+
+### Route & Access Control
+
+- Add `/admin` route in `App.tsx` wrapped in `<ProtectedRoute>` + new `<AdminRoute>` component
+- `AdminRoute` checks `user_roles` table for admin role; redirects non-admins to `/`
+- Sidebar: admin link only visible to users with admin role (icon: `Shield`)
+
+### Key Implementation Details
+
+- `has_role()` security definer function prevents RLS recursion
+- Edge function uses `SUPABASE_SERVICE_ROLE_KEY` to call `auth.admin.listUsers()` (cannot query auth.users from client)
+- Invitation codes CRUD uses existing table directly from client (add RLS for admin-only write access)
+- No changes to existing user-facing features
 
