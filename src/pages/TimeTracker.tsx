@@ -50,6 +50,7 @@ function getEventTypeFromStage(stage: InterviewStage): EventType {
 }
 
 function extractEvents(jobs: Job[]): TimelineEvent[] {
+  const lang = typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en';
   const events: TimelineEvent[] = [];
   for (const job of jobs) {
     const j_updatedAt = (job as any).updatedAt || job.createdAt;
