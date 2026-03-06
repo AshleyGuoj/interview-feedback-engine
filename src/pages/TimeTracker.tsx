@@ -40,13 +40,35 @@ import { detectStageCategory } from '@/types/job';
 
 
 
+const STAGE_PRIORITY: Record<string, number> = {
+  application: 0, resume_screen: 1, hr_screen: 2,
+  assessment: 3, written_test: 4, interview: 5,
+  hr_final: 6, offer_call: 7, offer_received: 8,
+};
+
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
   if (cat === 'application') return 'applied';
-  if (cat === 'resume_screen') return 'resume_screen';
   if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
+  if (cat === 'hr_final' || cat === 'offer_call' || cat === 'offer_received') return 'offer';
   return 'interview';
+}
+
+function getHighestStagePriority(job: Job): number {
+  let max = 0;
+  const allStages: InterviewStage[] = [];
+  if (job.pipelines?.length) {
+    for (const p of job.pipelines) allStages.push(...p.stages);
+  } else if (job.stages?.length) {
+    allStages.push(...job.stages);
+  }
+  for (const s of allStages) {
+    const cat = s.category || detectStageCategory(s.name);
+    const p = STAGE_PRIORITY[cat] ?? 5;
+    if (p > max) max = p;
+  }
+  return max;
 }
 
 function extractEvents(jobs: Job[]): TimelineEvent[] {
