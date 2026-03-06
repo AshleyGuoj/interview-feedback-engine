@@ -48,7 +48,7 @@ const STAGE_PRIORITY: Record<string, number> = {
 
 function getEventTypeFromStage(stage: InterviewStage): EventType {
   const cat = stage.category || detectStageCategory(stage.name);
-  if (cat === 'application') return 'applied';
+  if (cat === 'application' || cat === 'resume_screen' || cat === 'hr_screen') return 'applied';
   if (cat === 'written_test') return 'written_test';
   if (cat === 'assessment') return 'assessment';
   if (cat === 'hr_final' || cat === 'offer_call' || cat === 'offer_received') return 'offer';
