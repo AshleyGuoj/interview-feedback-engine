@@ -166,24 +166,29 @@ const CATEGORY_ORDER: EventType[] = ['applied', 'resume_screen', 'assessment', '
 
 function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: string) => void }) {
   const { t } = useTranslation();
-  const Icon = event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
-  const completedSuffix = event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
+  const Icon = event.isSchedulingAction ? CalendarPlus : event.isCompleted ? CheckCircle2 : EVENT_ICONS[event.type];
+  const suffix = event.isSchedulingAction
+    ? ` (${t('timeTracker.scheduled_suffix')})`
+    : event.isCompleted ? ` (${t('timeTracker.completed_suffix')})` : '';
+  const iconColor = event.isSchedulingAction
+    ? 'text-teal-500'
+    : event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type];
   return (
     <div
       className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
       onClick={() => navigate(`/jobs/${event.jobId}`)}
     >
-      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', event.isCompleted ? 'text-emerald-500' : EVENT_COLORS[event.type])} />
+      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', iconColor)} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">{event.label}{completedSuffix}</span>
+          <span className={cn('text-sm font-medium truncate', event.isSchedulingAction ? 'text-muted-foreground' : 'text-foreground')}>{event.label}{suffix}</span>
           {event.jobLink && (
             <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
             </a>
           )}
         </div>
-        {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.sublabel}</p>}
+        {event.sublabel && <p className="text-xs text-muted-foreground mt-0.5">{event.isSchedulingAction ? `📅 ${event.sublabel}` : event.sublabel}</p>}
       </div>
       <Badge variant="secondary" className="text-[10px] shrink-0">
         {event.isCompleted ? `✓ ${t(`timeTracker.type_${event.type}`)}` : t(`timeTracker.type_${event.type}`)}
