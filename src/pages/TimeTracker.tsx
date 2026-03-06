@@ -221,7 +221,7 @@ function EventRow({ event, navigate }: { event: TimelineEvent; navigate: (path: 
       <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', iconColor)} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn('text-sm font-medium truncate', event.isSchedulingAction ? 'text-muted-foreground' : 'text-foreground')}>{event.label}{suffix}</span>
+          <span className={cn('text-sm font-medium truncate', event.isSchedulingAction ? 'text-foreground/75' : 'text-foreground')}>{event.label}{suffix}</span>
           {event.jobLink && (
             <a href={event.jobLink} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
