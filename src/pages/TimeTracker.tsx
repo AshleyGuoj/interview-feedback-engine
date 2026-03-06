@@ -98,8 +98,28 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
           sublabel,
           stageName: stage.name,
         });
-      }
+       }
 
+       // Scheduling action event — shows on the day the user scheduled it
+       if (stage.status === 'scheduled' && (stage.scheduledTime || stage.date)) {
+         const scheduledDate = stage.scheduledTime || stage.date!;
+         const actionDate = j.updatedAt || j.createdAt;
+         const type: EventType = getEventTypeFromStage(stage);
+         const scheduledLabel = format(parseISO(scheduledDate), lang === 'zh' ? 'M月d日 HH:mm' : 'MMM d, HH:mm');
+         events.push({
+           id: `scheduling-${j.id}-${stage.id}`,
+           type,
+           date: parseISO(actionDate),
+           jobId: j.id,
+           companyName: j.companyName,
+           roleTitle: j.roleTitle,
+           jobLink: j.jobLink,
+           label: `${j.companyName} — ${stage.name}`,
+           sublabel: scheduledLabel,
+           stageName: stage.name,
+           isSchedulingAction: true,
+         });
+       }
       // Completion event (new) — fallback to job.updatedAt for legacy data
       // Skip "Applied" stages — already captured by the dedicated applied event above
       if (stage.status === 'completed') {
