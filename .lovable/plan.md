@@ -1,30 +1,41 @@
 
 
-# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
+## Time Tracker 精简改动
 
-## 方案
+### 用户需求
+1. **去掉"简历筛选"分类** — 不再显示 `resume_screen` 事件
+2. **增加 Offer 相关分类** — 显示 `offer_call`、`offer_received`、`hr_final` 阶段
+3. **每个 Job 只显示最新阶段** — 如果一个 Job 已经进展到笔试/面试，不再显示它的"投递"事件；只有还停留在 applied / resume_screen 阶段的 Job 才归入"投递"
 
-创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
+### 改动文件
+仅修改 `src/pages/TimeTracker.tsx` + i18n 翻译文件
 
-## 实现步骤
+### 逻辑变更
 
-### 1. 创建 Edge Function `generate-workflow-image`
+**`extractEvents` 函数重写核心逻辑：**
 
-- 接收工作流描述 prompt 作为输入
-- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
-- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
-- 返回生成的 base64 图像数据
+1. **确定每个 Job 的"最高阶段"**：遍历所有 stages，用现有的 `CATEGORY_PRIORITY` 取最高 priority 的 category
+2. **按最高阶段决定是否生成 applied 事件**：
+   - 最高阶段 ≤ `resume_screen` → 生成 applied 事件
+   - 最高阶段 > `resume_screen` → 跳过 applied 事件，只生成最高阶段的事件
+3. **过滤掉 `resume_screen` 类型事件** — 完全不生成
+4. **新增 `offer_call`、`offer_received`、`hr_final` 映射** — `getEventTypeFromStage` 增加这三个类别，映射到新 EventType
 
-### 2. 创建前端页面或组件调用该函数
+**`EventType` 扩展：**
+```
+type EventType = 'applied' | 'interview' | 'assessment' | 'written_test' | 'offer' ;
+```
+将 `hr_final`、`offer_call`、`offer_received` 统一归为 `'offer'` 类型（用同一个分组显示）
 
-- 添加一个简单的触发按钮和图像展示区域
-- 调用 edge function 获取生成的图片
-- 展示结果并支持下载
+**`CATEGORY_ORDER` 更新为：**
+```
+['applied', 'assessment', 'written_test', 'interview', 'offer']
+```
 
-## 技术细节
+**图标 & 颜色：**
+- `offer`: Gift 图标, `text-emerald-500`
+- 删除 `resume_screen` 相关配置
 
-- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
-- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
-- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
-- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
+### i18n 新增
+- `timeTracker.type_offer` / `timeTracker.section_offer`：英文 "Offer"，中文 "Offer 相关"
 
