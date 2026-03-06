@@ -64,6 +64,7 @@ function getHighestStagePriority(job: Job): number {
     allStages.push(...job.stages);
   }
   for (const s of allStages) {
+    if (s.status !== 'completed' && s.status !== 'scheduled') continue;
     const cat = s.category || detectStageCategory(s.name);
     const p = STAGE_PRIORITY[cat] ?? 5;
     if (p > max) max = p;
