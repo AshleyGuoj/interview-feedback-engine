@@ -32,7 +32,8 @@ interface TimelineEvent {
   label: string;
   sublabel?: string;
   stageName?: string;
-  isCompleted?: boolean; // completion event flag
+  isCompleted?: boolean;
+  isSchedulingAction?: boolean;
 }
 
 import { detectStageCategory } from '@/types/job';
