@@ -75,17 +75,20 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
   const lang = typeof navigator !== 'undefined' && navigator.language?.startsWith('zh') ? 'zh' : 'en';
   const events: TimelineEvent[] = [];
   for (const job of jobs) {
-    const j_updatedAt = (job as any).updatedAt || job.createdAt;
-    events.push({
-      id: `applied-${job.id}`,
-      type: 'applied',
-      date: parseISO(job.createdAt),
-      jobId: job.id,
-      companyName: job.companyName,
-      roleTitle: job.roleTitle,
-      jobLink: job.jobLink,
-      label: `${job.companyName} — ${job.roleTitle}`,
-    });
+    const highestPriority = getHighestStagePriority(job);
+    // Only show "applied" event if job hasn't progressed beyond resume_screen
+    if (highestPriority <= 1) {
+      events.push({
+        id: `applied-${job.id}`,
+        type: 'applied',
+        date: parseISO(job.createdAt),
+        jobId: job.id,
+        companyName: job.companyName,
+        roleTitle: job.roleTitle,
+        jobLink: job.jobLink,
+        label: `${job.companyName} — ${job.roleTitle}`,
+      });
+    }
 
     const allStages: { stage: InterviewStage; job: Job }[] = [];
     if (job.pipelines?.length) {
