@@ -147,13 +147,12 @@ function extractEvents(jobs: Job[]): TimelineEvent[] {
            isSchedulingAction: true,
          });
        }
-      // Completion event (new) — fallback to job.updatedAt for legacy data
+      // Completion event — fallback to job.updatedAt for legacy data
       // Skip "Applied" stages — already captured by the dedicated applied event above
       if (stage.status === 'completed') {
         const lowerName = stage.name.toLowerCase();
         if (lowerName === 'applied' || lowerName === '投递') continue;
         const completionDate = stage.completedAt || j.updatedAt || j.createdAt;
-        const type: EventType = getEventTypeFromStage(stage);
         events.push({
           id: `completed-${j.id}-${stage.id}`,
           type,
