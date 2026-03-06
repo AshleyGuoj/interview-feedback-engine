@@ -84,6 +84,7 @@ export default {
     analytics: 'Analytics',
     archive: 'Archive',
     timeTracker: 'Time Tracker',
+    admin: 'Admin',
     
     signOut: 'Sign Out',
     expandSidebar: 'Expand sidebar',
