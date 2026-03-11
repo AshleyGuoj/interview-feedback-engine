@@ -57,7 +57,7 @@ const locationColors: Record<string, string> = {
 };
 
 export default function JobDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJob } = useJobs();
@@ -465,16 +465,31 @@ export default function JobDetail() {
       createdAt: new Date().toISOString(),
     };
 
-    // Mark current active pipeline as paused if it exists
-    const updatedPipelines = (job.pipelines || []).map(p => 
-      p.id === activePipeline?.id ? { ...p, status: 'paused' as const } : p
+    // Defensive: if job has no pipelines but has legacy stages, create a legacy pipeline first
+    let existingPipelines = job.pipelines || [];
+    if (existingPipelines.length === 0 && job.stages && job.stages.length > 0) {
+      existingPipelines = [{
+        id: 'legacy-primary',
+        type: 'primary' as const,
+        status: 'active' as const,
+        targetRole: job.roleTitle,
+        stages: job.stages,
+        createdAt: job.createdAt,
+      }];
+    }
+
+    // Mark current active pipeline as paused
+    const updatedPipelines = existingPipelines.map(p => 
+      p.id === activePipeline?.id || p.status === 'active'
+        ? { ...p, status: 'paused' as const } 
+        : p
     );
 
     // Add new pipeline and update job role to new target
     await updateJob(job.id, {
       pipelines: [...updatedPipelines, pipelineWithId],
-      roleTitle: pipelineWithId.targetRole, // Update job role to new target
-      stages: pipelineWithId.stages, // Keep legacy stages in sync
+      roleTitle: pipelineWithId.targetRole,
+      stages: pipelineWithId.stages,
     });
 
     // Select the new pipeline
@@ -492,7 +507,10 @@ export default function JobDetail() {
       }
     });
 
-    toast.success(`Created transfer pipeline: ${pipelineWithId.targetRole}`);
+    const msg = i18n.language === 'zh'
+      ? `已创建转岗流程：${pipelineWithId.targetRole}，历史面试记录已保留在下方`
+      : `Created transfer pipeline: ${pipelineWithId.targetRole}. Historical interview records preserved below.`;
+    toast.success(msg);
     setDismissedOnHoldPrompt(true);
   };
 

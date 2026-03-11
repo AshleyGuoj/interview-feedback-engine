@@ -31,7 +31,7 @@ export function CollapsiblePipelineHistory({
   pipeline,
   previousPipeline,
   jobContext,
-  defaultExpanded = false,
+  defaultExpanded = true,
 }: CollapsiblePipelineHistoryProps) {
   const { t, i18n } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -40,6 +40,9 @@ export function CollapsiblePipelineHistory({
   const displayStages = getDisplayStages(pipeline, false);
   const summary = getPipelineSummary(pipeline);
   const terminalReason = getTerminalReasonLabel(pipeline);
+  
+  // Count meaningful stages for the preservation hint
+  const preservedCount = displayStages.length;
   
   // Don't render if no meaningful stages
   if (displayStages.length === 0) {
@@ -96,8 +99,13 @@ export function CollapsiblePipelineHistory({
               variant="secondary" 
               className="text-xs bg-muted-foreground/10"
             >
-              {t('jobs.historyRecord')}
-            </Badge>
+            {t('jobs.historyRecord')}
+          </Badge>
+          <Badge variant="outline" className="text-xs text-primary/70 border-primary/30">
+            {i18n.language === 'zh' 
+              ? `${preservedCount} 轮面试记录已保留` 
+              : `${preservedCount} interview records preserved`}
+          </Badge>
           </div>
           <p className="text-xs text-muted-foreground/70 mt-0.5">
             {t('jobs.historyEndedAt', { summary, stage: lastStageName })}

@@ -1,46 +1,30 @@
 
 
-## 诊断结果：转岗后历史面试记录"消失"
+# 生成 Agent 2 (Role Debrief) n8n 风格工作流图
 
-经过对代码完整追踪，发现有**两个问题**叠加导致你看不到之前的面试记录：
+## 方案
 
-### 问题 1：UI 可见性（主因）
-`CollapsiblePipelineHistory` 组件默认**折叠**（`defaultExpanded = false`），且位于新 pipeline 下方，视觉上不明显——只有一行灰色小字"历史记录"。用户很容易以为数据丢失了。
+创建一个临时的后端函数，使用 Gemini 图像生成模型根据用户提供的详细 prompt 生成 n8n 风格的工作流图，然后在前端展示。
 
-### 问题 2：数据完整性风险
-`handleCreatePipelineBranch` 中 `job.pipelines` 的旧 pipeline 数据来自内存中的 `dbToJob` 转换（legacy-primary），其 stages 是正确的。但 `jobToDb` 仅序列化 `finalUpdates`（partial），不序列化完整 job，存在边界情况下旧 pipeline stages 可能未完整写入 `_metadata.pipelines` 的风险。
+## 实现步骤
 
----
+### 1. 创建 Edge Function `generate-workflow-image`
 
-### 修复方案
+- 接收工作流描述 prompt 作为输入
+- 调用 `google/gemini-2.5-flash-image` 模型（支持图像生成）
+- 将用户提供的完整 prompt（7 个节点、连线关系、输出结构标注、视觉要求）发送给模型
+- 返回生成的 base64 图像数据
 
-#### 1. 历史 Pipeline 默认展开 + 醒目提示
-**文件**: `src/components/jobs/CollapsiblePipelineHistory.tsx`
-- 将 `defaultExpanded` 改为 `true`（转岗后首次查看应该能直接看到历史）
-- 在 header 中加入"共 N 轮面试记录已保留"的提示文字，让用户明确知道数据没丢
+### 2. 创建前端页面或组件调用该函数
 
-#### 2. 转岗后自动选中新 pipeline 并 toast 提示历史保留
-**文件**: `src/pages/JobDetail.tsx`
-- 在 `handleCreatePipelineBranch` 的 toast 中加一句说明："历史面试记录已保留在下方"
-- 确保 `handleCreatePipelineBranch` 中 `updatedPipelines` 包含旧 pipeline 的完整 stages（加入防御性检查）
+- 添加一个简单的触发按钮和图像展示区域
+- 调用 edge function 获取生成的图片
+- 展示结果并支持下载
 
-#### 3. 防御性数据保护
-**文件**: `src/pages/JobDetail.tsx` → `handleCreatePipelineBranch`
-- 在构建 `updatedPipelines` 时，如果 `job.pipelines` 为空但 `job.stages` 有数据，手动创建一个 legacy pipeline 对象确保旧 stages 不丢失：
+## 技术细节
 
-```text
-if job.pipelines is empty but job.stages has data:
-  → create a legacy pipeline with job.stages
-  → include it in updatedPipelines before pausing
-```
-
-这是**最关键的防御**，确保从未以 pipeline 格式保存过的老数据在首次转岗时不会被遗漏。
-
----
-
-### 改动范围
-| 文件 | 改动量 | 内容 |
-|---|---|---|
-| `CollapsiblePipelineHistory.tsx` | ~5 行 | 默认展开 + 保留提示 |
-| `JobDetail.tsx` | ~15 行 | 防御性 pipeline 创建 + toast 提示 |
+- 模型：`google/gemini-2.5-flash-image`（支持图像生成，需设置 `modalities: ["image", "text"]`）
+- 如需更高质量可切换为 `google/gemini-3-pro-image-preview`
+- Prompt 内容直接使用用户提供的中文描述，包含所有 7 个节点定义、连线关系、输出结构标注和视觉要求
+- 生成的图片以 base64 格式返回，前端直接渲染为 `<img>` 标签
 
