@@ -57,7 +57,7 @@ const locationColors: Record<string, string> = {
 };
 
 export default function JobDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJob } = useJobs();
