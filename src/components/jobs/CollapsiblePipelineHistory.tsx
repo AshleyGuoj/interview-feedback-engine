@@ -99,8 +99,13 @@ export function CollapsiblePipelineHistory({
               variant="secondary" 
               className="text-xs bg-muted-foreground/10"
             >
-              {t('jobs.historyRecord')}
-            </Badge>
+            {t('jobs.historyRecord')}
+          </Badge>
+          <Badge variant="outline" className="text-xs text-primary/70 border-primary/30">
+            {i18n.language === 'zh' 
+              ? `${preservedCount} 轮面试记录已保留` 
+              : `${preservedCount} interview records preserved`}
+          </Badge>
           </div>
           <p className="text-xs text-muted-foreground/70 mt-0.5">
             {t('jobs.historyEndedAt', { summary, stage: lastStageName })}
